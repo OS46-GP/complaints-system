@@ -6,11 +6,12 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:api": "npm run dev -w apps/api"
-  },
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.9.0",
-    "dotenv": "^17.4.2",
-    "pg": "^8.22.0"
+    "dev": "npm run dev -w apps/api",
+    "build": "npm run build -w apps/api",
+    "typecheck": "npm run typecheck -w apps/api",
+    "prisma:generate": "npm run prisma:generate -w packages/db",
+    "prisma:migrate": "npm run prisma:migrate -w packages/db",
+    "prisma:studio": "npm run prisma:studio -w packages/db",
+    "prisma:seed": "npm run prisma:seed -w packages/db"
   }
 }
