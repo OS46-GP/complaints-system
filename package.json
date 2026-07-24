@@ -1,0 +1,16 @@
+{
+  "name": "complaints-system",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w apps/api"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.0",
+    "dotenv": "^17.4.2",
+    "pg": "^8.22.0"
+  }
+}
