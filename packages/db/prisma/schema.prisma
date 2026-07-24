@@ -1,0 +1,204 @@
+generator client {
+  provider        = "prisma-client-js"
+  driverAdapters  = ["pg"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Severity {
+  Low
+  Medium
+  High
+}
+
+enum ComplaintStatus {
+  Finished
+  NotFinished
+}
+
+enum UserRole {
+  Official
+  Admin
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      UserRole @default(Official)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  complaints Complaint[]
+}
+
+model Citizen {
+  id           String    @id @default(cuid())
+  fullName     String
+  nationalId   String?
+  mobileNumber String?
+  address      String?
+  village      String?
+  district     String?
+  locationCode String?
+  location     Location? @relation(fields: [locationCode], references: [code])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  complaints Complaint[]
+
+  @@index([nationalId])
+}
+
+model Location {
+  code       String     @id
+  name       String
+  parentCode String?
+  parent     Location?  @relation("LocationHierarchy", fields: [parentCode], references: [code])
+  children   Location[] @relation("LocationHierarchy")
+  level      Int?
+  levelDesc  String?
+  p0         String?
+  p1         String?
+  p2         String?
+  p3         String?
+  p4         String?
+  p5         String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  citizens Citizen[]
+
+  @@index([parentCode])
+}
+
+model Department {
+  id           String      @id @default(cuid())
+  name         String
+  subAuthority String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  complaints Complaint[]
+}
+
+model ReceptionMethod {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  complaints Complaint[]
+}
+
+model ComplaintType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  complaints Complaint[]
+}
+
+model ExaminationStatus {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  complaints Complaint[]
+}
+
+model PresentationStatus {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  complaints Complaint[]
+}
+
+model Complaint {
+  id                     String               @id @default(cuid())
+  complaintNumber        String
+  statementYear          Int
+  arrivalDate            DateTime
+  status                 ComplaintStatus       @default(NotFinished)
+  severity               Severity              @default(Low)
+  receptionMethodId      Int?
+  receptionMethod        ReceptionMethod?     @relation(fields: [receptionMethodId], references: [id])
+  complaintTypeId        Int?
+  complaintType          ComplaintType?       @relation(fields: [complaintTypeId], references: [id])
+  subject                String
+  respondentName         String?
+  departmentId           String?
+  department             Department?          @relation(fields: [departmentId], references: [id])
+  presentationStatusId   Int?
+  presentationStatus     PresentationStatus?  @relation(fields: [presentationStatusId], references: [id])
+  annotation             String?
+  examinationStatusId    Int?
+  examinationStatus      ExaminationStatus?   @relation(fields: [examinationStatusId], references: [id])
+  examinationResult      String?
+  authorityResponseText  String?
+  authorityResponseDate  DateTime?
+  outgoingLetterNumber   String?
+  outgoingLetterDate     DateTime?
+  incomingResponseNumber String?
+  notificationMethod     String?
+  notificationOutNumber  String?
+  notificationOutDate    DateTime?
+  archiveNumber          String?
+  archiveDate            DateTime?
+  archiveLocation        String?
+  weeklyMeeting          Int?
+  finalDecisionDate      DateTime?
+  endDate                DateTime?
+  attachmentCount        Int?                 @default(0)
+  createdByUserId        String?
+  createdBy              User?                @relation(fields: [createdByUserId], references: [id])
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  citizenId   String
+  citizen     Citizen @relation(fields: [citizenId], references: [id])
+
+  actions     ComplaintAction[]
+  escalations ComplaintEscalation[]
+  files       ComplaintFile[]
+
+  @@unique([complaintNumber, statementYear])
+  @@index([citizenId])
+  @@index([departmentId])
+  @@index([status])
+  @@index([statementYear])
+  @@index([createdAt])
+}
+
+model ComplaintAction {
+  id          String    @id @default(cuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  action      String
+  actionDate  DateTime
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([complaintId])
+}
+
+model ComplaintEscalation {
+  id            String    @id @default(cuid())
+  complaintId   String
+  complaint     Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  urgencyNumber String?
+  urgencyDate   DateTime?
+  responseDate  DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([complaintId])
+}
+
+model ComplaintFile {
+  id          String    @id @default(cuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  fileType    String
+  storageKey  String
+  uploadedAt  DateTime  @default(now())
+
+  @@index([complaintId])
+}
