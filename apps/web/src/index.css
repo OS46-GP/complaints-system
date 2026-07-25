@@ -39,10 +39,28 @@
   --spacing-header-height: 72px;
   --spacing-gutter: 24px;
   --spacing-container-padding: 32px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 24px;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --font-size-display-lg: 30px;
+  --font-size-display-lg--line-height: 38px;
+  --font-size-display-lg-mobile: 24px;
+  --font-size-display-lg-mobile--line-height: 32px;
+  --font-size-headline-md: 20px;
+  --font-size-headline-md--line-height: 28px;
+  --font-size-body-lg: 16px;
+  --font-size-body-lg--line-height: 24px;
+  --font-size-body-md: 14px;
+  --font-size-body-md--line-height: 20px;
+  --font-size-label-sm: 12px;
+  --font-size-label-sm--line-height: 16px;
+  --font-size-label-sm--letter-spacing: 0.02em;
+  --font-size-mono-data: 13px;
+  --font-size-mono-data--line-height: 18px;
 }
 
 :root {
