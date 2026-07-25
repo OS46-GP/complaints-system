@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import * as bcrypt from "bcrypt";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -84,6 +85,17 @@ async function main() {
       { name: "الوحدة المحلية", subAuthority: "مركز ومدينة السادات" },
       { name: "الوحدة المحلية", subAuthority: "مركز ومدينة الشهداء" },
     ],
+  });
+
+  const hashedPassword = await bcrypt.hash("admin123", 10);
+  await prisma.user.upsert({
+    where: { username: "admin" },
+    update: {},
+    create: {
+      username: "admin",
+      password: hashedPassword,
+      role: "Admin",
+    },
   });
 
   await prisma.location.createMany({
