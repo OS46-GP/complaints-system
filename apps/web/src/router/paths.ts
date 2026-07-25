@@ -1,27 +1,25 @@
 export const PATHS = {
-
-  LOGIN:            "/login",
-  REGISTER:         "/register",
-  FORGOT_PASSWORD:  "/forgot-password",
+  LOGIN: "/login",
+  REGISTER: "/register",
+  FORGOT_PASSWORD: "/forgot-password",
 
   ADMIN: {
-    DASHBOARD:        "/admin/dashboard",
-    COMPLAINTS:       "/admin/complaints",
+    DASHBOARD: "/admin/dashboard",
+    COMPLAINTS: "/admin/complaints",
     COMPLAINT_DETAIL: (id: string) => `/admin/complaints/${id}`,
-    USERS:            "/admin/users",
-    USER_DETAIL:      (id: string) => `/admin/users/${id}`,
-    SETTINGS:         "/admin/settings",
+    USERS: "/admin/users",
+    USER_DETAIL: (id: string) => `/admin/users/${id}`,
+    SETTINGS: "/admin/settings",
   },
 
   USER: {
-    DASHBOARD:        "/user/dashboard",
-    COMPLAINTS:       "/user/complaints",
+    DASHBOARD: "/user/dashboard",
+    COMPLAINTS: "/user/complaints",
     COMPLAINT_DETAIL: (id: string) => `/user/complaints/${id}`,
-    NEW_COMPLAINT:    "/user/complaints/new",
-    SETTINGS:         "/user/settings",
+    NEW_COMPLAINT: "/user/complaints/new",
+    SETTINGS: "/user/settings",
   },
 
-  UNAUTHORIZED:   "/403",
-  NOT_FOUND:      "/404",
-
-} as const
+  UNAUTHORIZED: "/403",
+  NOT_FOUND: "/404",
+} as const;
