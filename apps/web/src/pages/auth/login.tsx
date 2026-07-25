@@ -7,7 +7,7 @@ export default function Login() {
     <div className="w-full max-w-[480px]">
       <div className="rounded-xl border border-border bg-surface-container-lowest p-stack-lg shadow-[0_4px_12px_rgba(13,27,46,0.08)] md:p-12">
         <div className="mb-10 text-center">
-          <div className="mb-6 inline-flex size-16 items-center justify-center rounded-full bg-primary-container text-on-primary-container">
+          <div className="mb-6 inline-flex size-16 items-center justify-center rounded-full bg-primary-container text-white dark:text-on-primary-container">
             <Lock className="size-8" />
           </div>
           <h2 className="font-heading text-headline-md text-foreground mb-2">

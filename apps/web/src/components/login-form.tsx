@@ -65,17 +65,14 @@ export function LoginForm() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 py-2">
+      <div className="flex items-center gap-3">
         <Checkbox id="remember" />
         <Label htmlFor="remember" className="text-muted-foreground">
           تذكرني
         </Label>
       </div>
 
-      <Button
-        type="submit"
-        className="flex h-12 w-full gap-2 bg-primary-container text-on-primary-container font-heading text-headline-md shadow-md hover:bg-primary"
-      >
+      <Button type="submit" className="w-full h-12 gap-2">
         <span>تسجيل الدخول</span>
         <ArrowLeft className="size-5" />
       </Button>

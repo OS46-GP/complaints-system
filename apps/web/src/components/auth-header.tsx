@@ -1,9 +1,6 @@
-import {
-  Globe,
-  Building2,
-  //  HelpCircle
-} from "lucide-react";
+import { Globe, Building2 } from "lucide-react";
 
+import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 
 export function AuthHeader() {
@@ -19,9 +16,7 @@ export function AuthHeader() {
         <Button variant="ghost" size="icon" className="text-muted-foreground">
           <Globe className="size-5" />
         </Button>
-        {/* <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <HelpCircle className="size-5" />
-        </Button> */}
+        <ModeToggle />
       </div>
     </header>
   );
