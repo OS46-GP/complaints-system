@@ -33,6 +33,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
   --font-heading: "IBM Plex Sans Arabic", sans-serif;
   --font-body: "Inter", "IBM Plex Sans Arabic", sans-serif;
   --font-mono: "Geist", monospace;
@@ -94,6 +96,8 @@
   --sidebar-accent-foreground: #89f5e7;
   --sidebar-border: #bcc9c6;
   --sidebar-ring: #89f5e7;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f0f5f2;
 }
 
 .dark {
@@ -126,6 +130,8 @@
   --sidebar-accent-foreground: #89f5e7;
   --sidebar-border: #3d4947;
   --sidebar-ring: #89f5e7;
+  --surface-container-lowest: #232928;
+  --surface-container-low: #232928;
 }
 
 [dir="rtl"] [data-slot="sidebar-menu-button"] {
@@ -155,4 +161,19 @@
     font-size: 13px;
     line-height: 18px;
   }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-16px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.error-number-glitch {
+  text-shadow: 2px 0 var(--primary), -2px 0 var(--destructive);
+  letter-spacing: -2px;
 }

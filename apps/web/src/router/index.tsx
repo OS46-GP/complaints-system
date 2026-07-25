@@ -9,6 +9,7 @@ import UserGuard from "./guards/user-guard";
 import AuthLayout from "@/layouts/auth-layout";
 import AdminLayout from "@/layouts/admin-layout";
 import UserLayout from "@/layouts/user-layout";
+import DefaultLayout from "@/layouts/default-layout";
 
 const LoginPage = lazy(() => import("@/pages/auth/login"));
 const RegisterPage = lazy(() => import("@/pages/auth/register"));
@@ -52,12 +53,7 @@ const UserSettingsPage = lazy(
 );
 
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
-
-const Placeholder = lazy(() =>
-  Promise.resolve({
-    default: () => <div>Coming Soon</div>,
-  }),
-);
+const ForbiddenPage = lazy(() => import("@/pages/forbidden"));
 
 function Loading() {
   return <div>Loading...</div>;
@@ -203,22 +199,24 @@ const AppRouter = () => {
           </Route>
         </Route>
 
-        <Route
-          path={PATHS.UNAUTHORIZED}
-          element={
-            <SuspenseBoundary>
-              <Placeholder />
-            </SuspenseBoundary>
-          }
-        />
-        <Route
-          path={PATHS.NOT_FOUND}
-          element={
-            <SuspenseBoundary>
-              <NotFoundPage />
-            </SuspenseBoundary>
-          }
-        />
+        <Route element={<DefaultLayout />}>
+          <Route
+            path={PATHS.UNAUTHORIZED}
+            element={
+              <SuspenseBoundary>
+                <ForbiddenPage />
+              </SuspenseBoundary>
+            }
+          />
+          <Route
+            path={PATHS.NOT_FOUND}
+            element={
+              <SuspenseBoundary>
+                <NotFoundPage />
+              </SuspenseBoundary>
+            }
+          />
+        </Route>
         <Route path="*" element={<Navigate to={PATHS.NOT_FOUND} replace />} />
       </Routes>
     </BrowserRouter>
