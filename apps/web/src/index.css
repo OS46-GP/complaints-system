@@ -33,16 +33,36 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
   --font-heading: "IBM Plex Sans Arabic", sans-serif;
   --font-body: "Inter", "IBM Plex Sans Arabic", sans-serif;
   --font-mono: "Geist", monospace;
   --spacing-header-height: 72px;
   --spacing-gutter: 24px;
   --spacing-container-padding: 32px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 24px;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --font-size-display-lg: 30px;
+  --font-size-display-lg--line-height: 38px;
+  --font-size-display-lg-mobile: 24px;
+  --font-size-display-lg-mobile--line-height: 32px;
+  --font-size-headline-md: 20px;
+  --font-size-headline-md--line-height: 28px;
+  --font-size-body-lg: 16px;
+  --font-size-body-lg--line-height: 24px;
+  --font-size-body-md: 14px;
+  --font-size-body-md--line-height: 20px;
+  --font-size-label-sm: 12px;
+  --font-size-label-sm--line-height: 16px;
+  --font-size-label-sm--letter-spacing: 0.02em;
+  --font-size-mono-data: 13px;
+  --font-size-mono-data--line-height: 18px;
 }
 
 :root {
@@ -76,6 +96,8 @@
   --sidebar-accent-foreground: #89f5e7;
   --sidebar-border: #bcc9c6;
   --sidebar-ring: #89f5e7;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f0f5f2;
 }
 
 .dark {
@@ -108,6 +130,8 @@
   --sidebar-accent-foreground: #89f5e7;
   --sidebar-border: #3d4947;
   --sidebar-ring: #89f5e7;
+  --surface-container-lowest: #232928;
+  --surface-container-low: #232928;
 }
 
 [dir="rtl"] [data-slot="sidebar-menu-button"] {
@@ -137,4 +161,19 @@
     font-size: 13px;
     line-height: 18px;
   }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-16px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.error-number-glitch {
+  text-shadow: 2px 0 var(--primary), -2px 0 var(--destructive);
+  letter-spacing: -2px;
 }
