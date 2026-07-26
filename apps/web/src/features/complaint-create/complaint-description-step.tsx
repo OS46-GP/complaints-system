@@ -1,4 +1,4 @@
-import type { ComplaintCreateFormData } from "@/types/complaint-create.types";
+import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Label } from "@/components/ui/label";
 
 const PRESENTATION_STATUSES = [

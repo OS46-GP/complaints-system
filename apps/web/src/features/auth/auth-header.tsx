@@ -1,6 +1,6 @@
 import { Globe, Building2 } from "lucide-react";
 
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/shared/mode-toggle";
 import { Button } from "@/components/ui/button";
 
 export function AuthHeader() {

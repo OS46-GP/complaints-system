@@ -1,8 +1,8 @@
 import { Inbox, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 
-import { StatCard } from "@/components/stat-card";
-import type { Complaint } from "@/types/complaint.types";
-import { ComplaintTable } from "@/components/complaint-table";
+import { StatCard } from "@/components/shared/stat-card";
+import type { Complaint } from "@/features/complaint-list/types";
+import { ComplaintTable } from "@/features/complaint-list/complaint-table";
 
 const stats = [
   {

@@ -5,7 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import AppRouter from "./router";
 import { queryClient } from "./lib/query-client";
 
-import { ThemeProvider } from "./components/theme-provider";
+import { ThemeProvider } from "./components/shared/theme-provider";
 import { TooltipProvider } from "./components/ui/tooltip";
 
 export default function App() {

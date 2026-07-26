@@ -1,7 +1,7 @@
 import { Outlet, Link } from "react-router";
 import { HelpCircle } from "lucide-react";
 
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/shared/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { PATHS } from "@/router/paths";
 

@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { AppHeader } from "@/components/app-header";
+import { AppSidebar } from "@/components/shared/app-sidebar";
+import { AppHeader } from "@/components/shared/app-header";
 import { PATHS } from "@/router/paths";
 
 const navItems = [

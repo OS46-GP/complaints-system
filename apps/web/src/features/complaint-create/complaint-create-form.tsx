@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
-import type { ComplaintCreateFormData } from "@/types/complaint-create.types";
+import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Button } from "@/components/ui/button";
-import { ComplaintStepper } from "@/components/complaint-stepper";
-import { ComplaintBasicInfoStep } from "@/components/complaint-basic-info-step";
-import { ComplaintDescriptionStep } from "@/components/complaint-description-step";
-import { ComplaintAttachmentStep } from "@/components/complaint-attachment-step";
-import { ComplaintReviewStep } from "@/components/complaint-review-step";
+import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
+import { ComplaintBasicInfoStep } from "@/features/complaint-create/complaint-basic-info-step";
+import { ComplaintDescriptionStep } from "@/features/complaint-create/complaint-description-step";
+import { ComplaintAttachmentStep } from "@/features/complaint-create/complaint-attachment-step";
+import { ComplaintReviewStep } from "@/features/complaint-create/complaint-review-step";
 
 interface FileItem {
   file: File;

@@ -1,5 +1,5 @@
-import type { ComplaintCreateFormData } from "@/types/complaint-create.types";
-import { FileUploadArea } from "@/components/file-upload-area";
+import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
+import { FileUploadArea } from "@/features/complaint-create/file-upload-area";
 
 interface FileItem {
   file: File;

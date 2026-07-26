@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Lock } from "lucide-react";
 
 import { PATHS } from "@/router/paths";
-import { ForgotPasswordForm } from "@/components/forgot-password-form";
+import { ForgotPasswordForm } from "@/features/auth/forgot-password-form";
 
 export default function ForgotPassword() {
   return (

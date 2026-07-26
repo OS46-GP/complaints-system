@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router";
-import { LogoutButton } from "@/components/logout-button";
+import { LogoutButton } from "@/features/auth/logout-button";
 
 export interface UserNavItem {
   label: string;

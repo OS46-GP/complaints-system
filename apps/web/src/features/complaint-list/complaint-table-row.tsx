@@ -1,9 +1,9 @@
-import type { Complaint } from "@/types/complaint.types";
-import { ComplaintActionsDropdown } from "@/components/complaint-actions-dropdown";
+import type { Complaint } from "@/features/complaint-list/types";
+import { ComplaintActionsDropdown } from "@/features/complaint-list/complaint-actions-dropdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ComplaintStatusBadge } from "@/components/complaint-status-badge";
-import { ComplaintPriority } from "@/components/complaint-priority";
-import { DataTableRow, DataTableCell } from "@/components/data-table";
+import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
+import { ComplaintPriority } from "@/features/complaint-list/complaint-priority";
+import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
 
 interface ComplaintTableRowProps {
   complaint: Complaint;

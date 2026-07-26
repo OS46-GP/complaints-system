@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PATHS } from "@/router/paths";
 
 interface ComplaintActionsDropdownProps {
