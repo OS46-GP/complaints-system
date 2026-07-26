@@ -1,11 +1,11 @@
 import { User, Settings } from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ModeToggle } from "@/components/mode-toggle";
-import { NotificationBell } from "@/components/notification-bell";
-import { SearchBar } from "@/components/search-bar";
-import { SearchDialog } from "@/components/search-dialog";
-import { UserNav, type UserNavItem } from "@/components/user-nav";
+import { ModeToggle } from "@/components/shared/mode-toggle";
+import { NotificationBell } from "@/components/shared/notification-bell";
+import { SearchBar } from "@/components/shared/search-bar";
+import { SearchDialog } from "@/components/shared/search-dialog";
+import { UserNav, type UserNavItem } from "@/components/shared/user-nav";
 import { cn } from "@/lib/utils";
 
 const userMenuItems: UserNavItem[] = [

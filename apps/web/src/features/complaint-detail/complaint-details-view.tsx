@@ -1,10 +1,10 @@
 import { Printer } from "lucide-react";
-import type { ComplaintDetailsData } from "@/types/complaint-details.types";
-import { ComplaintDescriptionCard } from "@/components/complaint-description-card";
-import { ComplaintEvidenceGallery } from "@/components/complaint-evidence-gallery";
-import { ComplaintTimeline } from "@/components/complaint-timeline";
-import { ComplaintMetaPanel } from "@/components/complaint-meta-panel";
-import { ComplaintQuickActions } from "@/components/complaint-quick-actions";
+import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
+import { ComplaintDescriptionCard } from "@/features/complaint-detail/complaint-description-card";
+import { ComplaintEvidenceGallery } from "@/features/complaint-detail/complaint-evidence-gallery";
+import { ComplaintTimeline } from "@/features/complaint-detail/complaint-timeline";
+import { ComplaintMetaPanel } from "@/features/complaint-detail/complaint-meta-panel";
+import { ComplaintQuickActions } from "@/features/complaint-detail/complaint-quick-actions";
 import { Button } from "@/components/ui/button";
 
 interface ComplaintDetailsViewProps {

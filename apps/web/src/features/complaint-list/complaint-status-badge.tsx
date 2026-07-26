@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { ComplaintStatus } from "@/types/complaint.types";
+import type { ComplaintStatus } from "@/features/complaint-list/types";
 
 const statusMap: Record<
   ComplaintStatus,

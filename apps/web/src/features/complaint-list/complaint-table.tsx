@@ -1,15 +1,15 @@
 import { useSearchParams } from "react-router";
-import { TablePagination } from "@/components/table-pagination";
-import { ComplaintTableRow } from "@/components/complaint-table-row";
-import { ComplaintTableToolbar } from "@/components/complaint-table-toolbar";
+import { TablePagination } from "@/components/shared/table-pagination";
+import { ComplaintTableRow } from "@/features/complaint-list/complaint-table-row";
+import { ComplaintTableToolbar } from "@/features/complaint-list/complaint-table-toolbar";
 import {
   DataTable,
   DataTableHeader,
   DataTableBody,
   DataTableFooter,
   type DataTableColumn,
-} from "@/components/data-table";
-import type { Complaint } from "@/types/complaint.types";
+} from "@/components/shared/data-table";
+import type { Complaint } from "@/features/complaint-list/types";
 
 interface ComplaintTableProps {
   complaints: Complaint[];

@@ -3,7 +3,7 @@ import { useLocation, Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { DataTableToolbar } from "@/components/data-table";
+import { DataTableToolbar } from "@/components/shared/data-table";
 import { PATHS } from "@/router/paths";
 
 interface ComplaintTableToolbarProps {
