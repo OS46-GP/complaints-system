@@ -35,6 +35,10 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-surface-container-lowest: var(--surface-container-lowest);
   --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-tertiary-container: var(--tertiary-container);
   --font-heading: "IBM Plex Sans Arabic", sans-serif;
   --font-body: "Inter", "IBM Plex Sans Arabic", sans-serif;
   --font-mono: "Geist", monospace;
@@ -98,6 +102,10 @@
   --sidebar-ring: #89f5e7;
   --surface-container-lowest: #ffffff;
   --surface-container-low: #f0f5f2;
+  --surface-container-high: #e4e9e7;
+  --tertiary: #924628;
+  --tertiary-foreground: #ffffff;
+  --tertiary-container: #b05e3d;
 }
 
 .dark {
@@ -132,6 +140,10 @@
   --sidebar-ring: #89f5e7;
   --surface-container-lowest: #232928;
   --surface-container-low: #232928;
+  --surface-container-high: #2c3130;
+  --tertiary: #ffb59a;
+  --tertiary-foreground: #370e00;
+  --tertiary-container: #773215;
 }
 
 [dir="rtl"] [data-slot="sidebar-menu-button"] {
