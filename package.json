@@ -13,5 +13,10 @@
     "prisma:migrate": "npm run prisma:migrate -w packages/db",
     "prisma:studio": "npm run prisma:studio -w packages/db",
     "prisma:seed": "npm run prisma:seed -w packages/db"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.9.0": true,
+    "esbuild@0.28.1": true,
+    "prisma@7.9.0": true
   }
 }
