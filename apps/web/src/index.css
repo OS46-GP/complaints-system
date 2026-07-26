@@ -52,21 +52,23 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-size-display-lg: 30px;
-  --font-size-display-lg--line-height: 38px;
-  --font-size-display-lg-mobile: 24px;
-  --font-size-display-lg-mobile--line-height: 32px;
-  --font-size-headline-md: 20px;
-  --font-size-headline-md--line-height: 28px;
-  --font-size-body-lg: 16px;
-  --font-size-body-lg--line-height: 24px;
-  --font-size-body-md: 14px;
-  --font-size-body-md--line-height: 20px;
-  --font-size-label-sm: 12px;
-  --font-size-label-sm--line-height: 16px;
-  --font-size-label-sm--letter-spacing: 0.02em;
-  --font-size-mono-data: 13px;
-  --font-size-mono-data--line-height: 18px;
+  --text-display-xl: 36px;
+  --text-display-xl--line-height: 44px;
+  --text-display-lg: 30px;
+  --text-display-lg--line-height: 38px;
+  --text-display-lg-mobile: 24px;
+  --text-display-lg-mobile--line-height: 32px;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-label-sm--letter-spacing: 0.02em;
+  --text-mono-data: 13px;
+  --text-mono-data--line-height: 18px;
 }
 
 :root {

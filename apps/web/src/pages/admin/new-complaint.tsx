@@ -1,9 +1,9 @@
 import { ComplaintCreateForm } from "@/components/complaint-create-form";
 import type { ComplaintCreateFormData } from "@/types/complaint-create.types";
 
-export default function UserNewComplaint() {
+export default function AdminNewComplaint() {
   const handleSubmit = async (data: ComplaintCreateFormData) => {
-    console.log("Submitting complaint:", data);
+    console.log("Admin submitting complaint:", data);
   };
 
   return (

@@ -26,6 +26,9 @@ const AdminComplaintsPage = lazy(
 const AdminComplaintDetailPage = lazy(
   () => import("@/pages/admin/complaint-detail"),
 );
+const AdminNewComplaintPage = lazy(
+  () => import("@/pages/admin/new-complaint"),
+);
 const AdminUsersPage = lazy(
   () => import("@/pages/admin/users"),
 );
@@ -124,6 +127,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminComplaintDetailPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.NEW_COMPLAINT}
+              element={
+                <SuspenseBoundary>
+                  <AdminNewComplaintPage />
                 </SuspenseBoundary>
               }
             />
