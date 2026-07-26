@@ -1,6 +1,5 @@
 import {
   AlertTriangle,
-  User,
   Building2,
   Calendar,
   Badge,
