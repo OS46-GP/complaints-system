@@ -20,7 +20,7 @@ export function ComplaintTableToolbar({
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith("/admin");
   const newComplaintPath = isAdmin
-    ? `${PATHS.ADMIN.COMPLAINTS}/new`
+    ? PATHS.ADMIN.NEW_COMPLAINT
     : PATHS.USER.NEW_COMPLAINT;
 
   return (
