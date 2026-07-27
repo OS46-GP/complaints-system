@@ -1,0 +1,25 @@
+meta {
+  name: Scheduled Reports
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/reports/scheduled
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+query {
+  page: 1
+  limit: 10
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.reports && data.reports.length > 0 && data.reports[0].id) {
+    bru.setVar("reportId", data.reports[0].id);
+  }
+}

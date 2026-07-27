@@ -1,0 +1,18 @@
+meta {
+  name: List Complaints
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/complaints
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+query {
+  page: 1
+  limit: 20
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Generate Report
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/reports/generate
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "type": "ACHIEVEMENT",
+    "from": "2026-07-20",
+    "to": "2026-07-27"
+  }
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.id) {
+    bru.setVar("reportId", data.id);
+  }
+}

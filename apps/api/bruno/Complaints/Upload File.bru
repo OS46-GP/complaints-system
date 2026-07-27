@@ -1,0 +1,19 @@
+meta {
+  name: Upload File
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/complaints/{{complaintId}}/files
+  body: multipart-form
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:multipart-form {
+  file: @file("test-document.pdf")
+  fileType: authority-response
+}

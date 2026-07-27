@@ -1,0 +1,13 @@
+meta {
+  name: List Files
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/complaints/{{complaintId}}/files
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

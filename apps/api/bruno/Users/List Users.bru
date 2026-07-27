@@ -1,0 +1,20 @@
+meta {
+  name: List Users
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/users
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (Array.isArray(data) && data.length > 0 && data[0].id) {
+    bru.setVar("userId", data[0].id);
+  }
+}

@@ -1,0 +1,13 @@
+meta {
+  name: Get Examination Statuses
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/complaints/examination-statuses
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
