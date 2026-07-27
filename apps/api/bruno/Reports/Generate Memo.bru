@@ -1,0 +1,20 @@
+meta {
+  name: Generate Memo
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/complaints/{{complaintId}}/memo
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.downloadUrl) {
+    bru.setVar("downloadUrl", data.downloadUrl);
+  }
+}

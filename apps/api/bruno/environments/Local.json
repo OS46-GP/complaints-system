@@ -1,0 +1,30 @@
+{
+  "name": "Local",
+  "variables": [
+    {
+      "name": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "default"
+    },
+    {
+      "name": "token",
+      "value": "",
+      "type": "secret"
+    },
+    {
+      "name": "userId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "name": "reportId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "name": "complaintId",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}

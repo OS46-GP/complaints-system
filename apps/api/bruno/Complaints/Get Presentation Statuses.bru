@@ -1,0 +1,13 @@
+meta {
+  name: Get Presentation Statuses
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/complaints/presentation-statuses
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}

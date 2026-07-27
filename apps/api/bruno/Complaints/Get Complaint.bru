@@ -1,0 +1,13 @@
+meta {
+  name: Get Complaint
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/complaints/{{complaintId}}
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
