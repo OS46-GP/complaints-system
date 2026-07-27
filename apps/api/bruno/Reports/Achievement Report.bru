@@ -16,3 +16,9 @@ query {
   from: 2026-01-01
   to: 2026-12-31
 }
+
+assert {
+  res.status: eq(200)
+  res.body.departments: $notNull
+  res.body.summary: $notNull
+}

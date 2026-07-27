@@ -12,7 +12,9 @@
     "prisma:generate": "npm run prisma:generate -w packages/db",
     "prisma:migrate": "npm run prisma:migrate -w packages/db",
     "prisma:studio": "npm run prisma:studio -w packages/db",
-    "prisma:seed": "npm run prisma:seed -w packages/db"
+    "prisma:seed": "npm run prisma:seed -w packages/db",
+    "bruno:test": "bru run apps/api/bruno --env Local",
+    "bruno:ci": "bru run apps/api/bruno --env CI"
   },
   "allowScripts": {
     "@prisma/engines@7.9.0": true,

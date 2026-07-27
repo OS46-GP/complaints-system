@@ -12,6 +12,11 @@ headers {
   Authorization: Bearer {{token}}
 }
 
+assert {
+  res.status: eq(201)
+  res.body.downloadUrl: $notNull
+}
+
 script:post-response {
   const data = res.getBody();
   if (data.downloadUrl) {

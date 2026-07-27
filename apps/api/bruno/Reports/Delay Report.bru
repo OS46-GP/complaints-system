@@ -17,3 +17,9 @@ query {
   to: 2026-12-31
   department: مديرية التضامن الاجتماعي
 }
+
+assert {
+  res.status: eq(200)
+  res.body.delayedComplaints: $notNull
+  res.body.totalDelayed: $notNull
+}

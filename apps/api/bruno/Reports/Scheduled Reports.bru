@@ -17,6 +17,12 @@ query {
   limit: 10
 }
 
+assert {
+  res.status: eq(200)
+  res.body.reports: $notNull
+  res.body.total: $notNull
+}
+
 script:post-response {
   const data = res.getBody();
   if (data.reports && data.reports.length > 0 && data.reports[0].id) {

@@ -12,6 +12,12 @@ headers {
   Authorization: Bearer {{token}}
 }
 
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+  res.body.length: gt(0)
+}
+
 script:post-response {
   const data = res.getBody();
   if (Array.isArray(data) && data.length > 0) {
