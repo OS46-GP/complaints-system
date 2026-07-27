@@ -35,6 +35,11 @@ export class ComplaintsController {
     return this.complaintsService.create(dto, req.user as { id: string; role: string });
   }
 
+  @Post("index")
+  indexAll() {
+    return this.complaintsService.indexAll();
+  }
+
   @Get()
   findAll(@Query() query: QueryComplaintsDto) {
     return this.complaintsService.findAll(query);
