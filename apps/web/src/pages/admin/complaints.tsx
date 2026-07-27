@@ -2,7 +2,7 @@ import { Inbox, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 
 import { StatCard } from "@/components/shared/stat-card";
 import type { Complaint } from "@/features/complaint-list/types";
-import { ComplaintTable } from "@/features/complaint-list/complaint-table";
+import { ComplaintList } from "@/features/complaint-list/complaint-list";
 
 const stats = [
   {
@@ -89,12 +89,12 @@ const mockComplaints: Complaint[] = [
 export default function AdminComplaints() {
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
-      <ComplaintTable
+      <ComplaintList
         complaints={mockComplaints}
         totalPages={42}
         totalCount={1284}
