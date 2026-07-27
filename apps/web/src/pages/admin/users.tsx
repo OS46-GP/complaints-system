@@ -1,6 +1,9 @@
-import { UserPlus } from "lucide-react";
+import { Link } from "react-router";
+import { Plus } from "lucide-react";
 
+import { PATHS } from "@/router/paths";
 import { PageHeader } from "@/components/shared/page-header";
+import { Button } from "@/components/ui/button";
 import type { User } from "@/features/user-list/types";
 import { UserList } from "@/features/user-list/user-list";
 
@@ -111,8 +114,14 @@ export default function AdminUsers() {
       <PageHeader
         title="إدارة طاقم العمل"
         description="تنظيم الصلاحيات ومتابعة أداء الموظفين في معالجة الشكاوى"
-        action={{ icon: UserPlus, label: "دعوة موظف جديد" }}
-      />
+      >
+        <Button asChild className="gap-2">
+          <Link to={PATHS.ADMIN.NEW_USER}>
+            <Plus className="size-5" />
+            <span>دعوة موظف جديد</span>
+          </Link>
+        </Button>
+      </PageHeader>
 
       <UserList
         users={mockUsers}

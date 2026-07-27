@@ -1,17 +1,10 @@
-import { type LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
 interface PageHeaderProps {
   title: string;
   description?: string;
-  action?: {
-    icon: LucideIcon;
-    label: string;
-    onClick?: () => void;
-  };
+  children?: React.ReactNode;
 }
 
-export function PageHeader({ title, description, action }: PageHeaderProps) {
+export function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
     <div className="flex justify-between items-center">
       <div>
@@ -24,12 +17,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
           </p>
         )}
       </div>
-      {action && (
-        <Button className="gap-2" onClick={action.onClick}>
-          <action.icon className="size-5" />
-          <span>{action.label}</span>
-        </Button>
-      )}
+      {children}
     </div>
   );
 }
