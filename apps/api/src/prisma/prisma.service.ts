@@ -30,6 +30,30 @@ export class PrismaService implements OnModuleInit {
   get generatedReport() {
     return prisma.generatedReport;
   }
+
+  get complaintFile() {
+    return prisma.complaintFile;
+  }
+
+  get complaintType() {
+    return prisma.complaintType;
+  }
+
+  get receptionMethod() {
+    return prisma.receptionMethod;
+  }
+
+  get presentationStatus() {
+    return prisma.presentationStatus;
+  }
+
+  get user() {
+    return prisma.user;
+  }
+
+  get complaintYearCounter() {
+    return prisma.complaintYearCounter;
+  }
 }
 
 export { Prisma };
