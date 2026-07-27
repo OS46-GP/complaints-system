@@ -3,6 +3,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import * as path from "path";
 import * as fs from "fs";
 
+function sanitizeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_\-\u0600-\u06FF.]/g, "_");
+}
+
 @Injectable()
 export class ComplaintFilesService {
   private readonly uploadDir: string;
@@ -15,14 +19,15 @@ export class ComplaintFilesService {
   }
 
   async upload(complaintId: string, file: Express.Multer.File, fileType: string) {
-    const complaint = await this.prisma.client.complaint.findUnique({
+    const complaint = await this.prisma.complaint.findUnique({
       where: { id: complaintId },
     });
     if (!complaint) {
       throw new NotFoundException("Complaint not found");
     }
 
-    const storageKey = `${complaintId}/${Date.now()}-${file.originalname}`;
+    const safeName = sanitizeFilename(file.originalname);
+    const storageKey = `${complaintId}/${Date.now()}-${safeName}`;
     const dir = path.join(this.uploadDir, complaintId);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -30,7 +35,7 @@ export class ComplaintFilesService {
 
     fs.writeFileSync(path.join(this.uploadDir, storageKey), file.buffer);
 
-    return this.prisma.client.complaintFile.create({
+    return this.prisma.complaintFile.create({
       data: {
         complaintId,
         fileType,
@@ -40,7 +45,7 @@ export class ComplaintFilesService {
   }
 
   async findAll(complaintId: string) {
-    const files = await this.prisma.client.complaintFile.findMany({
+    const files = await this.prisma.complaintFile.findMany({
       where: { complaintId },
       orderBy: { uploadedAt: "desc" },
     });
@@ -52,7 +57,7 @@ export class ComplaintFilesService {
   }
 
   async getFile(fileId: string) {
-    const fileRecord = await this.prisma.client.complaintFile.findUnique({
+    const fileRecord = await this.prisma.complaintFile.findUnique({
       where: { id: fileId },
     });
     if (!fileRecord) {

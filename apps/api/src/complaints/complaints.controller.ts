@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   Query,
+  Req,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -13,14 +14,13 @@ import {
   Res,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { Response } from "express";
+import { Request, Response } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ComplaintsService } from "./complaints.service";
 import { ComplaintFilesService } from "./complaint-files.service";
 import { CreateComplaintDto } from "./dto/create-complaint.dto";
 import { UpdateComplaintDto } from "./dto/update-complaint.dto";
 import { QueryComplaintsDto } from "./dto/query-complaints.dto";
-import { SearchComplaintDto } from "./dto/search-complaint.dto";
 
 @Controller("complaints")
 @UseGuards(JwtAuthGuard)
@@ -31,23 +31,14 @@ export class ComplaintsController {
   ) {}
 
   @Post()
-  create(@Body() dto: CreateComplaintDto) {
-    return this.complaintsService.create(dto);
+  create(@Body() dto: CreateComplaintDto, @Req() req: Request) {
+    return this.complaintsService.create(dto, req.user as { id: string; role: string });
   }
 
   @Get()
   findAll(@Query() query: QueryComplaintsDto) {
     return this.complaintsService.findAll(query);
   }
-
-  @Get("search")
-  search(@Query() query: SearchComplaintDto) {
-    return this.complaintsService.search(query);
-  }
-
-  // ===========================
-  // Reference Data
-  // ===========================
 
   @Get("departments")
   getDepartments() {
@@ -74,16 +65,12 @@ export class ComplaintsController {
     return this.complaintsService.getPresentationStatuses();
   }
 
-  // ===========================
-  // Files
-  // ===========================
-
   @Post(":id/files")
   @UseInterceptors(FileInterceptor("file"))
   uploadFile(
     @Param("id") id: string,
     @UploadedFile() file: Express.Multer.File,
-    @Query("fileType") fileType: string,
+    @Body("fileType") fileType: string,
   ) {
     return this.filesService.upload(id, file, fileType || "attachment");
   }
@@ -108,10 +95,6 @@ export class ComplaintsController {
 
     return new StreamableFile(stream);
   }
-
-  // ===========================
-  // Complaint by ID
-  // ===========================
 
   @Get(":id")
   findOne(@Param("id") id: string) {
