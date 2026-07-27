@@ -25,6 +25,12 @@ body:json {
   }
 }
 
+assert {
+  res.status: eq(200)
+  res.body.complaints: $notNull
+  res.body.total: $notNull
+}
+
 script:post-response {
   const data = res.getBody();
   if (data.complaints && data.complaints.length > 0 && data.complaints[0].id) {

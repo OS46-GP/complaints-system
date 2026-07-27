@@ -16,6 +16,11 @@ query {
   format: xlsx
 }
 
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+}
+
 script:post-response {
   const data = res.getBody();
   if (data.downloadUrl) {

@@ -20,3 +20,9 @@ body:json {
     "role": "Admin"
   }
 }
+
+assert {
+  res.status: eq(200)
+  res.body.id: eq({{userId}})
+  res.body.role: eq(Admin)
+}

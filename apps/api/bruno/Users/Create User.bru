@@ -22,6 +22,13 @@ body:json {
   }
 }
 
+assert {
+  res.status: eq(201)
+  res.body.id: $notNull
+  res.body.username: eq(new_official)
+  res.body.role: eq(Official)
+}
+
 script:post-response {
   const data = res.getBody();
   if (data.id) {

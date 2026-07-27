@@ -34,6 +34,15 @@ body:json {
   }
 }
 
+assert {
+  res.status: eq(201)
+  res.body.id: $notNull
+  res.body.complaintNumber: $notNull
+  res.body.subject: $notNull
+  res.body.citizen: $notNull
+  res.body.citizen.fullName: $notNull
+}
+
 script:post-response {
   const data = res.getBody();
   if (data.id) {

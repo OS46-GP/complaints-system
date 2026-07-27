@@ -11,3 +11,10 @@ get {
 headers {
   Authorization: Bearer {{token}}
 }
+
+assert {
+  res.status: eq(200)
+  res.body.id: eq({{complaintId}})
+  res.body.subject: $notNull
+  res.body.complaintNumber: $notNull
+}

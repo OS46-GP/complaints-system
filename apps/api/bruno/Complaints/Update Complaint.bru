@@ -21,3 +21,9 @@ body:json {
     "examinationResult": "تم إرسال فريق الصيانة"
   }
 }
+
+assert {
+  res.status: eq(200)
+  res.body.id: eq({{complaintId}})
+  res.body.subject: eq("طلب صيانة خط مياه - تم التحديث")
+}
