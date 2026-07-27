@@ -1,5 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from "@nestjs/common";
 import { PrismaService, Prisma } from "../prisma/prisma.service";
+import { EmbeddingService } from "../ai-triage/embedding.service";
 import { CreateComplaintDto } from "./dto/create-complaint.dto";
 import { UpdateComplaintDto } from "./dto/update-complaint.dto";
 import { QueryComplaintsDto } from "./dto/query-complaints.dto";
@@ -45,7 +51,9 @@ function parseDates(input: Record<string, unknown>): void {
   }
 }
 
-function toRelationData(input: Record<string, unknown>): Record<string, unknown> {
+function toRelationData(
+  input: Record<string, unknown>,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value === undefined || value === null || value === "") continue;
@@ -61,7 +69,12 @@ function toRelationData(input: Record<string, unknown>): Record<string, unknown>
 
 @Injectable()
 export class ComplaintsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ComplaintsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly embeddingService: EmbeddingService,
+  ) {}
 
   async create(dto: CreateComplaintDto, user?: { id: string; role: string }) {
     const { citizen, ...complaintData } = dto;
@@ -89,11 +102,65 @@ export class ComplaintsService {
       });
     });
 
-    return this.addCaseStatus(complaint);
+    const result = this.addCaseStatus(complaint);
+
+    this.indexComplaint(complaint);
+
+    return result;
+  }
+
+  async indexAll(): Promise<{ indexed: number }> {
+    const batchSize = 100;
+    let indexed = 0;
+    let skip = 0;
+    let count: number;
+
+    do {
+      const batch = await this.prisma.complaint.findMany({
+        skip,
+        take: batchSize,
+        include: { citizen: { select: { village: true, district: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+      count = batch.length;
+      for (const c of batch) {
+        await this.indexComplaint(c);
+        indexed++;
+      }
+      skip += batchSize;
+    } while (count === batchSize);
+
+    return { indexed };
+  }
+
+  async indexComplaint(complaint: {
+    id: string;
+    subject: string;
+    departmentId: string | null;
+    citizen: { village: string | null; district: string | null };
+  }): Promise<void> {
+    try {
+      const location = complaint.citizen?.village || complaint.citizen?.district || null;
+      await this.embeddingService.ensureEmbedding(
+        complaint.id,
+        complaint.subject,
+        complaint.departmentId,
+        location,
+      );
+    } catch (error) {
+      this.logger.warn('Failed to index complaint embedding', error);
+    }
   }
 
   async findAll(query: QueryComplaintsDto) {
-    const { page = 1, limit = 20, departmentId, name, complaintNumber, statementYear } = query;
+    const {
+      page = 1,
+      limit = 20,
+      departmentId,
+      name,
+      complaintNumber,
+      statementYear,
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ComplaintWhereInput = {};
