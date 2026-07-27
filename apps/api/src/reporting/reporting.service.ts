@@ -488,7 +488,7 @@ export class ReportingService {
     if (!complaint) throw new NotFoundException('Complaint not found');
 
     const html = replacePlaceholders(readTemplate('memo.html'), {
-      complaintNumber: complaint.complaintNumber,
+      complaintNumber: String(complaint.complaintNumber),
       arrivalDate: complaint.arrivalDate.toLocaleDateString('ar-EG'),
       citizenName: complaint.citizen.fullName,
       department: complaint.department?.name ?? 'غير محدد',

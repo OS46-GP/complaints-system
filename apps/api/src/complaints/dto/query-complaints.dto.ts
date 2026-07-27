@@ -23,8 +23,10 @@ export class QueryComplaintsDto {
   name?: string;
 
   @IsOptional()
-  @IsString()
-  complaintNumber?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  complaintNumber?: number;
 
   @IsOptional()
   @Type(() => Number)

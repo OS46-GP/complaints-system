@@ -3,10 +3,6 @@ import { IsString, IsNotEmpty, IsDateString, IsOptional, ValidateNested, IsInt, 
 import { CreateCitizenDto } from "./create-citizen.dto";
 
 export class CreateComplaintDto {
-  @IsString()
-  @IsNotEmpty()
-  complaintNumber!: string;
-
   @IsInt()
   @Min(2000)
   statementYear!: number;
