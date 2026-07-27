@@ -78,6 +78,9 @@ jobs:
           DATABASE_URL: ${{ env.DATABASE_URL }}
           PORT: 3000
 
+      - name: Install Bruno CLI
+        run: npm install -g @usebruno/cli
+
       - name: Run Bruno API tests
         working-directory: apps/api/bruno
         run: bru run . --env CI
