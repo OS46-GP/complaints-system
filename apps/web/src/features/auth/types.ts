@@ -1,27 +1,15 @@
 export interface User {
   id: string;
-  name: string;
-  email: string;
-  role: Role;
+  username: string;
+  role: "Official" | "Admin";
   createdAt: string;
 }
 
 export interface LoginPayload {
-  email: string;
+  username: string;
   password: string;
-}
-
-export interface RegisterPayload {
-  name: string;
-  email: string;
-  password: string;
-  role: Role;
 }
 
 export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  access_token: string;
 }
-
-export type Role = "admin" | "user";
