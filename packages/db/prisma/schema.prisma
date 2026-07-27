@@ -150,9 +150,11 @@ model Complaint {
   citizenId   String
   citizen     Citizen @relation(fields: [citizenId], references: [id])
 
-  actions     ComplaintAction[]
-  escalations ComplaintEscalation[]
-  files       ComplaintFile[]
+  actions          ComplaintAction[]
+  escalations      ComplaintEscalation[]
+  files            ComplaintFile[]
+  linksFrom        ComplaintLink[] @relation("LinkedFrom")
+  linksTo          ComplaintLink[] @relation("LinkedTo")
 
   @@unique([complaintNumber, statementYear])
   @@index([citizenId])
@@ -194,6 +196,19 @@ model ComplaintFile {
   uploadedAt  DateTime  @default(now())
 
   @@index([complaintId])
+}
+
+model ComplaintLink {
+  id        String   @id @default(cuid())
+  sourceId  String
+  source    Complaint @relation("LinkedFrom", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId  String
+  target    Complaint @relation("LinkedTo", fields: [targetId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([sourceId, targetId])
+  @@index([sourceId])
+  @@index([targetId])
 }
 
 model ComplaintYearCounter {
