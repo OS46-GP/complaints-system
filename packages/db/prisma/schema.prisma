@@ -202,3 +202,18 @@ model ComplaintFile {
 
   @@index([complaintId])
 }
+
+model GeneratedReport {
+  id          String   @id @default(cuid())
+  type        String
+  periodLabel String
+  periodStart DateTime
+  periodEnd   DateTime
+  data        Json
+  format      String?
+  storageKey  String?
+  generatedAt DateTime @default(now())
+
+  @@index([generatedAt])
+  @@index([type])
+}
