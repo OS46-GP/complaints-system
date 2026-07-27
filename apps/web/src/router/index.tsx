@@ -13,53 +13,31 @@ import DefaultLayout from "@/layouts/default-layout";
 
 const LoginPage = lazy(() => import("@/pages/auth/login"));
 const RegisterPage = lazy(() => import("@/pages/auth/register"));
-const ForgotPasswordPage = lazy(
-  () => import("@/pages/auth/forgot-password"),
-);
+const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
 
-const AdminDashboardPage = lazy(
-  () => import("@/pages/admin/dashboard"),
-);
-const AdminComplaintsPage = lazy(
-  () => import("@/pages/admin/complaints"),
-);
+const AdminDashboardPage = lazy(() => import("@/pages/admin/dashboard"));
+const AdminComplaintsPage = lazy(() => import("@/pages/admin/complaints"));
 const AdminComplaintDetailPage = lazy(
   () => import("@/pages/admin/complaint-detail"),
 );
-const AdminNewComplaintPage = lazy(
-  () => import("@/pages/admin/new-complaint"),
-);
-const AdminUsersPage = lazy(
-  () => import("@/pages/admin/users"),
-);
-const AdminUserDetailPage = lazy(
-  () => import("@/pages/admin/user-detail"),
-);
-const AdminSettingsPage = lazy(
-  () => import("@/pages/admin/settings"),
-);
+const AdminNewComplaintPage = lazy(() => import("@/pages/admin/new-complaint"));
+const AdminUsersPage = lazy(() => import("@/pages/admin/users"));
+const AdminUserDetailPage = lazy(() => import("@/pages/admin/user-detail"));
+const AdminSettingsPage = lazy(() => import("@/pages/admin/settings"));
 
-const UserDashboardPage = lazy(
-  () => import("@/pages/user/dashboard"),
-);
-const UserComplaintsPage = lazy(
-  () => import("@/pages/user/complaints"),
-);
-const UserNewComplaintPage = lazy(
-  () => import("@/pages/user/new-complaint"),
-);
+const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
+const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
+const UserNewComplaintPage = lazy(() => import("@/pages/user/new-complaint"));
 const UserComplaintDetailPage = lazy(
   () => import("@/pages/user/complaint-detail"),
 );
-const UserSettingsPage = lazy(
-  () => import("@/pages/user/settings"),
-);
+const UserSettingsPage = lazy(() => import("@/pages/user/settings"));
 
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 const ForbiddenPage = lazy(() => import("@/pages/forbidden"));
 
 function Loading() {
-  return <div>Loading...</div>;
+  return <div>جارى التحميل ...</div>;
 }
 
 function SuspenseBoundary({ children }: { children: React.ReactNode }) {
@@ -70,10 +48,7 @@ const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to={PATHS.LOGIN} replace />}
-        />
+        <Route path="/" element={<Navigate to={PATHS.LOGIN} replace />} />
 
         <Route element={<GuestGuard />}>
           <Route element={<AuthLayout />}>

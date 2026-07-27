@@ -9,19 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
-interface TablePaginationProps {
+interface ComplaintsPaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   showGoto?: boolean;
 }
 
-export function TablePagination({
+export function ComplaintsPagination({
   currentPage,
   totalPages,
   onPageChange,
   showGoto = true,
-}: TablePaginationProps) {
+}: ComplaintsPaginationProps) {
   const [gotoDraft, setGotoDraft] = useState<string | null>(null);
   const gotoValue = gotoDraft ?? String(currentPage);
 

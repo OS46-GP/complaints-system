@@ -1,17 +1,17 @@
 import { useSearchParams } from "react-router";
-import { TablePagination } from "@/components/shared/table-pagination";
+import { ComplaintsPagination } from "@/components/shared/complaints-pagination";
+import { ComplaintCard } from "@/features/complaint-list/complaint-card";
 import { ComplaintTableRow } from "@/features/complaint-list/complaint-table-row";
-import { ComplaintTableToolbar } from "@/features/complaint-list/complaint-table-toolbar";
+import { ComplaintToolbar } from "@/features/complaint-list/complaint-list-toolbar";
 import {
   DataTable,
   DataTableHeader,
   DataTableBody,
-  DataTableFooter,
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import type { Complaint } from "@/features/complaint-list/types";
 
-interface ComplaintTableProps {
+interface ComplaintListProps {
   complaints: Complaint[];
   totalPages: number;
   totalCount: number;
@@ -32,12 +32,12 @@ const columns: DataTableColumn[] = [
   },
 ];
 
-export function ComplaintTable({
+export function ComplaintList({
   complaints,
   totalPages,
   totalCount,
   pageSize,
-}: ComplaintTableProps) {
+}: ComplaintListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
 
@@ -52,33 +52,30 @@ export function ComplaintTable({
   const end = Math.min(currentPage * pageSize, totalCount);
 
   return (
-    <DataTable
-      toolbar={
-        <ComplaintTableToolbar
-          start={start}
-          end={end}
-          totalCount={totalCount}
-        />
-      }
-    >
-      <DataTableHeader columns={columns} />
+    <div className="flex flex-col gap-4">
+      <ComplaintToolbar start={start} end={end} totalCount={totalCount} />
 
-      <DataTableBody>
+      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
         {complaints.map((complaint) => (
-          <ComplaintTableRow
-            key={complaint.id}
-            complaint={complaint}
-          />
+          <ComplaintCard key={complaint.id} complaint={complaint} />
         ))}
-      </DataTableBody>
+      </div>
 
-      <DataTableFooter>
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      </DataTableFooter>
-    </DataTable>
+      <DataTable className="hidden lg:block">
+        <DataTableHeader columns={columns} />
+
+        <DataTableBody>
+          {complaints.map((complaint) => (
+            <ComplaintTableRow key={complaint.id} complaint={complaint} />
+          ))}
+        </DataTableBody>
+      </DataTable>
+
+      <ComplaintsPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+    </div>
   );
 }
