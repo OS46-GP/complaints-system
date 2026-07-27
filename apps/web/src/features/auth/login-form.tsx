@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Lock, Mail, Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
@@ -15,6 +15,7 @@ import { useLogin } from "./use-auth";
 const loginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
+  remember: z.boolean(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -26,9 +27,11 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { remember: true },
   });
 
   const onSubmit = (data: LoginFormData) => {
@@ -101,12 +104,22 @@ export function LoginForm() {
         )}
       </div>
 
-      <div className="flex items-center gap-3">
-        <Checkbox id="remember" />
-        <Label htmlFor="remember" className="text-muted-foreground">
-          تذكرني
-        </Label>
-      </div>
+      <Controller
+        name="remember"
+        control={control}
+        render={({ field }) => (
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="remember"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+            <Label htmlFor="remember" className="text-muted-foreground">
+              تذكرني
+            </Label>
+          </div>
+        )}
+      />
 
       <Button
         type="submit"

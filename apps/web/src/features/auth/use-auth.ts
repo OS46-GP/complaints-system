@@ -4,13 +4,20 @@ import { authApi } from "./api";
 import { persistAuthFromToken } from "./store";
 import { PATHS } from "@/router/paths";
 
+interface LoginArgs {
+  username: string;
+  password: string;
+  remember: boolean;
+}
+
 export function useLogin() {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: authApi.login,
-    onSuccess: (data) => {
-      const user = persistAuthFromToken(data.access_token);
+    mutationFn: ({ username, password }: LoginArgs) =>
+      authApi.login({ username, password }),
+    onSuccess: (data, variables) => {
+      const user = persistAuthFromToken(data.access_token, variables.remember);
       if (user) {
         const dashboard =
           user.role === "Admin" ? PATHS.ADMIN.DASHBOARD : PATHS.USER.DASHBOARD;

@@ -1,11 +1,14 @@
 import { create } from "zustand";
 import type { User } from "./types";
 
+const TOKEN_KEY = "auth_token";
+const USER_KEY = "auth_user";
+
 interface AuthState {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
-  setAuth: (token: string, user: User) => void;
+  setAuth: (token: string, user: User, remember: boolean) => void;
   logout: () => void;
 }
 
@@ -23,11 +26,17 @@ function decodeToken(token: string): User | null {
   }
 }
 
+export function getAuthToken(): string | null {
+  return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+}
+
 function loadPersistedAuth(): { token: string | null; user: User | null } {
   try {
-    const token = localStorage.getItem("auth_token");
-    const user = localStorage.getItem("auth_user");
-    return { token, user: user ? JSON.parse(user) : null };
+    const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+    const stored = token
+      ? sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY)
+      : null;
+    return { token, user: stored ? JSON.parse(stored) : null };
   } catch {
     return { token: null, user: null };
   }
@@ -39,22 +48,25 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: persisted.token,
   user: persisted.user,
   isAuthenticated: !!persisted.token,
-  setAuth: (token, user) => {
-    localStorage.setItem("auth_token", token);
-    localStorage.setItem("auth_user", JSON.stringify(user));
+  setAuth: (token, user, remember) => {
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem(TOKEN_KEY, token);
+    storage.setItem(USER_KEY, JSON.stringify(user));
     set({ token, user, isAuthenticated: true });
   },
   logout: () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
     set({ token: null, user: null, isAuthenticated: false });
   },
 }));
 
-export function persistAuthFromToken(token: string) {
+export function persistAuthFromToken(token: string, remember = true) {
   const user = decodeToken(token);
   if (user) {
-    useAuthStore.getState().setAuth(token, user);
+    useAuthStore.getState().setAuth(token, user, remember);
   }
   return user;
 }
