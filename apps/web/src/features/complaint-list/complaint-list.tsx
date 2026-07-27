@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router";
-import { ComplaintsPagination } from "@/components/shared/complaints-pagination";
+import { ListPagination } from "@/components/shared/list-pagination";
 import { ComplaintCard } from "@/features/complaint-list/complaint-card";
 import { ComplaintTableRow } from "@/features/complaint-list/complaint-table-row";
 import { ComplaintToolbar } from "@/features/complaint-list/complaint-list-toolbar";
@@ -71,11 +71,14 @@ export function ComplaintList({
         </DataTableBody>
       </DataTable>
 
-      <ComplaintsPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+      <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
+        <ListPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          className="w-full"
+        />
+      </div>
     </div>
   );
 }
