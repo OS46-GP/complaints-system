@@ -13,11 +13,6 @@ enum Severity {
   High
 }
 
-enum ComplaintStatus {
-  Finished
-  NotFinished
-}
-
 enum UserRole {
   Official
   Admin
@@ -114,10 +109,9 @@ model PresentationStatus {
 
 model Complaint {
   id                     String               @id @default(cuid())
-  complaintNumber        String
+  complaintNumber        Int
   statementYear          Int
   arrivalDate            DateTime
-  status                 ComplaintStatus       @default(NotFinished)
   severity               Severity              @default(Low)
   receptionMethodId      Int?
   receptionMethod        ReceptionMethod?     @relation(fields: [receptionMethodId], references: [id])
@@ -163,7 +157,6 @@ model Complaint {
   @@unique([complaintNumber, statementYear])
   @@index([citizenId])
   @@index([departmentId])
-  @@index([status])
   @@index([statementYear])
   @@index([createdAt])
 }
@@ -201,6 +194,11 @@ model ComplaintFile {
   uploadedAt  DateTime  @default(now())
 
   @@index([complaintId])
+}
+
+model ComplaintYearCounter {
+  year          Int   @id
+  currentNumber Int   @default(0)
 }
 
 model GeneratedReport {
