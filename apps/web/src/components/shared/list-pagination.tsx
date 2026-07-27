@@ -8,20 +8,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface ComplaintsPaginationProps {
+interface ListPaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   showGoto?: boolean;
+  className?: string;
 }
 
-export function ComplaintsPagination({
+export function ListPagination({
   currentPage,
   totalPages,
   onPageChange,
   showGoto = true,
-}: ComplaintsPaginationProps) {
+  className,
+}: ListPaginationProps) {
   const [gotoDraft, setGotoDraft] = useState<string | null>(null);
   const gotoValue = gotoDraft ?? String(currentPage);
 
@@ -49,7 +52,7 @@ export function ComplaintsPagination({
   }
 
   return (
-    <div className="flex items-center justify-between px-6 py-4">
+    <div className={cn("flex items-center justify-between flex-wrap gap-2", className)}>
       <Pagination className="mx-0 w-auto">
         <PaginationContent>
           <PaginationItem>
@@ -68,15 +71,16 @@ export function ComplaintsPagination({
           {pages.map((page, i) =>
             page === "ellipsis" ? (
               <PaginationItem key={`e-${i}`}>
-                <PaginationEllipsis />
+                <PaginationEllipsis className="size-6 sm:size-9" />
               </PaginationItem>
             ) : (
               <PaginationItem key={page}>
                 <Button
                   variant={page === currentPage ? "default" : "ghost"}
-                  size="icon"
+                  size="icon-xs"
                   aria-current={page === currentPage ? "page" : undefined}
                   onClick={() => onPageChange(page)}
+                  className="sm:size-9"
                 >
                   {page}
                 </Button>
@@ -104,7 +108,12 @@ export function ComplaintsPagination({
           <span className="font-heading text-label-sm text-muted-foreground">
             الانتقال إلى صفحة:
           </span>
-          <form onSubmit={(e) => { e.preventDefault(); submitGoto(); }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitGoto();
+            }}
+          >
             <Input
               type="number"
               min={1}

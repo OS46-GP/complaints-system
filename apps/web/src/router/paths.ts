@@ -9,6 +9,7 @@ export const PATHS = {
     COMPLAINT_DETAIL: (id: string) => `/admin/complaints/${id}`,
     NEW_COMPLAINT: "/admin/complaints/new",
     USERS: "/admin/users",
+    NEW_USER: "/admin/users/create",
     USER_DETAIL: (id: string) => `/admin/users/${id}`,
     SETTINGS: "/admin/settings",
   },
