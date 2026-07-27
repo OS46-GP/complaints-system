@@ -1,7 +1,7 @@
 import { Outlet } from "react-router";
 
-import { AuthHeader } from "@/components/auth-header";
-import { AuthFooter } from "@/components/auth-footer";
+import { AuthHeader } from "@/features/auth/auth-header";
+import { AuthFooter } from "@/features/auth/auth-footer";
 
 export default function AuthLayout() {
   return (

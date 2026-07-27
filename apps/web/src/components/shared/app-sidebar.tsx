@@ -1,9 +1,9 @@
 import { type LucideIcon } from "lucide-react";
 
 import { Sidebar, SidebarFooter } from "@/components/ui/sidebar";
-import { SidebarBrand } from "@/components/sidebar-brand";
-import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
-import { LogoutButton } from "@/components/logout-button";
+import { SidebarBrand } from "@/components/shared/sidebar-brand";
+import { SidebarNav, type NavItem } from "@/components/shared/sidebar-nav";
+import { LogoutButton } from "@/features/auth/logout-button";
 
 export type { NavItem };
 

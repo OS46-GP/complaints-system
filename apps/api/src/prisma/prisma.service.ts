@@ -1,12 +1,35 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { prisma } from '@complaints/db';
+import { prisma, Prisma } from '@complaints/db';
 
 @Injectable()
 export class PrismaService implements OnModuleInit {
-  // Expose the prisma client instance directly
-  public readonly client = prisma;
-
   async onModuleInit() {
-    await this.client.$connect();
+    await prisma.$connect();
+  }
+
+  get client() {
+    return prisma;
+  }
+
+  get complaint() {
+    return prisma.complaint;
+  }
+
+  get citizen() {
+    return prisma.citizen;
+  }
+
+  get department() {
+    return prisma.department;
+  }
+
+  get examinationStatus() {
+    return prisma.examinationStatus;
+  }
+
+  get generatedReport() {
+    return prisma.generatedReport;
   }
 }
+
+export { Prisma };

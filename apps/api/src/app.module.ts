@@ -1,11 +1,19 @@
 import { Module } from "@nestjs/common";
+import { ScheduleModule } from "@nestjs/schedule";
+import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
 import { ComplaintsModule } from "./complaints/complaints.module";
 import { ReportingModule } from "./reporting/reporting.module";
-import { PrismaModule } from "./prisma/prisma.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
-  imports: [AuthModule, ComplaintsModule, ReportingModule, PrismaModule, UsersModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    ComplaintsModule,
+    ReportingModule,
+  ],
 })
 export class AppModule {}

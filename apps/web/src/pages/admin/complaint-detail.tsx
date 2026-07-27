@@ -1,5 +1,5 @@
-import type { ComplaintDetailsData } from "@/types/complaint-details.types";
-import { ComplaintDetailsView } from "@/components/complaint-details-view";
+import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
+import { ComplaintDetailsView } from "@/features/complaint-detail/complaint-details-view";
 
 const MOCK_COMPLAINT: ComplaintDetailsData = {
   id: "1",

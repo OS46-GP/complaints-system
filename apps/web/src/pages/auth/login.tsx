@@ -1,6 +1,6 @@
 import { Lock } from "lucide-react";
 
-import { LoginForm } from "@/components/login-form";
+import { LoginForm } from "@/features/auth/login-form";
 
 export default function Login() {
   return (

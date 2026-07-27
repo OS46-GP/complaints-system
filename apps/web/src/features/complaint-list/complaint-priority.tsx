@@ -1,4 +1,4 @@
-import type { ComplaintPriority } from "@/types/complaint.types";
+import type { ComplaintPriority } from "@/features/complaint-list/types";
 
 const priorityConfig: Record<ComplaintPriority, { label: string; color: string }> = {
   high: { label: "عالية", color: "text-destructive" },

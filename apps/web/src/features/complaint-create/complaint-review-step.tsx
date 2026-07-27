@@ -1,5 +1,5 @@
 import { Edit3, Info } from "lucide-react";
-import type { ComplaintCreateFormData } from "@/types/complaint-create.types";
+import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 
 interface FileItem {
   file: File;
