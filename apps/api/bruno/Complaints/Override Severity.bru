@@ -1,0 +1,26 @@
+meta {
+  name: Override Severity
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/complaints/{{complaintId}}/severity
+  body: json
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "severity": "HIGH"
+  }
+}
+
+assert {
+  res.status: eq(200)
+  res.body.severity: eq("HIGH")
+}

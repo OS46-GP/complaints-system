@@ -1,0 +1,21 @@
+meta {
+  name: Analyze (AI Triage)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/complaints/{{complaintId}}/analyze
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(201)
+  res.body.severity: $oneOf(["LOW","MEDIUM","HIGH"])
+  res.body.recurrenceMatches: $notNull
+}
