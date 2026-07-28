@@ -7,6 +7,8 @@ import { ReportingModule } from "./reporting/reporting.module";
 import { UsersModule } from "./users/users.module";
 import { AiTriageModule } from "./ai-triage/ai-triage.module";
 import { AgentModule } from "./agents/agent.module";
+import { MastraModule } from "@mastra/nestjs";
+import { mastra } from "./agents/mastra.config";
 
 @Module({
   imports: [
@@ -18,6 +20,7 @@ import { AgentModule } from "./agents/agent.module";
     ReportingModule,
     AiTriageModule,
     AgentModule,
+    MastraModule.register({ mastra }),
   ],
 })
 export class AppModule {}
