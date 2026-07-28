@@ -276,6 +276,12 @@ export class ComplaintsService {
     });
   }
 
+  async remove(id: string) {
+    await this.findById(id);
+    await this.prisma.complaint.delete({ where: { id } });
+    return { success: true };
+  }
+
   private addCaseStatus(complaint: {
     examinationStatus?: { name: string } | null;
     examinationStatusId?: number | null;

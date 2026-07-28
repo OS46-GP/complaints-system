@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -117,5 +118,10 @@ export class ComplaintsController {
     @Body() dto: UpdateComplaintDto,
   ) {
     return this.complaintsService.update(id, dto);
+  }
+
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.complaintsService.remove(id);
   }
 }

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import {
   MoreHorizontal,
   Eye,
-  Reply,
-  MessageSquare,
-  XCircle,
   Trash2,
+  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PATHS } from "@/router/paths";
+import { complaintsApi } from "@/features/complaint-list/api";
 
 interface ComplaintActionsDropdownProps {
   complaintId: string;
@@ -30,16 +31,23 @@ export function ComplaintActionsDropdown({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const queryClient = useQueryClient();
   const isAdmin = pathname.startsWith("/admin");
 
   const detailPath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_DETAIL(complaintId)
     : PATHS.USER.COMPLAINT_DETAIL(complaintId);
 
+  const deleteMutation = useMutation({
+    mutationFn: () => complaintsApi.remove(complaintId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["complaints"] });
+      toast.success("تم حذف الشكوى بنجاح");
+      setDeleteOpen(false);
+    },
+  });
+
   const handleView = () => navigate(detailPath);
-  const handleResponse = () => {};
-  const handleComment = () => {};
-  const handleClose = () => {};
   const handleDelete = () => setDeleteOpen(true);
 
   return (
@@ -54,19 +62,6 @@ export function ComplaintActionsDropdown({
           <DropdownMenuItem onClick={handleView} className="w-full gap-2">
             <Eye className="size-4" />
             عرض التفاصيل
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleResponse} className="w-full gap-2">
-            <Reply className="size-4" />
-            إضافة رد
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleComment} className="w-full gap-2">
-            <MessageSquare className="size-4" />
-            إضافة تعليق
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleClose} className="w-full gap-2">
-            <XCircle className="size-4" />
-            إغلاق الشكوى
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -85,13 +80,11 @@ export function ComplaintActionsDropdown({
         onOpenChange={setDeleteOpen}
         title="حذف الشكوى"
         description="هل أنت متأكد من حذف هذه الشكوى؟ هذا الإجراء لا يمكن التراجع عنه."
-        confirmLabel="حذف"
+        confirmLabel={deleteMutation.isPending ? "جارٍ الحذف..." : "حذف"}
         cancelLabel="إلغاء"
         variant="destructive"
-        onConfirm={() => {
-          console.log("Delete complaint #", complaintId);
-          setDeleteOpen(false);
-        }}
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate()}
       />
     </>
   );

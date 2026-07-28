@@ -1,20 +1,17 @@
-import type { Complaint } from "@/features/complaint-list/types";
+import type { ComplaintItem } from "@/features/complaint-list/types";
 import { ComplaintActionsDropdown } from "@/features/complaint-list/complaint-actions-dropdown";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { ComplaintPriority } from "@/features/complaint-list/complaint-priority";
+import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
 
 interface ComplaintTableRowProps {
-  complaint: Complaint;
+  complaint: ComplaintItem;
 }
 
-export function ComplaintTableRow({
-  complaint,
-}: ComplaintTableRowProps) {
+export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
   return (
-    <DataTableRow className="hover:bg-surface-container-low">
-      <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data font-bold">
+    <DataTableRow className="hover:bg-surface-container-low transition-colors group">
+      <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data font-bold text-primary">
         {complaint.displayId}
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4">
@@ -22,38 +19,22 @@ export function ComplaintTableRow({
           <span className="font-heading text-label-sm font-bold text-foreground">
             {complaint.subject}
           </span>
-          <span className="text-[12px] text-muted-foreground">
-            {complaint.timeAgo}
-          </span>
         </div>
       </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4 font-heading text-label-sm">
-        {complaint.category}
+      <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-foreground">
+        {complaint.citizenName}
+      </DataTableCell>
+      <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-muted-foreground">
+        {complaint.departmentName}
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4">
-        <ComplaintPriority priority={complaint.priority} />
+        <ComplaintPriority severity={complaint.severity} />
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4">
-        <ComplaintStatusBadge status={complaint.status} />
+        <ComplaintStatusBadge status={complaint.caseStatus} label={complaint.statusLabel} variant={complaint.statusVariant} />
       </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Avatar size="sm">
-            {complaint.assignee.avatar ? (
-              <AvatarImage
-                src={complaint.assignee.avatar}
-                alt={complaint.assignee.name}
-              />
-            ) : null}
-            <AvatarFallback>
-              {complaint.assignee.initials ??
-                complaint.assignee.name.slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="font-heading text-label-sm">
-            {complaint.assignee.name}
-          </span>
-        </div>
+      <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data text-muted-foreground">
+        {complaint.createdAt}
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 text-center">
         <ComplaintActionsDropdown complaintId={complaint.id} />
