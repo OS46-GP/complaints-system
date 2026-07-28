@@ -9,6 +9,7 @@ import { AiTriageModule } from "./ai-triage/ai-triage.module";
 import { AiSummarizationModule } from "./ai-summarization/ai-summarization.module";
 import { MastraModule } from "@mastra/nestjs";
 import { mastra } from "./ai-summarization/mastra.config";
+import { IntakeModule } from "./intake/intake.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { mastra } from "./ai-summarization/mastra.config";
     AiTriageModule,
     AiSummarizationModule,
     MastraModule.register({ mastra }),
+    IntakeModule,
   ],
 })
 export class AppModule {}
