@@ -4,6 +4,7 @@ import { PaginationInfo } from "@/components/shared/pagination-info";
 import { UserCard } from "@/features/user-list/user-card";
 import { UserTableRow } from "@/features/user-list/user-table-row";
 import { UserListToolbar } from "@/features/user-list/user-list-toolbar";
+import { EmptyState } from "@/features/user-list/empty-state";
 import {
   DataTable,
   DataTableHeader,
@@ -14,72 +15,114 @@ import type { User } from "@/features/user-list/types";
 
 interface UserListProps {
   users: User[];
-  totalPages: number;
-  totalCount: number;
-  pageSize: number;
 }
+
+const PAGE_SIZE = 10;
 
 const columns: DataTableColumn[] = [
   { key: "name", label: "اسم الموظف" },
   { key: "role", label: "الدور" },
-  { key: "department", label: "القسم" },
-  { key: "status", label: "الحالة", className: "text-center" },
-  { key: "lastSeen", label: "آخر ظهور" },
+  { key: "lastSeen", label: "تاريخ الإنشاء" },
   { key: "actions", label: "الإجراءات", className: "text-center" },
 ];
 
-export function UserList({
-  users,
-  totalPages,
-  totalCount,
-  pageSize,
-}: UserListProps) {
+export function UserList({ users }: UserListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const search = searchParams.get("search") ?? "";
+  const roleFilter = searchParams.get("role") ?? "";
 
-  const handlePageChange = (page: number) => {
+  const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+  const totalCount = users.length;
+
+  const paginatedUsers = users.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
+  const setParam = (key: string, value: string) => {
     setSearchParams((prev) => {
-      prev.set("page", String(page));
+      prev.set(key, value);
       return prev;
     });
   };
 
-  const start = (currentPage - 1) * pageSize + 1;
-  const end = Math.min(currentPage * pageSize, totalCount);
+  const handleSearchChange = (value: string) => {
+    setSearchParams((prev) => {
+      prev.set("search", value);
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
+  const handleRoleFilterChange = (role: string | null) => {
+    setSearchParams((prev) => {
+      if (role) {
+        prev.set("role", role);
+      } else {
+        prev.delete("role");
+      }
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
+  const clearFilters = () => {
+    setSearchParams({});
+  };
+
+  const hasFilters = !!(search || roleFilter);
+  const isEmpty = users.length === 0;
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   return (
     <div className="flex flex-col gap-4">
-      <UserListToolbar />
+      <UserListToolbar
+        search={search}
+        onSearchSubmit={handleSearchChange}
+        roleFilter={roleFilter || null}
+        onRoleFilterChange={handleRoleFilterChange}
+      />
 
-      <div className="lg:hidden grid grid-cols-1 gap-4">
-        {users.map((user) => (
-          <UserCard key={user.id} user={user} />
-        ))}
-      </div>
+      {isEmpty ? (
+        <EmptyState hasFilters={hasFilters} onClear={clearFilters} />
+      ) : (
+        <>
+          <div className="lg:hidden grid grid-cols-1 gap-4">
+            {paginatedUsers.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))}
+          </div>
 
-      <DataTable className="hidden lg:block">
-        <DataTableHeader columns={columns} />
-        <DataTableBody>
-          {users.map((user) => (
-            <UserTableRow key={user.id} user={user} />
-          ))}
-        </DataTableBody>
-      </DataTable>
+          <DataTable className="hidden lg:block">
+            <DataTableHeader columns={columns} />
+            <DataTableBody>
+              {paginatedUsers.map((user) => (
+                <UserTableRow key={user.id} user={user} />
+              ))}
+            </DataTableBody>
+          </DataTable>
+        </>
+      )}
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
-        <ListPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          showGoto={false}
-        />
-        <PaginationInfo
-          start={start}
-          end={end}
-          totalCount={totalCount}
-          entity="موظف"
-        />
-      </div>
+      {!isEmpty && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
+          <ListPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setParam("page", String(page))}
+            showGoto={false}
+          />
+          <PaginationInfo
+            start={start}
+            end={end}
+            totalCount={totalCount}
+            entity="موظف"
+          />
+        </div>
+      )}
     </div>
   );
 }

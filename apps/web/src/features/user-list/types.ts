@@ -2,14 +2,40 @@ export type UserStatus = "online" | "offline";
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  username: string;
   role: string;
-  roleTitle: string;
+  roleLabel: string;
+  email: string;
   department: string;
-  activeCases: number;
-  activeCasesMax: number;
   status: UserStatus;
   lastSeen: string;
   avatar: string;
+}
+
+export interface ApiUser {
+  id: string;
+  username: string;
+  role: "Official" | "Admin";
+  createdAt: string;
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  Official: "موظف",
+  Admin: "مدير نظام",
+};
+
+export function mapApiUser(api: ApiUser): User {
+  return {
+    id: api.id,
+    username: api.username,
+    role: api.role,
+    roleLabel: ROLE_LABELS[api.role] ?? api.role,
+    email: "",
+    department: "",
+    status: "offline",
+    lastSeen: api.createdAt
+      ? new Date(api.createdAt).toLocaleDateString("ar-SA")
+      : "-",
+    avatar: "",
+  };
 }
