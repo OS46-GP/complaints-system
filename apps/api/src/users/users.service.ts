@@ -31,8 +31,16 @@ export class UsersService {
     });
   }
 
-  async findAll() {
+  async findAll(filters?: { search?: string; role?: string }) {
+    const where: any = {};
+    if (filters?.search) {
+      where.username = { contains: filters.search };
+    }
+    if (filters?.role) {
+      where.role = filters.role;
+    }
     return this.prisma.client.user.findMany({
+      where,
       select: {
         id: true,
         username: true,

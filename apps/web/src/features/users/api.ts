@@ -9,4 +9,6 @@ export const usersApi = {
     axiosClient
       .get<ApiUser[]>("/api/users", { params })
       .then((res) => res.data),
+  remove: (id: string) =>
+    axiosClient.delete(`/api/users/${id}`).then((res) => res.data),
 };
