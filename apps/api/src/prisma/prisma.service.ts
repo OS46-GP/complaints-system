@@ -54,6 +54,10 @@ export class PrismaService implements OnModuleInit {
   get complaintYearCounter() {
     return prisma.complaintYearCounter;
   }
+
+  get complaintLink() {
+    return prisma.complaintLink;
+  }
 }
 
 export { Prisma };
