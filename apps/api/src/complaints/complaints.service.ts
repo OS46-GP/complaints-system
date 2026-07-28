@@ -147,8 +147,9 @@ export class ComplaintsService {
         complaint.departmentId,
         location,
       );
+      this.logger.log(`Indexed embedding for complaint ${complaint.id}`);
     } catch (error) {
-      this.logger.warn('Failed to index complaint embedding', error);
+      this.logger.error(`Failed to index embedding for complaint ${complaint.id}: ${error instanceof Error ? error.message : error}`);
     }
   }
 
