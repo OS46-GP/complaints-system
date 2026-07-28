@@ -6,7 +6,7 @@ import { PATHS } from "@/router/paths";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { ComplaintList } from "@/features/complaint-list/complaint-list";
-import { complaintsApi } from "@/features/complaints/api";
+import { complaintsApi } from "@/features/complaint-list/api";
 import { mapApiComplaint } from "@/features/complaint-list/types";
 
 const PAGE_SIZE = 10;

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PATHS } from "@/router/paths";
-import { complaintsApi } from "@/features/complaints/api";
+import { complaintsApi } from "@/features/complaint-list/api";
 
 interface ComplaintActionsDropdownProps {
   complaintId: string;

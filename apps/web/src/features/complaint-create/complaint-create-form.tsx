@@ -1,6 +1,12 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
+
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
+import { createComplaint } from "@/features/complaint-create/api";
+import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
 import { ComplaintBasicInfoStep } from "@/features/complaint-create/complaint-basic-info-step";
@@ -13,11 +19,6 @@ interface FileItem {
   id: string;
 }
 
-interface ComplaintCreateFormProps {
-  onSubmit: (data: ComplaintCreateFormData) => Promise<void>;
-  initialData?: Partial<ComplaintCreateFormData>;
-}
-
 const DEFAULT_DATA: ComplaintCreateFormData = {
   subject: "",
   complaintTypeId: "",
@@ -27,18 +28,24 @@ const DEFAULT_DATA: ComplaintCreateFormData = {
   departmentId: "",
   annotation: "",
   presentationStatusId: "",
-  citizenId: "",
+  citizen: {
+    fullName: "",
+    nationalId: "",
+    mobileNumber: "",
+    address: "",
+    village: "",
+    district: "",
+  },
   files: [],
 };
 
 const TOTAL_STEPS = 4;
 
-export function ComplaintCreateForm({ onSubmit, initialData }: ComplaintCreateFormProps) {
+export function ComplaintCreateForm() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<ComplaintCreateFormData>({
-    ...DEFAULT_DATA,
-    ...initialData,
-  });
+  const [data, setData] = useState<ComplaintCreateFormData>(DEFAULT_DATA);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,7 +55,8 @@ export function ComplaintCreateForm({ onSubmit, initialData }: ComplaintCreateFo
 
   const canProceed = () => {
     if (step === 1) {
-      return data.subject.trim().length > 0;
+      if (!data.subject.trim()) return false;
+      if (!data.citizen.fullName.trim()) return false;
     }
     return true;
   };
@@ -70,7 +78,12 @@ export function ComplaintCreateForm({ onSubmit, initialData }: ComplaintCreateFo
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await onSubmit({ ...data, files: files.map((f) => f.file) });
+      await createComplaint({ ...data, files: files.map((f) => f.file) });
+      queryClient.invalidateQueries({ queryKey: ["complaints"] });
+      toast.success("تم تقديم الشكوى بنجاح");
+      navigate(PATHS.ADMIN.COMPLAINTS);
+    } catch {
+      toast.error("حدث خطأ أثناء تقديم الشكوى");
     } finally {
       setIsSubmitting(false);
     }

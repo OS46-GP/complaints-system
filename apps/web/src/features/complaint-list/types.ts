@@ -90,6 +90,17 @@ export interface ComplaintItem {
   createdAt: string;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  subAuthority: string | null;
+}
+
+export interface ReferenceItem {
+  id: number;
+  name: string;
+}
+
 export function mapApiComplaint(api: ApiComplaint): ComplaintItem {
   const statusConfig = api.caseStatus
     ? CASE_STATUS_LABELS[api.caseStatus]

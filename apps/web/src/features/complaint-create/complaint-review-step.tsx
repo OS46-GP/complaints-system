@@ -18,13 +18,6 @@ const SEVERITY_LABELS: Record<string, string> = {
   Low: "عادي",
 };
 
-const COMPLAINT_TYPE_LABELS: Record<string, string> = {
-  "1": "خدمات العملاء",
-  "2": "المشاكل التقنية",
-  "3": "المرافق والمنشآت",
-  "4": "إداري",
-};
-
 function ReviewRow({
   label,
   value,
@@ -61,35 +54,35 @@ export function ComplaintReviewStep({ data, files, onGoToStep }: ComplaintReview
     <div className="space-y-6">
       <div className="bg-surface-container-low rounded-lg p-6 space-y-4">
         <ReviewRow
-          label="الموضوع والفئة"
-          value={`${data.subject || "لم يتم إدخال عنوان"} - ${COMPLAINT_TYPE_LABELS[data.complaintTypeId] || "لم يتم اختيار فئة"}`}
+          label="الموضوع"
+          value={data.subject || "لم يتم إدخال عنوان"}
           onEdit={() => onGoToStep(1)}
         />
-
         <ReviewRow
-          label="الأولوية وطريقة الاستلام"
-          value={`${SEVERITY_LABELS[data.severity] || "—"} | ${data.receptionMethodId ? `طريقة ${data.receptionMethodId}` : "—"}`}
+          label="الأولوية"
+          value={SEVERITY_LABELS[data.severity] || "—"}
           onEdit={() => onGoToStep(1)}
         />
-
         <ReviewRow
-          label="الجهة المعنية واسم المقدم"
-          value={`${data.departmentId ? `قسم ${data.departmentId}` : "—"} | ${data.respondentName || "—"}`}
+          label="المواطن"
+          value={data.citizen.fullName || "—"}
           onEdit={() => onGoToStep(1)}
         />
-
+        <ReviewRow
+          label="رقم الهوية"
+          value={data.citizen.nationalId || "—"}
+          onEdit={() => onGoToStep(1)}
+        />
+        <ReviewRow
+          label="رقم الجوال"
+          value={data.citizen.mobileNumber || "—"}
+          onEdit={() => onGoToStep(1)}
+        />
         <ReviewRow
           label="وصف الشكوى"
           value={data.annotation || "لا يوجد وصف متاح"}
           onEdit={() => onGoToStep(2)}
         />
-
-        <ReviewRow
-          label="حالة التقديم"
-          value={data.presentationStatusId ? `حالة ${data.presentationStatusId}` : "—"}
-          onEdit={() => onGoToStep(2)}
-        />
-
         <ReviewRow
           label="المرفقات"
           value={
