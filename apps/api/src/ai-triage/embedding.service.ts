@@ -12,6 +12,7 @@ export class EmbeddingService {
 
     const { PgVector } = await import('@mastra/pg');
     const { ModelRouterEmbeddingModel } = await import('@mastra/core/llm');
+    const { embed } = await import('ai');
 
     this.pgVector = new PgVector({
       id: 'complaint-embeddings',
@@ -22,7 +23,6 @@ export class EmbeddingService {
       process.env.EMBEDDING_MODEL || 'google/gemini-embedding-2',
     );
 
-    const { embed } = await import('ai');
     const test = await embed({
       model: this.embeddingModel,
       value: 'x',
@@ -35,8 +35,15 @@ export class EmbeddingService {
         dimension,
         metric: 'cosine',
       });
-    } catch {
-      this.logger.warn('Embedding index may already exist');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error);
+      if (/already exists/i.test(message)) {
+        this.logger.warn('Embedding index already exists');
+      } else {
+        this.logger.error('Failed to create embedding index', error);
+        throw error;
+      }
     }
 
     this.initialized = true;
