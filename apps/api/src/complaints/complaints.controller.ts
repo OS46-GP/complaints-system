@@ -15,7 +15,10 @@ import {
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
+import { UserRole } from "@prisma/client";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { ComplaintsService } from "./complaints.service";
 import { ComplaintFilesService } from "./complaint-files.service";
 import { CreateComplaintDto } from "./dto/create-complaint.dto";
@@ -36,6 +39,8 @@ export class ComplaintsController {
   }
 
   @Post("index")
+  @Roles(UserRole.Admin)
+  @UseGuards(RolesGuard)
   indexAll() {
     return this.complaintsService.indexAll();
   }
