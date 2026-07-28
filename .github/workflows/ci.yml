@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:18.4
+        image: pgvector/pgvector:0.8.5-pg18
         env:
           POSTGRES_DB: complaints_test
           POSTGRES_USER: postgres
