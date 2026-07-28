@@ -21,6 +21,9 @@ const AdminComplaintDetailPage = lazy(
   () => import("@/pages/admin/complaint-detail"),
 );
 const AdminNewComplaintPage = lazy(() => import("@/pages/admin/new-complaint"));
+const AdminEditComplaintPage = lazy(
+  () => import("@/pages/admin/edit-complaint"),
+);
 const AdminUsersPage = lazy(() => import("@/pages/admin/users"));
 const AdminCreateUserPage = lazy(() => import("@/pages/admin/create-user"));
 const AdminUserDetailPage = lazy(() => import("@/pages/admin/user-detail"));
@@ -29,6 +32,9 @@ const AdminSettingsPage = lazy(() => import("@/pages/admin/settings"));
 const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
 const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
 const UserNewComplaintPage = lazy(() => import("@/pages/user/new-complaint"));
+const UserEditComplaintPage = lazy(
+  () => import("@/pages/user/edit-complaint"),
+);
 const UserComplaintDetailPage = lazy(
   () => import("@/pages/user/complaint-detail"),
 );
@@ -115,6 +121,14 @@ const AppRouter = () => {
               }
             />
             <Route
+              path={PATHS.ADMIN.COMPLAINT_EDIT(":id")}
+              element={
+                <SuspenseBoundary>
+                  <AdminEditComplaintPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
               path={PATHS.ADMIN.USERS}
               element={
                 <SuspenseBoundary>
@@ -172,6 +186,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserNewComplaintPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.COMPLAINT_EDIT(":id")}
+              element={
+                <SuspenseBoundary>
+                  <UserEditComplaintPage />
                 </SuspenseBoundary>
               }
             />

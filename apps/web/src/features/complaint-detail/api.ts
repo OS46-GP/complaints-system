@@ -1,6 +1,6 @@
 import { complaintsApi } from "@/features/complaint-list/api";
 import type { ApiComplaint } from "@/features/complaint-list/types";
-import type { ComplaintDetailsData, ComplaintFileItem } from "@/features/complaint-detail/types";
+import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
 function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
   return {

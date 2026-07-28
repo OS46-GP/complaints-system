@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 import {
   MoreHorizontal,
   Eye,
+  Pencil,
   Trash2,
-  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,9 @@ export function ComplaintActionsDropdown({
   const detailPath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_DETAIL(complaintId)
     : PATHS.USER.COMPLAINT_DETAIL(complaintId);
+  const editPath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_EDIT(complaintId)
+    : PATHS.USER.COMPLAINT_EDIT(complaintId);
 
   const deleteMutation = useMutation({
     mutationFn: () => complaintsApi.remove(complaintId),
@@ -48,6 +51,7 @@ export function ComplaintActionsDropdown({
   });
 
   const handleView = () => navigate(detailPath);
+  const handleEdit = () => navigate(editPath);
   const handleDelete = () => setDeleteOpen(true);
 
   return (
@@ -62,6 +66,10 @@ export function ComplaintActionsDropdown({
           <DropdownMenuItem onClick={handleView} className="w-full gap-2">
             <Eye className="size-4" />
             عرض التفاصيل
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleEdit} className="w-full gap-2">
+            <Pencil className="size-4" />
+            تعديل
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -10,6 +10,10 @@ export interface ListComplaintsParams {
   statementYear?: number;
 }
 
+export type UpdateComplaintPayload = Omit<Partial<CreateComplaintPayload>, "citizen"> & {
+  citizen?: Partial<CreateComplaintPayload["citizen"]>;
+};
+
 export interface CreateComplaintPayload {
   statementYear: number;
   arrivalDate: string;
@@ -42,6 +46,8 @@ export const complaintsApi = {
     axiosClient.delete(`/api/complaints/${id}`).then((res) => res.data),
   create: (payload: CreateComplaintPayload) =>
     axiosClient.post("/api/complaints", payload).then((res) => res.data),
+  update: (id: string, payload: UpdateComplaintPayload) =>
+    axiosClient.patch(`/api/complaints/${id}`, payload).then((res) => res.data),
   getDepartments: () =>
     axiosClient.get<Department[]>("/api/complaints/departments").then((res) => res.data),
   getComplaintTypes: () =>

@@ -38,7 +38,7 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
         <div className="col-span-12 lg:col-span-5 space-y-4 md:space-y-6">
           <ComplaintDescriptionCard
             subject={complaint.subject}
-            annotation={complaint.annotation}
+            annotation={complaint.annotation ?? ""}
           />
           <ComplaintEvidenceGallery files={complaint.files} />
         </div>
