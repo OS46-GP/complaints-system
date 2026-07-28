@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Param, Body, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Param, Body, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AiTriageService } from "./ai-triage.service";
 import { UpdateSeverityDto } from "./dto/update-severity.dto";
@@ -7,6 +7,11 @@ import { UpdateSeverityDto } from "./dto/update-severity.dto";
 @UseGuards(JwtAuthGuard)
 export class AiTriageController {
   constructor(private readonly aiTriageService: AiTriageService) {}
+
+  @Get(":id/links")
+  getLinks(@Param("id") id: string) {
+    return this.aiTriageService.getLinks(id);
+  }
 
   @Post(":id/analyze")
   analyze(@Param("id") id: string) {
