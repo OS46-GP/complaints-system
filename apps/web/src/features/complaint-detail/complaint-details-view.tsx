@@ -1,4 +1,4 @@
-import { Printer } from "lucide-react";
+import { Printer, MessageSquareReply, FileText } from "lucide-react";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 import { ComplaintDescriptionCard } from "@/features/complaint-detail/complaint-description-card";
 import { ComplaintEvidenceGallery } from "@/features/complaint-detail/complaint-evidence-gallery";
@@ -40,6 +40,28 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
             subject={complaint.subject}
             annotation={complaint.annotation ?? ""}
           />
+          {complaint.authorityResponseText && (
+            <div className="bg-card border border-border rounded-xl p-4 md:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquareReply className="size-5 text-primary" />
+                <h3 className="font-heading text-headline-md text-foreground">رد الجهة المختصة</h3>
+              </div>
+              <p className="text-muted-foreground font-body text-body-md leading-relaxed whitespace-pre-wrap mb-3">
+                {complaint.authorityResponseText}
+              </p>
+              <div className="flex items-center gap-4 text-label-xs text-muted-foreground">
+                {complaint.incomingResponseNumber && (
+                  <span className="flex items-center gap-1">
+                    <FileText className="size-3" />
+                    {complaint.incomingResponseNumber}
+                  </span>
+                )}
+                {complaint.authorityResponseDate && (
+                  <span>{new Date(complaint.authorityResponseDate).toLocaleDateString("ar-SA")}</span>
+                )}
+              </div>
+            </div>
+          )}
           <ComplaintEvidenceGallery files={complaint.files} />
         </div>
 

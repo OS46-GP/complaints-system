@@ -25,6 +25,11 @@ export interface CreateComplaintPayload {
   departmentId?: string;
   presentationStatusId?: number;
   annotation?: string;
+  examinationStatusId?: number;
+  examinationResult?: string;
+  authorityResponseText?: string;
+  authorityResponseDate?: string;
+  incomingResponseNumber?: string;
   citizen: {
     fullName: string;
     nationalId?: string;
@@ -56,4 +61,6 @@ export const complaintsApi = {
     axiosClient.get<ReferenceItem[]>("/api/complaints/reception-methods").then((res) => res.data),
   getPresentationStatuses: () =>
     axiosClient.get<ReferenceItem[]>("/api/complaints/presentation-statuses").then((res) => res.data),
+  getExaminationStatuses: () =>
+    axiosClient.get<ReferenceItem[]>("/api/complaints/examination-statuses").then((res) => res.data),
 };

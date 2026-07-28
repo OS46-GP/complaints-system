@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   Eye,
   Pencil,
+  MessageSquareReply,
   Trash2,
 } from "lucide-react";
 
@@ -40,6 +41,9 @@ export function ComplaintActionsDropdown({
   const editPath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_EDIT(complaintId)
     : PATHS.USER.COMPLAINT_EDIT(complaintId);
+  const responsePath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_RESPONSE(complaintId)
+    : PATHS.USER.COMPLAINT_RESPONSE(complaintId);
 
   const deleteMutation = useMutation({
     mutationFn: () => complaintsApi.remove(complaintId),
@@ -52,6 +56,7 @@ export function ComplaintActionsDropdown({
 
   const handleView = () => navigate(detailPath);
   const handleEdit = () => navigate(editPath);
+  const handleResponse = () => navigate(responsePath);
   const handleDelete = () => setDeleteOpen(true);
 
   return (
@@ -70,6 +75,10 @@ export function ComplaintActionsDropdown({
           <DropdownMenuItem onClick={handleEdit} className="w-full gap-2">
             <Pencil className="size-4" />
             تعديل
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleResponse} className="w-full gap-2">
+            <MessageSquareReply className="size-4" />
+            إضافة رد
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

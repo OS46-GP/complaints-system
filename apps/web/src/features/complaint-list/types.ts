@@ -46,6 +46,9 @@ export interface ApiComplaint {
   subject: string;
   respondentName: string | null;
   annotation: string | null;
+  authorityResponseText: string | null;
+  authorityResponseDate: string | null;
+  incomingResponseNumber: string | null;
   createdAt: string;
   citizen: ApiCitizen;
   department: ApiDepartment | null;

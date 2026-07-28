@@ -7,6 +7,9 @@ export interface ComplaintDetailsData {
   severity: "Low" | "Medium" | "High";
   subject: string;
   annotation: string | null;
+  authorityResponseText: string | null;
+  authorityResponseDate: string | null;
+  incomingResponseNumber: string | null;
   caseStatus: "FINISHED" | "NOT_FINISHED" | null;
   citizenName: string;
   citizenNationalId: string | null;
