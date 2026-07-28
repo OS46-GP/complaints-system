@@ -3,33 +3,31 @@ import { ListPagination } from "@/components/shared/list-pagination";
 import { ComplaintCard } from "@/features/complaint-list/complaint-card";
 import { ComplaintTableRow } from "@/features/complaint-list/complaint-table-row";
 import { ComplaintToolbar } from "@/features/complaint-list/complaint-list-toolbar";
+import { EmptyState } from "@/features/complaint-list/empty-state";
 import {
   DataTable,
   DataTableHeader,
   DataTableBody,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import type { Complaint } from "@/features/complaint-list/types";
+import type { ComplaintItem } from "@/features/complaint-list/types";
 
 interface ComplaintListProps {
-  complaints: Complaint[];
+  complaints: ComplaintItem[];
   totalPages: number;
   totalCount: number;
   pageSize: number;
 }
 
 const columns: DataTableColumn[] = [
-  { key: "id", label: "المعرف" },
+  { key: "id", label: "رقم الشكوى" },
   { key: "subject", label: "الموضوع" },
-  { key: "category", label: "الفئة" },
-  { key: "priority", label: "الأولوية" },
+  { key: "citizen", label: "المواطن" },
+  { key: "department", label: "القسم" },
+  { key: "severity", label: "الأولوية" },
   { key: "status", label: "الحالة" },
-  { key: "assignee", label: "المكلف" },
-  {
-    key: "actions",
-    label: "الإجراءات",
-    className: "text-center",
-  },
+  { key: "createdAt", label: "تاريخ الإنشاء" },
+  { key: "actions", label: "الإجراءات", className: "text-center" },
 ];
 
 export function ComplaintList({
@@ -40,6 +38,7 @@ export function ComplaintList({
 }: ComplaintListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const search = searchParams.get("search") ?? "";
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => {
@@ -48,37 +47,65 @@ export function ComplaintList({
     });
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchParams((prev) => {
+      prev.set("search", value);
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
+  const clearFilters = () => {
+    setSearchParams({});
+  };
+
+  const hasFilters = !!search;
+  const isEmpty = complaints.length === 0;
+
   const start = (currentPage - 1) * pageSize + 1;
   const end = Math.min(currentPage * pageSize, totalCount);
 
   return (
     <div className="flex flex-col gap-4">
-      <ComplaintToolbar start={start} end={end} totalCount={totalCount} />
+      <ComplaintToolbar
+        search={search}
+        onSearchSubmit={handleSearchChange}
+        start={start}
+        end={end}
+        totalCount={totalCount}
+      />
 
-      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-        {complaints.map((complaint) => (
-          <ComplaintCard key={complaint.id} complaint={complaint} />
-        ))}
-      </div>
+      {isEmpty ? (
+        <EmptyState hasFilters={hasFilters} onClear={clearFilters} />
+      ) : (
+        <>
+          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+            {complaints.map((complaint) => (
+              <ComplaintCard key={complaint.id} complaint={complaint} />
+            ))}
+          </div>
 
-      <DataTable className="hidden lg:block">
-        <DataTableHeader columns={columns} />
+          <DataTable className="hidden lg:block">
+            <DataTableHeader columns={columns} />
+            <DataTableBody>
+              {complaints.map((complaint) => (
+                <ComplaintTableRow key={complaint.id} complaint={complaint} />
+              ))}
+            </DataTableBody>
+          </DataTable>
+        </>
+      )}
 
-        <DataTableBody>
-          {complaints.map((complaint) => (
-            <ComplaintTableRow key={complaint.id} complaint={complaint} />
-          ))}
-        </DataTableBody>
-      </DataTable>
-
-      <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
-        <ListPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          className="w-full"
-        />
-      </div>
+      {!isEmpty && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
+          <ListPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            className="w-full"
+          />
+        </div>
+      )}
     </div>
   );
 }

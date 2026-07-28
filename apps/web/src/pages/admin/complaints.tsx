@@ -1,105 +1,60 @@
-import { Inbox, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams, Link } from "react-router";
+import { Plus, Loader2 } from "lucide-react";
 
-import { StatCard } from "@/components/shared/stat-card";
-import type { Complaint } from "@/features/complaint-list/types";
+import { PATHS } from "@/router/paths";
+import { PageHeader } from "@/components/shared/page-header";
+import { Button } from "@/components/ui/button";
 import { ComplaintList } from "@/features/complaint-list/complaint-list";
+import { complaintsApi } from "@/features/complaints/api";
+import { mapApiComplaint } from "@/features/complaint-list/types";
 
-const stats = [
-  {
-    icon: Inbox,
-    iconColor: "text-primary",
-    label: "إجمالي الشكاوى",
-    value: "١,٢٨٤",
-    trendIcon: Inbox,
-    trendText: "١٢٪ من الشهر الماضي",
-    trendColor: "text-primary",
-  },
-  {
-    icon: Clock,
-    iconColor: "text-tertiary",
-    label: "قيد المعالجة",
-    value: "٤٢",
-    trendIcon: Clock,
-    trendText: "متوسط الحل: ٢٤ ساعة",
-    trendColor: "text-tertiary",
-  },
-  {
-    icon: CheckCircle,
-    iconColor: "text-primary",
-    label: "شكاوى محلولة",
-    value: "٩٤٢",
-    trendIcon: CheckCircle,
-    trendText: "نسبة نجاح ٩٢٪",
-    trendColor: "text-primary",
-  },
-  {
-    icon: AlertTriangle,
-    iconColor: "text-destructive",
-    label: "شكاوى عاجلة",
-    value: "٨",
-    trendIcon: AlertTriangle,
-    trendText: "تتطلب تدخل فوري",
-    trendColor: "text-destructive",
-  },
-];
-
-const mockComplaints: Complaint[] = [
-  {
-    id: "1",
-    displayId: "#CMP-7241",
-    subject: "عطل في البوابة الإلكترونية",
-    category: "الخدمات التقنية",
-    priority: "high",
-    status: "in-progress",
-    assignee: { name: "سارة م.", avatar: "https://github.com/shadcn.png" },
-    timeAgo: "منذ ٢ ساعة",
-  },
-  {
-    id: "2",
-    displayId: "#CMP-7238",
-    subject: "تأخر في استجابة الموظف",
-    category: "خدمة العملاء",
-    priority: "medium",
-    status: "resolved",
-    assignee: { name: "محمد ع.", avatar: "https://github.com/shadcn.png" },
-    timeAgo: "منذ ٥ ساعات",
-  },
-  {
-    id: "3",
-    displayId: "#CMP-7235",
-    subject: "خطأ في فاتورة الصيانة",
-    category: "المالية",
-    priority: "low",
-    status: "closed",
-    assignee: { name: "ليلى خ.", avatar: "https://github.com/shadcn.png" },
-    timeAgo: "منذ يوم واحد",
-  },
-  {
-    id: "4",
-    displayId: "#CMP-7230",
-    subject: "طلب استبدال منتج تالف",
-    category: "الخدمات اللوجستية",
-    priority: "high",
-    status: "review",
-    assignee: { name: "فريق الدعم", initials: "ف.ن" },
-    timeAgo: "منذ يومين",
-  },
-];
+const PAGE_SIZE = 10;
 
 export default function AdminComplaints() {
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get("search") ?? "";
+  const page = parseInt(searchParams.get("page") ?? "1", 10);
+
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["complaints", search, page],
+    queryFn: () =>
+      complaintsApi.list({
+        name: search || undefined,
+        page,
+        limit: PAGE_SIZE,
+      }),
+  });
+
+  const complaints = response?.data.map(mapApiComplaint) ?? [];
+  const meta = response?.meta;
+
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
-      </div>
-      <ComplaintList
-        complaints={mockComplaints}
-        totalPages={42}
-        totalCount={1284}
-        pageSize={10}
-      />
+      <PageHeader
+        title="إدارة الشكاوى"
+        description="متابعة ومعالجة جميع الشكاوى الواردة"
+      >
+        <Button asChild className="gap-2">
+          <Link to={PATHS.ADMIN.NEW_COMPLAINT}>
+            <Plus className="size-5" />
+            <span>شكوى جديدة</span>
+          </Link>
+        </Button>
+      </PageHeader>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <ComplaintList
+          complaints={complaints}
+          totalPages={meta?.totalPages ?? 1}
+          totalCount={meta?.total ?? 0}
+          pageSize={PAGE_SIZE}
+        />
+      )}
     </div>
   );
 }
