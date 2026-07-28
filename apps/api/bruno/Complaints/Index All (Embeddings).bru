@@ -1,0 +1,19 @@
+meta {
+  name: Index All (Embeddings)
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/complaints/index
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(201)
+  res.body.indexed: $notNull
+}

@@ -1,13 +1,12 @@
 meta {
   name: Analyze (AI Triage)
   type: http
-  seq: 5
+  seq: 15
 }
 
 post {
   url: {{baseUrl}}/complaints/{{complaintId}}/analyze
   body: none
-  auth: none
 }
 
 headers {
@@ -16,6 +15,6 @@ headers {
 
 assert {
   res.status: eq(201)
-  res.body.severity: $oneOf(["LOW","MEDIUM","HIGH"])
+  res.body.severity: in(["LOW","MEDIUM","HIGH"])
   res.body.recurrenceMatches: $notNull
 }
