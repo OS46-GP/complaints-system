@@ -1,5 +1,9 @@
 const LLM_MODEL = process.env.LLM_MODEL || '';
 const ENABLE_AI = LLM_MODEL.length > 0;
+// When ENABLE_AI is false:
+// - Severity always returns "MEDIUM"
+// - Recurrence detection uses structured match only (National ID)
+// - Embedding similarity + agent reasoning are skipped
 
 let triageAgent: {
   generate(prompt: string, options?: Record<string, unknown>): Promise<{ text: string }>;
