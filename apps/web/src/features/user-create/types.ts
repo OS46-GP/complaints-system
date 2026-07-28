@@ -1,9 +1,12 @@
-export interface UserCreateFormData {
-  fullName: string;
-  employeeId: string;
+export interface CreateUserPayload {
+  username: string;
+  password: string;
+  role: "Official" | "Admin";
+}
+
+export interface CreateUserFormData {
+  username: string;
+  password: string;
   email: string;
-  department: string;
-  jobTitle: string;
-  role: string;
-  isActive: boolean;
+  role: "Official" | "Admin";
 }
