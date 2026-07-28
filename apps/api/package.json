@@ -9,10 +9,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.24",
     "@complaints/db": "*",
     "@complaints/types": "*",
     "@mastra/core": "^1.53.0",
     "@mastra/pg": "^1.17.1",
+    "@google/generative-ai": "^0.24.1",
+    "@mastra/core": "^1.53.0",
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
     "@nestjs/jwt": "^11.0.2",
