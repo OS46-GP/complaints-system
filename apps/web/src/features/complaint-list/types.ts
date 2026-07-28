@@ -30,6 +30,13 @@ export interface ApiCreatedBy {
   role: string;
 }
 
+export interface ApiComplaintFile {
+  id: string;
+  fileType: string;
+  storageKey: string;
+  uploadedAt: string;
+}
+
 export interface ApiComplaint {
   id: string;
   complaintNumber: number;
@@ -43,9 +50,17 @@ export interface ApiComplaint {
   citizen: ApiCitizen;
   department: ApiDepartment | null;
   complaintType: ApiComplaintType | null;
+  receptionMethod: ApiReferenceItem | null;
   examinationStatus: ApiExaminationStatus | null;
+  presentationStatus: ApiReferenceItem | null;
   createdBy: ApiCreatedBy | null;
   caseStatus: "FINISHED" | "NOT_FINISHED" | null;
+  files: ApiComplaintFile[];
+}
+
+export interface ApiReferenceItem {
+  id: number;
+  name: string;
 }
 
 export interface PaginatedComplaintResponse {

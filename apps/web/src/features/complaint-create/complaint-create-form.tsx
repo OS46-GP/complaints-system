@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
@@ -43,7 +43,9 @@ const TOTAL_STEPS = 4;
 
 export function ComplaintCreateForm() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const queryClient = useQueryClient();
+  const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
   const [step, setStep] = useState(1);
   const [data, setData] = useState<ComplaintCreateFormData>(DEFAULT_DATA);
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -81,7 +83,7 @@ export function ComplaintCreateForm() {
       await createComplaint({ ...data, files: files.map((f) => f.file) });
       queryClient.invalidateQueries({ queryKey: ["complaints"] });
       toast.success("تم تقديم الشكوى بنجاح");
-      navigate(PATHS.ADMIN.COMPLAINTS);
+      navigate(listPath);
     } catch {
       toast.error("حدث خطأ أثناء تقديم الشكوى");
     } finally {

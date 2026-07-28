@@ -1,62 +1,38 @@
-import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
+import { useParams } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+
+import { getComplaintDetails } from "@/features/complaint-detail/api";
 import { ComplaintDetailsView } from "@/features/complaint-detail/complaint-details-view";
 
-const MOCK_COMPLAINT: ComplaintDetailsData = {
-  id: "1",
-  complaintNumber: "شكوى-2024-00142",
-  statementYear: 2024,
-  arrivalDate: "2024-10-14",
-  status: "NotFinished",
-  severity: "Medium",
-  receptionMethodId: "2",
-  complaintTypeId: "1",
-  subject: "استفسار عن معاملة حجز أرض",
-  respondentName: "",
-  departmentId: "dept-3",
-  presentationStatusId: "2",
-  annotation:
-    "أتقدم بهذا الاستفسار بخصوص معاملة حجز قطعة الأرض رقم ٤٥٢٣ في حي النخيل. تم تقديم الطلب منذ ٤٥ يوماً ولم يتم البت فيه حتى الآن.",
-  examinationStatusId: "",
-  examinationResult: "",
-  authorityResponseText: "",
-  authorityResponseDate: "",
-  outgoingLetterNumber: "",
-  outgoingLetterDate: "",
-  incomingResponseNumber: "",
-  notificationMethod: "",
-  notificationOutNumber: "",
-  notificationOutDate: "",
-  archiveNumber: "",
-  archiveDate: "",
-  archiveLocation: "",
-  weeklyMeeting: null,
-  finalDecisionDate: "",
-  endDate: "",
-  citizenId: "cit-2",
-  files: [
-    {
-      id: "f1",
-      fileType: "application/pdf",
-      storageKey: "طلب حجز أرض.pdf",
-      uploadedAt: "2024-10-10",
-    },
-  ],
-  actions: [
-    {
-      id: "a1",
-      action: "تم استلام الطلب",
-      actionDate: "2024-10-10",
-      notes: "تم تسجيل الطلب في النظام.",
-      createdAt: "2024-10-10",
-    },
-  ],
-  escalations: [],
-};
-
 export default function UserComplaintDetail() {
+  const { id } = useParams();
+
+  const { data: complaint, isLoading } = useQuery({
+    queryKey: ["complaint", id],
+    queryFn: () => getComplaintDetails(id!),
+    enabled: !!id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!complaint) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-muted-foreground">لم يتم العثور على الشكوى</p>
+      </div>
+    );
+  }
+
   return (
     <section className="p-0 md:p-stack-lg flex flex-col flex-grow">
-      <ComplaintDetailsView complaint={MOCK_COMPLAINT} />
+      <ComplaintDetailsView complaint={complaint} />
     </section>
   );
 }

@@ -5,21 +5,19 @@ import {
   Badge,
   FileDigit,
   Hash,
+  User,
 } from "lucide-react";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
 const severityLabels: Record<string, { label: string; color: string }> = {
-  High: { label: "عالية جداً", color: "text-destructive" },
+  High: { label: "عالية", color: "text-destructive" },
   Medium: { label: "متوسطة", color: "text-tertiary" },
   Low: { label: "منخفضة", color: "text-muted-foreground" },
 };
 
-const statusLabels: Record<string, { label: string; variant: string }> = {
-  NotFinished: { label: "غير منتهية", variant: "bg-warning/10 text-warning" },
-  Finished: { label: "منتهية", variant: "bg-success/10 text-success" },
-  Suspended: { label: "معلقة", variant: "bg-secondary/10 text-secondary" },
-  Referral: { label: "محالة", variant: "bg-info/10 text-info" },
-  Archived: { label: "مؤرشفة", variant: "bg-muted text-muted-foreground" },
+const caseStatusLabels: Record<string, { label: string; variant: string }> = {
+  NOT_FINISHED: { label: "قيد الفحص", variant: "bg-warning/10 text-warning" },
+  FINISHED: { label: "تم الفحص", variant: "bg-success/10 text-success" },
 };
 
 interface ComplaintMetaPanelProps {
@@ -31,16 +29,17 @@ export function ComplaintMetaPanel({ complaint }: ComplaintMetaPanelProps) {
     label: complaint.severity,
     color: "text-foreground",
   };
-  const status = statusLabels[complaint.status] ?? {
-    label: complaint.status,
-    variant: "bg-muted text-muted-foreground",
-  };
+
+  const caseStatus = complaint.caseStatus
+    ? caseStatusLabels[complaint.caseStatus] ?? { label: complaint.caseStatus, variant: "bg-muted text-muted-foreground" }
+    : { label: complaint.examinationStatusName || "-", variant: "bg-muted text-muted-foreground" };
 
   const rows = [
-    { icon: Hash, label: "رقم الشكوى", value: complaint.complaintNumber },
+    { icon: Hash, label: "رقم الشكوى", value: `#${complaint.complaintNumber}-${complaint.statementYear}` },
     { icon: FileDigit, label: "سنة البيان", value: String(complaint.statementYear) },
-    { icon: Calendar, label: "تاريخ الوصول", value: complaint.arrivalDate },
-    { icon: Building2, label: "الجهة المختصة", value: complaint.departmentId },
+    { icon: Calendar, label: "تاريخ الوصول", value: new Date(complaint.arrivalDate).toLocaleDateString("ar-SA") },
+    { icon: Building2, label: "الجهة", value: complaint.departmentName || "-" },
+    { icon: User, label: "المواطن", value: complaint.citizenName },
     {
       icon: AlertTriangle,
       label: "درجة الخطورة",
@@ -52,8 +51,8 @@ export function ComplaintMetaPanel({ complaint }: ComplaintMetaPanelProps) {
       icon: Badge,
       label: "الحالة",
       value: (
-        <span className={`inline-block px-2 py-0.5 rounded-full text-label-xs font-heading ${status.variant}`}>
-          {status.label}
+        <span className={`inline-block px-2 py-0.5 rounded-full text-label-xs font-heading ${caseStatus.variant}`}>
+          {caseStatus.label}
         </span>
       ),
     },

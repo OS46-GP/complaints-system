@@ -79,13 +79,13 @@ export function ComplaintList({
         <EmptyState hasFilters={hasFilters} onClear={clearFilters} />
       ) : (
         <>
-          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:hidden grid grid-cols-1 gap-4">
             {complaints.map((complaint) => (
               <ComplaintCard key={complaint.id} complaint={complaint} />
             ))}
           </div>
 
-          <DataTable className="hidden lg:block">
+          <DataTable className="hidden md:block w-full overflow-x-auto">
             <DataTableHeader columns={columns} />
             <DataTableBody>
               {complaints.map((complaint) => (
