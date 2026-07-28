@@ -1,57 +1,52 @@
-import { UserPlus } from "lucide-react";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import type { UserCreateFormData } from "@/features/user-create/types";
+import type { UserFormData } from "@/features/user-create/types";
 
 interface BasicInfoSectionProps {
-  data: UserCreateFormData;
-  onChange: (partial: Partial<UserCreateFormData>) => void;
+  data: UserFormData;
+  onChange: (partial: Partial<UserFormData>) => void;
+  isEdit?: boolean;
 }
 
-export function BasicInfoSection({ data, onChange }: BasicInfoSectionProps) {
+export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-primary">
-          <UserPlus className="size-5" />
-          البيانات الأساسية
-        </CardTitle>
+        <CardTitle className="text-primary">البيانات الأساسية</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
           <div className="space-y-3">
-            <Label htmlFor="fullName">
-              الاسم بالكامل
+            <Label htmlFor="username">
+              اسم المستخدم
               <span className="text-destructive mr-0.5">*</span>
             </Label>
             <Input
-              id="fullName"
-              value={data.fullName}
-              onChange={(e) => onChange({ fullName: e.target.value })}
-              placeholder="مثال: محمد عبدالله الشمري"
+              id="username"
+              value={data.username}
+              onChange={(e) => onChange({ username: e.target.value })}
+              placeholder="اسم المستخدم للنظام"
+              className="h-10"
+              disabled={isEdit}
+            />
+          </div>
+          <div className="space-y-3">
+            <Label htmlFor="password">
+              {isEdit ? "كلمة المرور الجديدة" : "كلمة المرور"}
+              {!isEdit && <span className="text-destructive mr-0.5">*</span>}
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              value={data.password}
+              onChange={(e) => onChange({ password: e.target.value })}
+              placeholder={isEdit ? "اتركه فارغاً إذا لم ترد التغيير" : "••••••••"}
               className="h-10"
             />
           </div>
           <div className="space-y-3">
-            <Label htmlFor="employeeId">
-              الرقم الوظيفي
-              <span className="text-destructive mr-0.5">*</span>
-            </Label>
-            <Input
-              id="employeeId"
-              value={data.employeeId}
-              onChange={(e) => onChange({ employeeId: e.target.value })}
-              placeholder="EMP-12345"
-              className="h-10 font-mono"
-            />
-          </div>
-          <div className="space-y-3">
-            <Label htmlFor="email">
-              البريد الإلكتروني
-              <span className="text-destructive mr-0.5">*</span>
-            </Label>
+            <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input
               id="email"
               type="email"

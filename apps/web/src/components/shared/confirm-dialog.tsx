@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "destructive" | "default";
+  loading?: boolean;
   onConfirm: () => void;
 }
 
@@ -26,6 +28,8 @@ export function ConfirmDialog({
   description,
   confirmLabel = "تأكيد",
   cancelLabel = "إلغاء",
+  variant = "default",
+  loading,
   onConfirm,
 }: ConfirmDialogProps) {
   return (
@@ -36,10 +40,11 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
             {cancelLabel}
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
+          <Button variant={variant} onClick={onConfirm} disabled={loading}>
+            {loading && <Loader2 className="size-4 animate-spin" />}
             {confirmLabel}
           </Button>
         </DialogFooter>

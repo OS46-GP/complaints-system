@@ -10,11 +10,7 @@ export default function AdminCreateUser() {
       />
 
       <div className="mt-8">
-        <UserCreateForm
-          onSubmit={async () => {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }}
-        />
+        <UserCreateForm />
       </div>
     </div>
   );

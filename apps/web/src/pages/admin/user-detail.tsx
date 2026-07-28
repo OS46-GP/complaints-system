@@ -1,3 +1,19 @@
+import { useParams } from "react-router";
+import { PageHeader } from "@/components/shared/page-header";
+import { UserEditForm } from "@/features/user-edit/user-edit-form";
+
 export default function AdminUserDetail() {
-  return <div>Admin User Detail</div>;
+  const { id } = useParams();
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <PageHeader
+        title="تعديل المستخدم"
+        description="تحديث بيانات وصلاحيات المستخدم."
+      />
+      <div className="mt-8">
+        <UserEditForm userId={id!} />
+      </div>
+    </div>
+  );
 }
