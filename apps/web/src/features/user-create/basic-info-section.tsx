@@ -1,15 +1,15 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import type { CreateUserFormData } from "@/features/user-create/types";
+import type { UserFormData } from "@/features/user-create/types";
 
 interface BasicInfoSectionProps {
-  data: CreateUserFormData;
-  onChange: (partial: Partial<CreateUserFormData>) => void;
-  errors?: Partial<Record<keyof CreateUserFormData, string>>;
+  data: UserFormData;
+  onChange: (partial: Partial<UserFormData>) => void;
+  isEdit?: boolean;
 }
 
-export function BasicInfoSection({ data, onChange, errors }: BasicInfoSectionProps) {
+export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionProps) {
   return (
     <Card>
       <CardHeader>
@@ -28,29 +28,22 @@ export function BasicInfoSection({ data, onChange, errors }: BasicInfoSectionPro
               onChange={(e) => onChange({ username: e.target.value })}
               placeholder="اسم المستخدم للنظام"
               className="h-10"
-              aria-invalid={!!errors?.username}
+              disabled={isEdit}
             />
-            {errors?.username && (
-              <p className="text-sm text-destructive">{errors.username}</p>
-            )}
           </div>
           <div className="space-y-3">
             <Label htmlFor="password">
-              كلمة المرور
-              <span className="text-destructive mr-0.5">*</span>
+              {isEdit ? "كلمة المرور الجديدة" : "كلمة المرور"}
+              {!isEdit && <span className="text-destructive mr-0.5">*</span>}
             </Label>
             <Input
               id="password"
               type="password"
               value={data.password}
               onChange={(e) => onChange({ password: e.target.value })}
-              placeholder="••••••••"
+              placeholder={isEdit ? "اتركه فارغاً إذا لم ترد التغيير" : "••••••••"}
               className="h-10"
-              aria-invalid={!!errors?.password}
             />
-            {errors?.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
           </div>
           <div className="space-y-3">
             <Label htmlFor="email">البريد الإلكتروني</Label>

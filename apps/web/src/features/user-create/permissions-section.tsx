@@ -3,11 +3,11 @@ import { ShieldCheck, UserCog, ShieldAlert } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import type { CreateUserFormData } from "@/features/user-create/types";
+import type { UserFormData } from "@/features/user-create/types";
 
 interface PermissionsSectionProps {
-  data: CreateUserFormData;
-  onChange: (partial: Partial<CreateUserFormData>) => void;
+  data: UserFormData;
+  onChange: (partial: Partial<UserFormData>) => void;
 }
 
 const ROLE_OPTIONS: {

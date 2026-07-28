@@ -4,7 +4,12 @@ export interface CreateUserPayload {
   role: "Official" | "Admin";
 }
 
-export interface CreateUserFormData {
+export interface UpdateUserPayload {
+  password?: string;
+  role?: "Official" | "Admin";
+}
+
+export interface UserFormData {
   username: string;
   password: string;
   email: string;

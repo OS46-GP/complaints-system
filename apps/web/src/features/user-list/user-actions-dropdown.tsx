@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
@@ -8,6 +9,8 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
+
+import { PATHS } from "@/router/paths";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +32,7 @@ export function UserActionsDropdown({
   userId,
   userName,
 }: UserActionsDropdownProps) {
+  const navigate = useNavigate();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -41,7 +45,7 @@ export function UserActionsDropdown({
     },
   });
 
-  const handleEdit = () => {};
+  const handleEdit = () => navigate(PATHS.ADMIN.USER_DETAIL(userId));
   const handlePermissions = () => {};
   const handleDelete = () => setDeleteOpen(true);
 

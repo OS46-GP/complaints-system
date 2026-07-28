@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,24 +12,34 @@ import { Button } from "@/components/ui/button";
 import { BasicInfoSection } from "@/features/user-create/basic-info-section";
 import { PermissionsSection } from "@/features/user-create/permissions-section";
 import { usersApi } from "@/features/users/api";
-import type { UserFormData } from "@/features/user-create/types";
+import type { UserEditFormData } from "@/features/user-edit/types";
+
+interface UserEditFormProps {
+  userId: string;
+}
 
 const schema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
-  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+  password: z.string().or(z.literal("")),
   email: z.string(),
   role: z.enum(["Official", "Admin"]),
 });
 
-export function UserCreateForm() {
+export function UserEditForm({ userId }: UserEditFormProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const { data: existingUser, isLoading } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => usersApi.getById(userId),
+  });
 
   const {
     watch,
     setValue,
     handleSubmit,
-  } = useForm<UserFormData>({
+    reset,
+  } = useForm<UserEditFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       username: "",
@@ -38,35 +49,57 @@ export function UserCreateForm() {
     },
   });
 
+  useEffect(() => {
+    if (existingUser) {
+      reset({
+        username: existingUser.username,
+        password: "",
+        email: "",
+        role: existingUser.role,
+      });
+    }
+  }, [existingUser, reset]);
+
   const data = watch();
 
-  const update = (partial: Partial<UserFormData>) => {
+  const update = (partial: Partial<UserEditFormData>) => {
     for (const [key, value] of Object.entries(partial)) {
-      setValue(key as keyof UserFormData, value as never);
+      setValue(key as keyof UserEditFormData, value as never);
     }
   };
 
   const mutation = useMutation({
-    mutationFn: (formData: UserFormData) =>
-      usersApi.create({
-        username: formData.username,
-        password: formData.password,
+    mutationFn: (formData: UserEditFormData) =>
+      usersApi.update(userId, {
+        password: formData.password || undefined,
         role: formData.role,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("تم إنشاء المستخدم بنجاح");
+      toast.success("تم تحديث المستخدم بنجاح");
       navigate(PATHS.ADMIN.USERS);
     },
   });
 
-  const onSubmit = (formData: UserFormData) => {
+  const onSubmit = (formData: UserEditFormData) => {
     mutation.mutate(formData);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-stack-lg pb-12 mx-auto">
-      <BasicInfoSection data={data} onChange={update} />
+      <BasicInfoSection
+        data={data}
+        onChange={update}
+        isEdit
+      />
       <PermissionsSection data={data} onChange={update} />
 
       <div className="flex items-center justify-end gap-stack-md pt-6">
@@ -85,7 +118,7 @@ export function UserCreateForm() {
           ) : (
             <Save className="size-4" />
           )}
-          {mutation.isPending ? "جارٍ الحفظ..." : "حفظ المستخدم"}
+          {mutation.isPending ? "جارٍ الحفظ..." : "تحديث المستخدم"}
         </Button>
       </div>
     </form>
