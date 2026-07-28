@@ -40,6 +40,11 @@ export class EmbeddingService {
         error instanceof Error ? error.message : String(error);
       if (/already exists/i.test(message)) {
         this.logger.warn('Embedding index already exists');
+      } else if (/cannot have more than \d+ dimensions/i.test(message)) {
+        this.logger.warn(
+          `Skipping index creation — ${message}. Vector search will use brute-force. ` +
+          `To create an index manually, see https://github.com/pgvector/pgvector#indexing.`,
+        );
       } else {
         this.logger.error('Failed to create embedding index', error);
         throw error;
