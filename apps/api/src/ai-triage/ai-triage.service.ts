@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Logger } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { PrismaService, Prisma } from "../prisma/prisma.service";
 import { EmbeddingService } from "./embedding.service";
 import { Severity } from "@prisma/client";
 import { getOrCreateAgent, ENABLE_AI } from "./agents/triage-agent";
@@ -9,6 +9,12 @@ import type {
   RecurrenceMatch,
   RecurrenceCandidate,
 } from "./interfaces/analyze-result.interface";
+
+function sanitizeForLog(value: string): string {
+  const maxLen = 80;
+  if (value.length <= maxLen) return value;
+  return value.slice(0, maxLen) + "...";
+}
 
 const API_TO_PRISMA_SEVERITY: Record<SeverityLevel, Severity> = {
   LOW: Severity.Low,
@@ -30,10 +36,22 @@ export class AiTriageService {
   async analyze(id: string): Promise<AnalyzeResult> {
     const complaint = await this.prisma.complaint.findUnique({
       where: { id },
-      include: {
-        citizen: true,
-        department: true,
-        examinationStatus: true,
+      select: {
+        id: true,
+        subject: true,
+        complaintNumber: true,
+        statementYear: true,
+        arrivalDate: true,
+        departmentId: true,
+        severity: true,
+        annotation: true,
+        examinationResult: true,
+        authorityResponseText: true,
+        citizen: {
+          select: { nationalId: true, village: true, district: true, fullName: true, mobileNumber: true },
+        },
+        department: { select: { name: true } },
+        examinationStatus: { select: { name: true } },
       },
     });
 
@@ -45,10 +63,12 @@ export class AiTriageService {
 
     const severity = await this.scoreSeverity(complaint);
 
-    await this.prisma.complaint.update({
-      where: { id },
-      data: { severity: API_TO_PRISMA_SEVERITY[severity] },
-    });
+    if (complaint.severity === Severity.Low) {
+      await this.prisma.complaint.update({
+        where: { id },
+        data: { severity: API_TO_PRISMA_SEVERITY[severity] },
+      });
+    }
 
     return { severity, recurrenceMatches };
   }
@@ -147,7 +167,7 @@ export class AiTriageService {
     const { citizen, departmentId } = complaint;
     const timeWindowStart = new Date(Date.now() - RECURRENCE_TIME_WINDOW_MS);
 
-    const where: Record<string, unknown> = {
+    const where: Prisma.ComplaintWhereInput = {
       id: { not: complaint.id },
       createdAt: { gte: timeWindowStart },
     };
@@ -157,21 +177,18 @@ export class AiTriageService {
     }
 
     if (citizen?.village || citizen?.district) {
-      where.citizen = {};
-      const or: Record<string, string>[] = [];
+      const OR: Prisma.CitizenWhereInput[] = [];
       if (citizen.village) {
-        or.push({ village: citizen.village });
+        OR.push({ village: citizen.village });
       }
       if (citizen.district) {
-        or.push({ district: citizen.district });
+        OR.push({ district: citizen.district });
       }
-      if (or.length > 0) {
-        (where.citizen as Record<string, unknown>).OR = or;
-      }
+      where.citizen = { OR };
     }
 
     return this.prisma.complaint.findMany({
-      where: where as never,
+      where,
       include: {
         citizen: {
           select: { nationalId: true, village: true, district: true },
@@ -227,9 +244,9 @@ Return ONLY a JSON array of indices. Example: [0, 1, 2] or [0, 3] or [].
 
 No explanation.`;
 
-      this.logger.log(`Recurrence prompt:\n${recurrencePrompt}`);
+      this.logger.debug(`Recurrence prompt:\n${recurrencePrompt}`);
       const result = await agent.generate(recurrencePrompt);
-      this.logger.log(`Recurrence raw response: "${result.text}"`);
+      this.logger.log(`Recurrence response indices: "${result.text}"`);
 
       const matchIndices = this.parseSimilarityResult(
         result.text,
@@ -254,6 +271,7 @@ No explanation.`;
         .replace(/```json\s*|\s*```/g, "")
         .replace(/```/g, "")
         .trim();
+      if (cleaned.length === 0) return null;
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed)) {
         return parsed.filter(
@@ -264,11 +282,13 @@ No explanation.`;
     } catch {
       const matches = text.match(/\[([\d,\s]*)\]/);
       if (matches) {
-        const indices = matches[1]
+        const raw = matches[1].trim();
+        if (raw.length === 0) return [];
+        const indices = raw
           .split(",")
           .map((s) => parseInt(s.trim(), 10))
           .filter((n) => !isNaN(n) && n >= 0 && n < maxIndex);
-        return indices.length > 0 ? indices : null;
+        return indices;
       }
       return null;
     }
@@ -278,7 +298,7 @@ No explanation.`;
     try {
       for (const m of matches) {
         const ids = [sourceId, m.id].sort();
-        await this.prisma.client.complaintLink.upsert({
+        await this.prisma.complaintLink.upsert({
           where: { sourceId_targetId: { sourceId: ids[0], targetId: ids[1] } },
           create: { sourceId: ids[0], targetId: ids[1] },
           update: {},
@@ -287,6 +307,80 @@ No explanation.`;
     } catch (error) {
       this.logger.warn('Failed to persist recurrence link', error);
     }
+  }
+
+  async getLinks(complaintId: string): Promise<AnalyzeResult> {
+    const links = await this.prisma.complaintLink.findMany({
+      where: {
+        OR: [{ sourceId: complaintId }, { targetId: complaintId }],
+      },
+      include: {
+        source: {
+          include: {
+            citizen: true,
+            department: true,
+            examinationStatus: true,
+            actions: { orderBy: { actionDate: "desc" } },
+          },
+        },
+        target: {
+          include: {
+            citizen: true,
+            department: true,
+            examinationStatus: true,
+            actions: { orderBy: { actionDate: "desc" } },
+          },
+        },
+      },
+    });
+
+    const linkedComplaints = links.map((l) => {
+      const c = l.sourceId === complaintId ? l.target : l.source;
+      return this.toRecurrenceMatch(c);
+    });
+
+    return { severity: "LOW", recurrenceMatches: linkedComplaints };
+  }
+
+  private toRecurrenceMatch(complaint: {
+    id: string;
+    complaintNumber: number;
+    statementYear: number;
+    arrivalDate: Date;
+    subject: string;
+    examinationStatus?: { name: string } | null;
+    endDate: Date | null;
+    actions: {
+      id: string;
+      action: string;
+      actionDate: Date;
+      notes: string | null;
+    }[];
+  }): RecurrenceMatch {
+    return {
+      id: complaint.id,
+      complaintNumber: complaint.complaintNumber,
+      statementYear: complaint.statementYear,
+      arrivalDate:
+        complaint.arrivalDate instanceof Date
+          ? complaint.arrivalDate.toISOString()
+          : String(complaint.arrivalDate),
+      subject: complaint.subject,
+      examinationStatus: complaint.examinationStatus?.name ?? null,
+      endDate:
+        complaint.endDate instanceof Date
+          ? complaint.endDate.toISOString()
+          : (complaint.endDate ?? null),
+      actions: complaint.actions.map((a) => ({
+        id: a.id,
+        action: a.action,
+        actionDate:
+          a.actionDate instanceof Date
+            ? a.actionDate.toISOString()
+            : String(a.actionDate),
+        notes: a.notes,
+      })),
+    };
   }
 
   private async upsertCurrentEmbedding(complaint: {
@@ -337,9 +431,9 @@ Additional Context: "${impactInfo}"
 
 Respond with exactly one word: LOW, MEDIUM, or HIGH.`;
 
-      this.logger.log(`Severity prompt:\n${severityPrompt}`);
+      this.logger.debug(`Severity prompt for complaint (dept=${departmentName}): ${sanitizeForLog(complaint.subject)}`);
       const result = await agent.generate(severityPrompt);
-      this.logger.log(`Severity raw response: "${result.text}"`);
+      this.logger.log(`Severity response: "${result.text}"`);
 
       return this.parseSeverityResult(result.text);
     } catch (error) {
@@ -359,29 +453,6 @@ Respond with exactly one word: LOW, MEDIUM, or HIGH.`;
   private toRecurrenceMatches(
     candidates: RecurrenceCandidate[],
   ): RecurrenceMatch[] {
-    return candidates.map((c) => ({
-      id: c.id,
-      complaintNumber: c.complaintNumber,
-      statementYear: c.statementYear,
-      arrivalDate:
-        c.arrivalDate instanceof Date
-          ? c.arrivalDate.toISOString()
-          : String(c.arrivalDate),
-      subject: c.subject,
-      examinationStatus: c.examinationStatus?.name ?? null,
-      endDate:
-        c.endDate instanceof Date
-          ? c.endDate.toISOString()
-          : (c.endDate ?? null),
-      actions: c.actions.map((a) => ({
-        id: a.id,
-        action: a.action,
-        actionDate:
-          a.actionDate instanceof Date
-            ? a.actionDate.toISOString()
-            : String(a.actionDate),
-        notes: a.notes,
-      })),
-    }));
+    return candidates.map((c) => this.toRecurrenceMatch(c));
   }
 }
