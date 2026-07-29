@@ -7,7 +7,6 @@ import {
   Pencil,
   Shield,
   Trash2,
-  Loader2,
 } from "lucide-react";
 
 import { PATHS } from "@/router/paths";

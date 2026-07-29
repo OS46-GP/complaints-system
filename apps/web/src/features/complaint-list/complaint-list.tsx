@@ -4,6 +4,7 @@ import { ComplaintCard } from "@/features/complaint-list/complaint-card";
 import { ComplaintTableRow } from "@/features/complaint-list/complaint-table-row";
 import { ComplaintToolbar } from "@/features/complaint-list/complaint-list-toolbar";
 import { EmptyState } from "@/features/complaint-list/empty-state";
+import type { FilterValues } from "@/features/complaint-list/complaint-filter-sheet";
 import {
   DataTable,
   DataTableHeader,
@@ -11,6 +12,11 @@ import {
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import type { ComplaintItem } from "@/features/complaint-list/types";
+
+export interface SortState {
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+}
 
 interface ComplaintListProps {
   complaints: ComplaintItem[];
@@ -30,6 +36,25 @@ const columns: DataTableColumn[] = [
   { key: "actions", label: "الإجراءات", className: "text-center" },
 ];
 
+function filtersFromParams(params: URLSearchParams): FilterValues {
+  return {
+    departmentId: params.get("departmentId") ?? "",
+    severity: params.get("severity") ?? "",
+    complaintTypeId: params.get("complaintTypeId") ?? "",
+    examinationStatusId: params.get("examinationStatusId") ?? "",
+    receptionMethodId: params.get("receptionMethodId") ?? "",
+    presentationStatusId: params.get("presentationStatusId") ?? "",
+    complaintNumber: params.get("complaintNumber") ?? "",
+    statementYear: params.get("statementYear") ?? "",
+  };
+}
+
+function sortFromParams(params: URLSearchParams): SortState {
+  const sortBy = params.get("sortBy") || "createdAt";
+  const sortOrder = (params.get("sortOrder") as "asc" | "desc") || "desc";
+  return { sortBy, sortOrder };
+}
+
 export function ComplaintList({
   complaints,
   totalPages,
@@ -39,6 +64,8 @@ export function ComplaintList({
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
   const search = searchParams.get("search") ?? "";
+  const filters = filtersFromParams(searchParams);
+  const sort = sortFromParams(searchParams);
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => {
@@ -55,11 +82,31 @@ export function ComplaintList({
     });
   };
 
+  const handleFiltersChange = (newFilters: FilterValues) => {
+    setSearchParams((prev) => {
+      for (const [key, value] of Object.entries(newFilters)) {
+        if (value) prev.set(key, value);
+        else prev.delete(key);
+      }
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
+  const handleSortChange = (newSort: SortState) => {
+    setSearchParams((prev) => {
+      prev.set("sortBy", newSort.sortBy);
+      prev.set("sortOrder", newSort.sortOrder);
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
   const clearFilters = () => {
     setSearchParams({});
   };
 
-  const hasFilters = !!search;
+  const hasFilters = !!search || Object.values(filters).some((v) => v !== "");
   const isEmpty = complaints.length === 0;
 
   const start = (currentPage - 1) * pageSize + 1;
@@ -70,6 +117,11 @@ export function ComplaintList({
       <ComplaintToolbar
         search={search}
         onSearchSubmit={handleSearchChange}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onFiltersClear={clearFilters}
+        sort={sort}
+        onSortChange={handleSortChange}
         start={start}
         end={end}
         totalCount={totalCount}

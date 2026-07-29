@@ -5,8 +5,10 @@ import toast from "react-hot-toast";
 import {
   MoreHorizontal,
   Eye,
+  Pencil,
+  MessageSquareReply,
+  Archive,
   Trash2,
-  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,15 @@ export function ComplaintActionsDropdown({
   const detailPath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_DETAIL(complaintId)
     : PATHS.USER.COMPLAINT_DETAIL(complaintId);
+  const editPath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_EDIT(complaintId)
+    : PATHS.USER.COMPLAINT_EDIT(complaintId);
+  const responsePath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_RESPONSE(complaintId)
+    : PATHS.USER.COMPLAINT_RESPONSE(complaintId);
+  const archivePath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_ARCHIVE(complaintId)
+    : PATHS.USER.COMPLAINT_ARCHIVE(complaintId);
 
   const deleteMutation = useMutation({
     mutationFn: () => complaintsApi.remove(complaintId),
@@ -48,6 +59,9 @@ export function ComplaintActionsDropdown({
   });
 
   const handleView = () => navigate(detailPath);
+  const handleEdit = () => navigate(editPath);
+  const handleResponse = () => navigate(responsePath);
+  const handleArchive = () => navigate(archivePath);
   const handleDelete = () => setDeleteOpen(true);
 
   return (
@@ -62,6 +76,18 @@ export function ComplaintActionsDropdown({
           <DropdownMenuItem onClick={handleView} className="w-full gap-2">
             <Eye className="size-4" />
             عرض التفاصيل
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleEdit} className="w-full gap-2">
+            <Pencil className="size-4" />
+            تعديل
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleResponse} className="w-full gap-2">
+            <MessageSquareReply className="size-4" />
+            إضافة رد
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleArchive} className="w-full gap-2">
+            <Archive className="size-4" />
+            أرشفة
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -1,23 +1,49 @@
-import { useState, useEffect } from "react";
-import { Filter, ArrowUpDown, Download, Plus, Search } from "lucide-react";
+import { Plus, ArrowUp, ArrowDown } from "lucide-react";
 import { useLocation, Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { SearchForm } from "@/components/shared/search-form";
 import { DataTableToolbar } from "@/components/shared/data-table";
 import { PATHS } from "@/router/paths";
+import { ComplaintFilterSheet, type FilterValues } from "@/features/complaint-list/complaint-filter-sheet";
+import type { SortState } from "@/features/complaint-list/complaint-list";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 
 interface ComplaintToolbarProps {
   search: string;
   onSearchSubmit: (value: string) => void;
+  filters: FilterValues;
+  onFiltersChange: (filters: FilterValues) => void;
+  onFiltersClear: () => void;
+  sort: SortState;
+  onSortChange: (sort: SortState) => void;
   start: number;
   end: number;
   totalCount: number;
 }
 
+const SORT_OPTIONS = [
+  { value: "createdAt", label: "تاريخ الإنشاء" },
+  { value: "complaintNumber", label: "رقم الشكوى" },
+  { value: "severity", label: "الأولوية" },
+  { value: "subject", label: "الموضوع" },
+];
+
 export function ComplaintToolbar({
   search,
   onSearchSubmit,
+  filters,
+  onFiltersChange,
+  onFiltersClear,
+  sort,
+  onSortChange,
   start,
   end,
   totalCount,
@@ -28,45 +54,65 @@ export function ComplaintToolbar({
     ? PATHS.ADMIN.NEW_COMPLAINT
     : PATHS.USER.NEW_COMPLAINT;
 
-  const [inputValue, setInputValue] = useState(search);
+  const currentLabel = SORT_OPTIONS.find((o) => o.value === sort.sortBy)?.label ?? "ترتيب";
 
-  useEffect(() => {
-    setInputValue(search);
-  }, [search]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      onSearchSubmit(inputValue);
+  const handleSortSelect = (value: string) => {
+    if (value === sort.sortBy) {
+      onSortChange({
+        sortBy: value,
+        sortOrder: sort.sortOrder === "asc" ? "desc" : "asc",
+      });
+    } else {
+      onSortChange({ sortBy: value, sortOrder: "desc" });
     }
   };
 
   return (
-    <DataTableToolbar className="flex-wrap gap-2">
-      <div className="flex items-center gap-2">
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4" />
-          <input
-            dir="auto"
-            className="h-9 w-48 pe-9 ps-3 bg-surface-container-lowest border border-input rounded-lg text-body-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none transition-all"
-            placeholder="بحث..."
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-        </div>
-        <Button variant="outline" size="sm" className="gap-1 md:gap-2">
-          <Filter className="size-4" />
-          <span className="hidden sm:inline">تصفية</span>
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1 md:gap-2">
-          <ArrowUpDown className="size-4" />
-          <span className="hidden sm:inline">ترتيب</span>
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1 md:gap-2">
-          <Download className="size-4" />
-          <span className="hidden sm:inline">تصدير</span>
-        </Button>
+    <DataTableToolbar className="flex-wrap gap-2 justify-center sm:justify-between">
+      <div className="flex items-center gap-2 flex-wrap">
+        <SearchForm
+          defaultValue={search}
+          onSubmit={onSearchSubmit}
+          inputClassName="w-48"
+        />
+        <ComplaintFilterSheet
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          onClear={onFiltersClear}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1 md:gap-2">
+              {sort.sortOrder === "asc" ? (
+                <ArrowUp className="size-4" />
+              ) : (
+                <ArrowDown className="size-4" />
+              )}
+              <span className="hidden sm:inline">{currentLabel}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuRadioGroup
+              value={sort.sortBy}
+              onValueChange={handleSortSelect}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuRadioItem key={option.value} value={option.value}>
+                  <span className="flex items-center gap-2">
+                    {option.label}
+                    {sort.sortBy === option.value && (
+                      sort.sortOrder === "asc" ? (
+                        <ArrowUp className="size-3.5 text-muted-foreground" />
+                      ) : (
+                        <ArrowDown className="size-3.5 text-muted-foreground" />
+                      )
+                    )}
+                  </span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Separator orientation="vertical" className="h-6" />
         <Button asChild size="sm">
           <Link to={newComplaintPath} className="gap-1 md:gap-2">
@@ -75,13 +121,11 @@ export function ComplaintToolbar({
           </Link>
         </Button>
       </div>
-      <div className="flex items-center gap-2">
-        <Separator orientation="vertical" className="hidden sm:block h-6" />
-        <p className="font-heading text-label-sm text-muted-foreground whitespace-nowrap">
-          {start.toLocaleString("ar-SA")}–{end.toLocaleString("ar-SA")}
-          <span className="hidden sm:inline"> من أصل {totalCount.toLocaleString("ar-SA")}</span>
-        </p>
-      </div>
+      <p className="font-heading text-body-lg text-muted-foreground whitespace-nowrap text-center">
+        {start.toLocaleString("ar-SA")}–{end.toLocaleString("ar-SA")}
+        {" "}
+        من أصل {totalCount.toLocaleString("ar-SA")}
+      </p>
     </DataTableToolbar>
   );
 }

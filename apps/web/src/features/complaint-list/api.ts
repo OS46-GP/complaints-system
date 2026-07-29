@@ -8,7 +8,18 @@ export interface ListComplaintsParams {
   name?: string;
   complaintNumber?: number;
   statementYear?: number;
+  severity?: "Low" | "Medium" | "High";
+  complaintTypeId?: number;
+  examinationStatusId?: number;
+  receptionMethodId?: number;
+  presentationStatusId?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
+
+export type UpdateComplaintPayload = Omit<Partial<CreateComplaintPayload>, "citizen"> & {
+  citizen?: Partial<CreateComplaintPayload["citizen"]>;
+};
 
 export interface CreateComplaintPayload {
   statementYear: number;
@@ -21,6 +32,14 @@ export interface CreateComplaintPayload {
   departmentId?: string;
   presentationStatusId?: number;
   annotation?: string;
+  examinationStatusId?: number;
+  examinationResult?: string;
+  authorityResponseText?: string;
+  authorityResponseDate?: string;
+  incomingResponseNumber?: string;
+  archiveNumber?: string;
+  archiveDate?: string;
+  archiveLocation?: string;
   citizen: {
     fullName: string;
     nationalId?: string;
@@ -42,6 +61,8 @@ export const complaintsApi = {
     axiosClient.delete(`/api/complaints/${id}`).then((res) => res.data),
   create: (payload: CreateComplaintPayload) =>
     axiosClient.post("/api/complaints", payload).then((res) => res.data),
+  update: (id: string, payload: UpdateComplaintPayload) =>
+    axiosClient.patch(`/api/complaints/${id}`, payload).then((res) => res.data),
   getDepartments: () =>
     axiosClient.get<Department[]>("/api/complaints/departments").then((res) => res.data),
   getComplaintTypes: () =>
@@ -50,4 +71,6 @@ export const complaintsApi = {
     axiosClient.get<ReferenceItem[]>("/api/complaints/reception-methods").then((res) => res.data),
   getPresentationStatuses: () =>
     axiosClient.get<ReferenceItem[]>("/api/complaints/presentation-statuses").then((res) => res.data),
+  getExaminationStatuses: () =>
+    axiosClient.get<ReferenceItem[]>("/api/complaints/examination-statuses").then((res) => res.data),
 };

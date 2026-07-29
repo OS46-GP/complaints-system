@@ -161,6 +161,13 @@ export class ComplaintsService {
       name,
       complaintNumber,
       statementYear,
+      severity,
+      complaintTypeId,
+      examinationStatusId,
+      receptionMethodId,
+      presentationStatusId,
+      sortBy,
+      sortOrder = "desc",
     } = query;
     const skip = (page - 1) * limit;
 
@@ -184,13 +191,45 @@ export class ComplaintsService {
       where.statementYear = statementYear;
     }
 
+    if (severity) {
+      where.severity = severity;
+    }
+
+    if (complaintTypeId) {
+      where.complaintTypeId = complaintTypeId;
+    }
+
+    if (examinationStatusId) {
+      where.examinationStatusId = examinationStatusId;
+    }
+
+    if (receptionMethodId) {
+      where.receptionMethodId = receptionMethodId;
+    }
+
+    if (presentationStatusId) {
+      where.presentationStatusId = presentationStatusId;
+    }
+
+    const validSortFields = [
+      "complaintNumber",
+      "createdAt",
+      "severity",
+      "subject",
+      "arrivalDate",
+      "statementYear",
+    ];
+    const orderBy = sortBy && validSortFields.includes(sortBy)
+      ? { [sortBy]: sortOrder }
+      : { createdAt: "desc" as const };
+
     const [items, total] = await Promise.all([
       this.prisma.complaint.findMany({
         where,
         skip,
         take: limit,
         include: complaintInclude,
-        orderBy: { createdAt: "desc" },
+        orderBy,
       }),
       this.prisma.complaint.count({ where }),
     ]);

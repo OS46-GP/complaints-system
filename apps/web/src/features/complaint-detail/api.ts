@@ -1,6 +1,6 @@
 import { complaintsApi } from "@/features/complaint-list/api";
 import type { ApiComplaint } from "@/features/complaint-list/types";
-import type { ComplaintDetailsData, ComplaintFileItem } from "@/features/complaint-detail/types";
+import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
 function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
   return {
@@ -13,6 +13,12 @@ function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
     subject: api.subject,
     annotation: api.annotation,
     caseStatus: api.caseStatus,
+    authorityResponseText: api.authorityResponseText ?? null,
+    authorityResponseDate: api.authorityResponseDate ?? null,
+    incomingResponseNumber: api.incomingResponseNumber ?? null,
+    archiveNumber: api.archiveNumber ?? null,
+    archiveDate: api.archiveDate ?? null,
+    archiveLocation: api.archiveLocation ?? null,
     citizenName: api.citizen.fullName,
     citizenNationalId: api.citizen.nationalId || null,
     citizenMobile: api.citizen.mobileNumber || null,

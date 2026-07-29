@@ -1,7 +1,11 @@
+import { useNavigate, useLocation } from "react-router";
 import {
   ArrowUp,
   UserSearch,
   ListTree,
+  Pencil,
+  MessageSquareReply,
+  Archive,
   XCircle,
   Printer,
   ChevronLeft,
@@ -19,7 +23,23 @@ interface ComplaintQuickActionsProps {
 }
 
 export function ComplaintQuickActions({ complaintId }: ComplaintQuickActionsProps) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
+  const editPath = isAdmin
+    ? `/admin/complaints/${complaintId}/edit`
+    : `/user/complaints/${complaintId}/edit`;
+  const responsePath = isAdmin
+    ? `/admin/complaints/${complaintId}/response`
+    : `/user/complaints/${complaintId}/response`;
+  const archivePath = isAdmin
+    ? `/admin/complaints/${complaintId}/archive`
+    : `/user/complaints/${complaintId}/archive`;
+
   const actions: ActionItem[] = [
+    { icon: <Pencil className="size-5" />, label: "تعديل الشكوى", onClick: () => navigate(editPath) },
+    { icon: <MessageSquareReply className="size-5" />, label: "إضافة رد", onClick: () => navigate(responsePath) },
+    { icon: <Archive className="size-5" />, label: "أرشفة", onClick: () => navigate(archivePath) },
     { icon: <ArrowUp className="size-5" />, label: "تصعيد الشكوى", onClick: () => console.log("Escalate", complaintId) },
     { icon: <UserSearch className="size-5" />, label: "إعادة تعيين وكيل", onClick: () => console.log("Reassign", complaintId) },
     { icon: <ListTree className="size-5" />, label: "تغيير التصنيف", onClick: () => console.log("Reclassify", complaintId) },

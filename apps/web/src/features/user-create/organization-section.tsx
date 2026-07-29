@@ -10,11 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import type { UserCreateFormData } from "@/features/user-create/types";
+import type { UserFormData } from "@/features/user-create/types";
 
 interface OrganizationSectionProps {
-  data: UserCreateFormData;
-  onChange: (partial: Partial<UserCreateFormData>) => void;
+  data: UserFormData;
+  onChange: (partial: Partial<UserFormData>) => void;
 }
 
 const DEPARTMENTS = [
