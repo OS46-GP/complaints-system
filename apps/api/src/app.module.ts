@@ -6,6 +6,10 @@ import { ComplaintsModule } from "./complaints/complaints.module";
 import { ReportingModule } from "./reporting/reporting.module";
 import { UsersModule } from "./users/users.module";
 import { AiTriageModule } from "./ai-triage/ai-triage.module";
+import { AiSummarizationModule } from "./ai-summarization/ai-summarization.module";
+import { MastraModule } from "@mastra/nestjs";
+import { mastra } from "./ai-summarization/mastra.config";
+import { IntakeModule } from "./intake/intake.module";
 
 @Module({
   imports: [
@@ -16,6 +20,9 @@ import { AiTriageModule } from "./ai-triage/ai-triage.module";
     ComplaintsModule,
     ReportingModule,
     AiTriageModule,
+    IntakeModule,
+    AiSummarizationModule,
+    MastraModule.register({ mastra }),
   ],
 })
 export class AppModule {}
