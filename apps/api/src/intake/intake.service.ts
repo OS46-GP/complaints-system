@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, ServiceUnavailableException, OnModuleInit } from "@nestjs/common";
 import { OcrService } from "./ocr/ocr.service";
 import { getOrCreateOcrAgent } from "./agents/ocr-agent";
 import * as path from "path";
@@ -15,12 +15,15 @@ export interface OcrIntakeResult {
 }
 
 @Injectable()
-export class IntakeService {
+export class IntakeService implements OnModuleInit {
   private readonly logger = new Logger(IntakeService.name);
   private readonly uploadDir: string;
 
   constructor(private readonly ocrService: OcrService) {
     this.uploadDir = path.resolve(process.env.UPLOAD_DIR || "uploads");
+  }
+
+  onModuleInit() {
     const ocrDir = path.join(this.uploadDir, "ocr");
     if (!fs.existsSync(ocrDir)) {
       fs.mkdirSync(ocrDir, { recursive: true });
@@ -53,7 +56,7 @@ export class IntakeService {
     fs.writeFileSync(filePath, file.buffer);
     this.logger.log(`Image stored at ${storageKey}`);
 
-    return `/api/uploads/${storageKey}`;
+    return `/uploads/${storageKey}`;
   }
 
   private async extractFields(rawText: string): Promise<Record<string, FieldResult>> {
@@ -65,19 +68,17 @@ export class IntakeService {
       );
 
       const parsed = this.parseAgentResponse(result.text);
-      if (!parsed) {
-        this.logger.warn("Agent returned unparseable response, returning empty fields");
-        return {};
-      }
 
       return parsed;
     } catch (error) {
       this.logger.error("Mastra agent field extraction failed", error);
-      return {};
+      throw new ServiceUnavailableException(
+        "فشلت معالجة الاستخراج الذكي. يرجى المحاولة مرة أخرى.",
+      );
     }
   }
 
-  private parseAgentResponse(text: string): Record<string, FieldResult> | null {
+  private parseAgentResponse(text: string): Record<string, FieldResult> {
     try {
       const cleaned = text
         .trim()
@@ -88,7 +89,7 @@ export class IntakeService {
       const parsed = JSON.parse(cleaned);
 
       if (!parsed || typeof parsed !== "object" || !parsed.fields) {
-        return null;
+        throw new Error("Agent response missing fields");
       }
 
       const fields: Record<string, FieldResult> = {};
@@ -105,7 +106,8 @@ export class IntakeService {
 
       return fields;
     } catch {
-      return null;
+      this.logger.warn("Agent returned unparseable response");
+      return {};
     }
   }
 }
