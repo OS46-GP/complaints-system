@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
+import type { FieldResult } from "@/features/complaint-list/types";
 import { createComplaint } from "@/features/complaint-create/api";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
@@ -39,15 +40,39 @@ const DEFAULT_DATA: ComplaintCreateFormData = {
   files: [],
 };
 
+function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<ComplaintCreateFormData> {
+  const get = (key: string) => fields[key]?.value ?? "";
+  return {
+    subject: get("subject") || undefined,
+    severity: (get("severity") as "Low" | "Medium" | "High") || undefined,
+    respondentName: get("respondentName") || undefined,
+    annotation: get("annotation") || undefined,
+    citizen: {
+      fullName: get("citizenName") || get("fullName") || "",
+      nationalId: get("nationalId") || undefined,
+      mobileNumber: get("mobileNumber") || undefined,
+      address: get("address") || undefined,
+      village: get("village") || undefined,
+      district: get("district") || undefined,
+    },
+  };
+}
+
 const TOTAL_STEPS = 4;
 
 export function ComplaintCreateForm() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
   const queryClient = useQueryClient();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<ComplaintCreateFormData>(DEFAULT_DATA);
+
+  const ocrData = (state as { ocrData?: Record<string, FieldResult> } | null)?.ocrData;
+  const initialData = ocrData
+    ? { ...DEFAULT_DATA, ...ocrFieldsToFormData(ocrData) }
+    : DEFAULT_DATA;
+
+  const [data, setData] = useState<ComplaintCreateFormData>(initialData);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

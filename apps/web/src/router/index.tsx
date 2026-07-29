@@ -17,6 +17,7 @@ const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
 
 const AdminDashboardPage = lazy(() => import("@/pages/admin/dashboard"));
 const AdminComplaintsPage = lazy(() => import("@/pages/admin/complaints"));
+const AdminOcrIntakePage = lazy(() => import("@/pages/admin/ocr-intake"));
 const AdminComplaintDetailPage = lazy(
   () => import("@/pages/admin/complaint-detail"),
 );
@@ -37,6 +38,7 @@ const AdminSettingsPage = lazy(() => import("@/pages/admin/settings"));
 
 const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
 const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
+const UserOcrIntakePage = lazy(() => import("@/pages/user/ocr-intake"));
 const UserNewComplaintPage = lazy(() => import("@/pages/user/new-complaint"));
 const UserEditComplaintPage = lazy(
   () => import("@/pages/user/edit-complaint"),
@@ -113,6 +115,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminComplaintsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.COMPLAINT_OCR}
+              element={
+                <SuspenseBoundary>
+                  <AdminOcrIntakePage />
                 </SuspenseBoundary>
               }
             />
@@ -202,10 +212,18 @@ const AppRouter = () => {
               }
             />
             <Route
-              path={PATHS.USER.COMPLAINTS}
+              path={PATHS.USER.COMPLAINT_OCR}
               element={
                 <SuspenseBoundary>
-                  <UserComplaintsPage />
+                  <UserOcrIntakePage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.COMPLAINT_DETAIL(":id")}
+              element={
+                <SuspenseBoundary>
+                  <UserComplaintDetailPage />
                 </SuspenseBoundary>
               }
             />
