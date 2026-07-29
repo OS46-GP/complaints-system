@@ -13,6 +13,8 @@ export interface ListComplaintsParams {
   examinationStatusId?: number;
   receptionMethodId?: number;
   presentationStatusId?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export type UpdateComplaintPayload = Omit<Partial<CreateComplaintPayload>, "citizen"> & {

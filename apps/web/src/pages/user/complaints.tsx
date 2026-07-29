@@ -23,9 +23,11 @@ export default function UserComplaints() {
   const presentationStatusId = searchParams.get("presentationStatusId") ?? "";
   const complaintNumber = searchParams.get("complaintNumber") ?? "";
   const statementYear = searchParams.get("statementYear") ?? "";
+  const sortBy = searchParams.get("sortBy");
+  const sortOrder = searchParams.get("sortOrder") as "asc" | "desc" | null;
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ["complaints", search, page, departmentId, severity, complaintTypeId, examinationStatusId, receptionMethodId, presentationStatusId, complaintNumber, statementYear],
+    queryKey: ["complaints", search, page, departmentId, severity, complaintTypeId, examinationStatusId, receptionMethodId, presentationStatusId, complaintNumber, statementYear, sortBy, sortOrder],
     queryFn: () =>
       complaintsApi.list({
         name: search || undefined,
@@ -39,6 +41,8 @@ export default function UserComplaints() {
         presentationStatusId: presentationStatusId ? Number(presentationStatusId) : undefined,
         complaintNumber: complaintNumber ? Number(complaintNumber) : undefined,
         statementYear: statementYear ? Number(statementYear) : undefined,
+        sortBy: sortBy ?? undefined,
+        sortOrder: sortOrder ?? undefined,
       }),
   });
 

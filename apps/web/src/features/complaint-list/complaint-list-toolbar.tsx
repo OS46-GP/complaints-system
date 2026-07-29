@@ -1,4 +1,4 @@
-import { ArrowUpDown, Download, Plus } from "lucide-react";
+import { ArrowUpDown, Download, Plus, ArrowUp, ArrowDown } from "lucide-react";
 import { useLocation, Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,14 @@ import { SearchForm } from "@/components/shared/search-form";
 import { DataTableToolbar } from "@/components/shared/data-table";
 import { PATHS } from "@/router/paths";
 import { ComplaintFilterSheet, type FilterValues } from "@/features/complaint-list/complaint-filter-sheet";
+import type { SortState } from "@/features/complaint-list/complaint-list";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 
 interface ComplaintToolbarProps {
   search: string;
@@ -14,10 +22,19 @@ interface ComplaintToolbarProps {
   filters: FilterValues;
   onFiltersChange: (filters: FilterValues) => void;
   onFiltersClear: () => void;
+  sort: SortState;
+  onSortChange: (sort: SortState) => void;
   start: number;
   end: number;
   totalCount: number;
 }
+
+const SORT_OPTIONS = [
+  { value: "createdAt", label: "تاريخ الإنشاء" },
+  { value: "complaintNumber", label: "رقم الشكوى" },
+  { value: "severity", label: "الأولوية" },
+  { value: "subject", label: "الموضوع" },
+];
 
 export function ComplaintToolbar({
   search,
@@ -25,6 +42,8 @@ export function ComplaintToolbar({
   filters,
   onFiltersChange,
   onFiltersClear,
+  sort,
+  onSortChange,
   start,
   end,
   totalCount,
@@ -34,6 +53,19 @@ export function ComplaintToolbar({
   const newComplaintPath = isAdmin
     ? PATHS.ADMIN.NEW_COMPLAINT
     : PATHS.USER.NEW_COMPLAINT;
+
+  const currentLabel = SORT_OPTIONS.find((o) => o.value === sort.sortBy)?.label ?? "ترتيب";
+
+  const handleSortSelect = (value: string) => {
+    if (value === sort.sortBy) {
+      onSortChange({
+        sortBy: value,
+        sortOrder: sort.sortOrder === "asc" ? "desc" : "asc",
+      });
+    } else {
+      onSortChange({ sortBy: value, sortOrder: "desc" });
+    }
+  };
 
   return (
     <DataTableToolbar className="flex-wrap gap-2">
@@ -48,10 +80,39 @@ export function ComplaintToolbar({
           onFiltersChange={onFiltersChange}
           onClear={onFiltersClear}
         />
-        <Button variant="outline" size="sm" className="gap-1 md:gap-2">
-          <ArrowUpDown className="size-4" />
-          <span className="hidden sm:inline">ترتيب</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1 md:gap-2">
+              {sort.sortOrder === "asc" ? (
+                <ArrowUp className="size-4" />
+              ) : (
+                <ArrowDown className="size-4" />
+              )}
+              <span className="hidden sm:inline">{currentLabel}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuRadioGroup
+              value={sort.sortBy}
+              onValueChange={handleSortSelect}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuRadioItem key={option.value} value={option.value}>
+                  <span className="flex items-center gap-2">
+                    {option.label}
+                    {sort.sortBy === option.value && (
+                      sort.sortOrder === "asc" ? (
+                        <ArrowUp className="size-3.5 text-muted-foreground" />
+                      ) : (
+                        <ArrowDown className="size-3.5 text-muted-foreground" />
+                      )
+                    )}
+                  </span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button variant="outline" size="sm" className="gap-1 md:gap-2">
           <Download className="size-4" />
           <span className="hidden sm:inline">تصدير</span>

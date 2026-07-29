@@ -13,6 +13,11 @@ import {
 } from "@/components/shared/data-table";
 import type { ComplaintItem } from "@/features/complaint-list/types";
 
+export interface SortState {
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+}
+
 interface ComplaintListProps {
   complaints: ComplaintItem[];
   totalPages: number;
@@ -44,6 +49,12 @@ function filtersFromParams(params: URLSearchParams): FilterValues {
   };
 }
 
+function sortFromParams(params: URLSearchParams): SortState {
+  const sortBy = params.get("sortBy") || "createdAt";
+  const sortOrder = (params.get("sortOrder") as "asc" | "desc") || "desc";
+  return { sortBy, sortOrder };
+}
+
 export function ComplaintList({
   complaints,
   totalPages,
@@ -54,6 +65,7 @@ export function ComplaintList({
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
   const search = searchParams.get("search") ?? "";
   const filters = filtersFromParams(searchParams);
+  const sort = sortFromParams(searchParams);
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => {
@@ -81,6 +93,15 @@ export function ComplaintList({
     });
   };
 
+  const handleSortChange = (newSort: SortState) => {
+    setSearchParams((prev) => {
+      prev.set("sortBy", newSort.sortBy);
+      prev.set("sortOrder", newSort.sortOrder);
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
   const clearFilters = () => {
     setSearchParams({});
   };
@@ -99,6 +120,8 @@ export function ComplaintList({
         filters={filters}
         onFiltersChange={handleFiltersChange}
         onFiltersClear={clearFilters}
+        sort={sort}
+        onSortChange={handleSortChange}
         start={start}
         end={end}
         totalCount={totalCount}

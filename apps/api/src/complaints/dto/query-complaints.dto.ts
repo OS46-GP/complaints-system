@@ -57,4 +57,12 @@ export class QueryComplaintsDto {
   @Type(() => Number)
   @IsInt()
   presentationStatusId?: number;
+
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @IsOptional()
+  @IsString()
+  sortOrder?: "asc" | "desc";
 }
