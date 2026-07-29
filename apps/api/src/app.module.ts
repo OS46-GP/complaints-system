@@ -20,9 +20,9 @@ import { IntakeModule } from "./intake/intake.module";
     ComplaintsModule,
     ReportingModule,
     AiTriageModule,
+    IntakeModule,
     AiSummarizationModule,
     MastraModule.register({ mastra }),
-    IntakeModule,
   ],
 })
 export class AppModule {}
