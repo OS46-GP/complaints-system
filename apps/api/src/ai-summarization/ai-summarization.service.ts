@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { generateDraft } from "./mastra.config";
 
 @Injectable()
-export class AgentService {
+export class AiSummarizationService {
   constructor(private readonly prisma: PrismaService) {}
 
   async summarizeComplaint(complaintId: string): Promise<{ draft: string }> {
