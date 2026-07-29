@@ -27,6 +27,9 @@ const AdminEditComplaintPage = lazy(
 const AdminComplaintResponsePage = lazy(
   () => import("@/pages/admin/complaint-response"),
 );
+const AdminComplaintArchivePage = lazy(
+  () => import("@/pages/admin/complaint-archive"),
+);
 const AdminUsersPage = lazy(() => import("@/pages/admin/users"));
 const AdminCreateUserPage = lazy(() => import("@/pages/admin/create-user"));
 const AdminUserDetailPage = lazy(() => import("@/pages/admin/user-detail"));
@@ -40,6 +43,9 @@ const UserEditComplaintPage = lazy(
 );
 const UserComplaintResponsePage = lazy(
   () => import("@/pages/user/complaint-response"),
+);
+const UserComplaintArchivePage = lazy(
+  () => import("@/pages/user/complaint-archive"),
 );
 const UserComplaintDetailPage = lazy(
   () => import("@/pages/user/complaint-detail"),
@@ -143,6 +149,14 @@ const AppRouter = () => {
               }
             />
             <Route
+              path={PATHS.ADMIN.COMPLAINT_ARCHIVE(":id")}
+              element={
+                <SuspenseBoundary>
+                  <AdminComplaintArchivePage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
               path={PATHS.ADMIN.USERS}
               element={
                 <SuspenseBoundary>
@@ -216,6 +230,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserComplaintResponsePage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.COMPLAINT_ARCHIVE(":id")}
+              element={
+                <SuspenseBoundary>
+                  <UserComplaintArchivePage />
                 </SuspenseBoundary>
               }
             />

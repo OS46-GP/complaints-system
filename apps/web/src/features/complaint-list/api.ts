@@ -30,6 +30,9 @@ export interface CreateComplaintPayload {
   authorityResponseText?: string;
   authorityResponseDate?: string;
   incomingResponseNumber?: string;
+  archiveNumber?: string;
+  archiveDate?: string;
+  archiveLocation?: string;
   citizen: {
     fullName: string;
     nationalId?: string;

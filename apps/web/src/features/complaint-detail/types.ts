@@ -10,6 +10,9 @@ export interface ComplaintDetailsData {
   authorityResponseText: string | null;
   authorityResponseDate: string | null;
   incomingResponseNumber: string | null;
+  archiveNumber: string | null;
+  archiveDate: string | null;
+  archiveLocation: string | null;
   caseStatus: "FINISHED" | "NOT_FINISHED" | null;
   citizenName: string;
   citizenNationalId: string | null;

@@ -7,6 +7,7 @@ import {
   Eye,
   Pencil,
   MessageSquareReply,
+  Archive,
   Trash2,
 } from "lucide-react";
 
@@ -44,6 +45,9 @@ export function ComplaintActionsDropdown({
   const responsePath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_RESPONSE(complaintId)
     : PATHS.USER.COMPLAINT_RESPONSE(complaintId);
+  const archivePath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_ARCHIVE(complaintId)
+    : PATHS.USER.COMPLAINT_ARCHIVE(complaintId);
 
   const deleteMutation = useMutation({
     mutationFn: () => complaintsApi.remove(complaintId),
@@ -57,6 +61,7 @@ export function ComplaintActionsDropdown({
   const handleView = () => navigate(detailPath);
   const handleEdit = () => navigate(editPath);
   const handleResponse = () => navigate(responsePath);
+  const handleArchive = () => navigate(archivePath);
   const handleDelete = () => setDeleteOpen(true);
 
   return (
@@ -79,6 +84,10 @@ export function ComplaintActionsDropdown({
           <DropdownMenuItem onClick={handleResponse} className="w-full gap-2">
             <MessageSquareReply className="size-4" />
             إضافة رد
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleArchive} className="w-full gap-2">
+            <Archive className="size-4" />
+            أرشفة
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
