@@ -1,4 +1,4 @@
-import { Filter, ArrowUpDown, Download, Plus } from "lucide-react";
+import { ArrowUpDown, Download, Plus } from "lucide-react";
 import { useLocation, Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,14 @@ import { Separator } from "@/components/ui/separator";
 import { SearchForm } from "@/components/shared/search-form";
 import { DataTableToolbar } from "@/components/shared/data-table";
 import { PATHS } from "@/router/paths";
+import { ComplaintFilterSheet, type FilterValues } from "@/features/complaint-list/complaint-filter-sheet";
 
 interface ComplaintToolbarProps {
   search: string;
   onSearchSubmit: (value: string) => void;
+  filters: FilterValues;
+  onFiltersChange: (filters: FilterValues) => void;
+  onFiltersClear: () => void;
   start: number;
   end: number;
   totalCount: number;
@@ -18,6 +22,9 @@ interface ComplaintToolbarProps {
 export function ComplaintToolbar({
   search,
   onSearchSubmit,
+  filters,
+  onFiltersChange,
+  onFiltersClear,
   start,
   end,
   totalCount,
@@ -36,10 +43,11 @@ export function ComplaintToolbar({
           onSubmit={onSearchSubmit}
           inputClassName="w-48"
         />
-        <Button variant="outline" size="sm" className="gap-1 md:gap-2">
-          <Filter className="size-4" />
-          <span className="hidden sm:inline">تصفية</span>
-        </Button>
+        <ComplaintFilterSheet
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          onClear={onFiltersClear}
+        />
         <Button variant="outline" size="sm" className="gap-1 md:gap-2">
           <ArrowUpDown className="size-4" />
           <span className="hidden sm:inline">ترتيب</span>

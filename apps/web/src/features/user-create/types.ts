@@ -14,4 +14,6 @@ export interface UserFormData {
   password: string;
   email: string;
   role: "Official" | "Admin";
+  department?: string;
+  jobTitle?: string;
 }

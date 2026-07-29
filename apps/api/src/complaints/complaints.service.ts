@@ -161,6 +161,11 @@ export class ComplaintsService {
       name,
       complaintNumber,
       statementYear,
+      severity,
+      complaintTypeId,
+      examinationStatusId,
+      receptionMethodId,
+      presentationStatusId,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -182,6 +187,26 @@ export class ComplaintsService {
 
     if (statementYear) {
       where.statementYear = statementYear;
+    }
+
+    if (severity) {
+      where.severity = severity;
+    }
+
+    if (complaintTypeId) {
+      where.complaintTypeId = complaintTypeId;
+    }
+
+    if (examinationStatusId) {
+      where.examinationStatusId = examinationStatusId;
+    }
+
+    if (receptionMethodId) {
+      where.receptionMethodId = receptionMethodId;
+    }
+
+    if (presentationStatusId) {
+      where.presentationStatusId = presentationStatusId;
     }
 
     const [items, total] = await Promise.all([

@@ -8,6 +8,11 @@ export interface ListComplaintsParams {
   name?: string;
   complaintNumber?: number;
   statementYear?: number;
+  severity?: "Low" | "Medium" | "High";
+  complaintTypeId?: number;
+  examinationStatusId?: number;
+  receptionMethodId?: number;
+  presentationStatusId?: number;
 }
 
 export type UpdateComplaintPayload = Omit<Partial<CreateComplaintPayload>, "citizen"> & {

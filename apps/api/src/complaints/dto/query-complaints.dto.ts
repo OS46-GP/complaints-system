@@ -1,5 +1,6 @@
-import { IsOptional, IsString, IsInt, Min } from "class-validator";
+import { IsOptional, IsString, IsInt, IsEnum, Min } from "class-validator";
 import { Type } from "class-transformer";
+import { Severity } from "@prisma/client";
 
 export class QueryComplaintsDto {
   @IsOptional()
@@ -32,4 +33,28 @@ export class QueryComplaintsDto {
   @Type(() => Number)
   @IsInt()
   statementYear?: number;
+
+  @IsOptional()
+  @IsEnum(Severity)
+  severity?: Severity;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  complaintTypeId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  examinationStatusId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  receptionMethodId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  presentationStatusId?: number;
 }
