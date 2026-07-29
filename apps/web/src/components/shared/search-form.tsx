@@ -53,7 +53,9 @@ export function SearchForm({
 
   const handleReset = () => {
     if (!formRef.current) return;
-    const input = formRef.current.elements.namedItem(name) as HTMLInputElement | null;
+    const input = formRef.current.elements.namedItem(
+      name,
+    ) as HTMLInputElement | null;
     if (input) {
       input.value = "";
       input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -71,22 +73,24 @@ export function SearchForm({
         className={`relative flex items-center gap-2 ${className ?? ""}`}
       >
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4 pointer-events-none z-10" />
           <Input
             dir="rtl"
             name={name}
             key={defaultValue}
             defaultValue={defaultValue}
-            className={`ps-9 ${error ? "border-destructive focus-visible:ring-destructive/20" : ""} ${inputClassName ?? ""}`}
+            className={`${error ? "border-destructive focus-visible:ring-destructive/20" : ""} ${inputClassName ?? ""}`}
             placeholder={placeholder}
-            onChange={(e) => { setError(null); setHasValue(e.target.value !== ""); }}
+            onChange={(e) => {
+              setError(null);
+              setHasValue(e.target.value !== "");
+            }}
             aria-invalid={!!error}
           />
           {hasValue && (
             <button
               type="button"
               onClick={handleReset}
-              className="absolute left-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="size-4" />
             </button>
@@ -96,9 +100,7 @@ export function SearchForm({
           <Search className="size-4" />
         </Button>
       </form>
-      {error && (
-        <p className="text-destructive text-label-sm px-1">{error}</p>
-      )}
+      {error && <p className="text-destructive text-label-sm px-1">{error}</p>}
     </div>
   );
 }

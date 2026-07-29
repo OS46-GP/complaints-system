@@ -3,6 +3,11 @@ import { ComplaintActionsDropdown } from "@/features/complaint-list/complaint-ac
 import { ComplaintPriority } from "@/features/complaint-list/complaint-priority";
 import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 interface ComplaintTableRowProps {
   complaint: ComplaintItem;
@@ -14,11 +19,18 @@ export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data font-bold text-primary">
         {complaint.displayId}
       </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4">
+      <DataTableCell className="p-0 px-6 py-4 max-w-64">
         <div className="flex flex-col">
-          <span className="font-heading text-label-sm font-bold text-foreground">
-            {complaint.subject}
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="font-heading text-label-sm font-bold text-foreground truncate">
+                {complaint.subject}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="start">
+              {complaint.subject}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-foreground">

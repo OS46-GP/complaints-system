@@ -1,4 +1,6 @@
+import { useState, type FormEvent } from "react";
 import { Search, X } from "lucide-react";
+import { useNavigate, useLocation } from "react-router";
 
 import {
   Dialog,
@@ -10,10 +12,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PATHS } from "@/router/paths";
 
 export function SearchDialog() {
+  const [value, setValue] = useState("");
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const query = value.trim();
+    if (!query) return;
+    const base = isAdmin ? PATHS.ADMIN.COMPLAINTS : PATHS.USER.COMPLAINTS;
+    navigate(`${base}?search=${encodeURIComponent(query)}`);
+    setOpen(false);
+    setValue("");
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className="md:hidden flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
           <Search className="size-5" />
@@ -30,14 +49,16 @@ export function SearchDialog() {
             </Button>
           </DialogClose>
         </DialogHeader>
-        <div className="relative px-4 py-3">
-          <Search className="absolute start-7 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <form onSubmit={handleSubmit} className="relative px-4 py-3">
+          <Search className="absolute start-7 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="اكتب كلمة البحث..."
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
             className="h-12 rounded-lg border-none bg-muted ps-9 pe-4 text-base"
             autoFocus
           />
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

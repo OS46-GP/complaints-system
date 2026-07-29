@@ -1,4 +1,4 @@
-import { ArrowUpDown, Download, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, ArrowUp, ArrowDown } from "lucide-react";
 import { useLocation, Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -68,8 +68,8 @@ export function ComplaintToolbar({
   };
 
   return (
-    <DataTableToolbar className="flex-wrap gap-2">
-      <div className="flex items-center gap-2">
+    <DataTableToolbar className="flex-wrap gap-2 justify-center sm:justify-between">
+      <div className="flex items-center gap-2 flex-wrap">
         <SearchForm
           defaultValue={search}
           onSubmit={onSearchSubmit}
@@ -113,10 +113,6 @@ export function ComplaintToolbar({
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="outline" size="sm" className="gap-1 md:gap-2">
-          <Download className="size-4" />
-          <span className="hidden sm:inline">تصدير</span>
-        </Button>
         <Separator orientation="vertical" className="h-6" />
         <Button asChild size="sm">
           <Link to={newComplaintPath} className="gap-1 md:gap-2">
@@ -125,16 +121,11 @@ export function ComplaintToolbar({
           </Link>
         </Button>
       </div>
-      <div className="flex items-center gap-2">
-        <Separator orientation="vertical" className="hidden sm:block h-6" />
-        <p className="font-heading text-body-lg text-muted-foreground whitespace-nowrap">
-          {start.toLocaleString("ar-SA")}–{end.toLocaleString("ar-SA")}
-          <span className="hidden sm:inline">
-            {" "}
-            من أصل {totalCount.toLocaleString("ar-SA")}
-          </span>
-        </p>
-      </div>
+      <p className="font-heading text-body-lg text-muted-foreground whitespace-nowrap text-center">
+        {start.toLocaleString("ar-SA")}–{end.toLocaleString("ar-SA")}
+        {" "}
+        من أصل {totalCount.toLocaleString("ar-SA")}
+      </p>
     </DataTableToolbar>
   );
 }
