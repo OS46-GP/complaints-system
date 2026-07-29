@@ -1,31 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
 import { createWorker, PSM } from "tesseract.js";
-
-/*
- * OCR Engine: Tesseract.js v5 with Arabic (ara) language model
- *
- * Rationale:
- * - Free, open-source, works entirely offline — no external API calls, no data leaves the server
- * - Native Arabic script support via trained LSTM models (including Arabic-script handwriting in clear cases)
- * - Pre-processing converts the image to grayscale + high contrast to improve both printed and handwritten recognition
- * - Fallback to English (eng) for mixed-form documents (e.g. Latin-script complaint numbers, dates)
- *
- * Alternatives considered (rejected):
- * - Google Cloud Vision: excellent handwriting + Arabic, but paid API + requires internet + sends citizen data
- *   to a third party (problematic for National ID / personal data in government context)
- * - Gemini Vision via Mastra: viable secondary pass, but tying OCR to the LLM provider creates coupling;
- *   Tesseract handles the free, offline first pass while the LLM reasoning step (ocr-agent.ts) corrects
- *   any OCR ambiguities using the LLM's own language understanding
- * - PaddleOCR (Python): best open-source handwriting + Arabic support, but requires Python runtime +
- *   subprocess communication from Node.js — too heavy for this project's deployment model
- *
- * Handwriting strategy:
- * - The LSTM model in Tesseract v5 handles clear, structured handwriting (forms with boxes/lines)
- * - For challenging handwriting, the LLM reasoning step (ocr-agent.ts) acts as a semantic corrector,
- *   using context to resolve ambiguous characters and fill gaps
- * - Image pre-processing (binarization, contrast enhancement, deskew) significantly improves
- *   handwritten text recognition — run before passing to Tesseract
- */
+import { Jimp } from "jimp";
 
 export interface OcrResult {
   text: string;
@@ -37,47 +12,71 @@ export interface OcrResult {
   }>;
 }
 
+const workerLogger = (logger: Logger) => (m: { status: string; progress: number }) => {
+  if (m.status === "recognizing text") {
+    logger.debug(`OCR progress: ${(m.progress * 100).toFixed(0)}%`);
+  }
+};
+
 @Injectable()
-export class OcrService {
+export class OcrService implements OnModuleDestroy {
   private readonly logger = new Logger(OcrService.name);
+  private worker: Awaited<ReturnType<typeof createWorker>> | null = null;
+  private workerReady: Promise<void> | null = null;
 
-  async extract(imageBuffer: Buffer): Promise<OcrResult> {
-    const worker = await createWorker("ara+eng", 1, {
-      logger: (m) => {
-        if (m.status === "recognizing text") {
-          this.logger.debug(`OCR progress: ${(m.progress * 100).toFixed(0)}%`);
-        }
-      },
-    });
+  private ensureWorker(): Promise<void> {
+    if (this.workerReady) return this.workerReady;
 
-    try {
-      await worker.setParameters({
+    this.workerReady = (async () => {
+      this.worker = await createWorker("ara+eng", 1, {
+        logger: workerLogger(this.logger),
+      });
+
+      await this.worker.setParameters({
         tessedit_pageseg_mode: PSM.AUTO,
         tessedit_char_whitelist: "",
         preserve_interword_spaces: "1",
       });
+    })();
 
-      const { data } = await worker.recognize(imageBuffer);
-      this.logger.log(`OCR complete: ${data.text.length} chars, mean confidence ${data.confidence?.toFixed(1)}%`);
+    return this.workerReady;
+  }
 
-      return {
-        text: data.text || "",
-        confidence: data.confidence ?? 0,
-        blocks: (data.blocks ?? []).map((b: any) => ({
-          text: b.text || "",
-          confidence: b.confidence ?? 0,
-          bbox: b.bbox
-            ? {
-                x0: b.bbox.x0 ?? 0,
-                y0: b.bbox.y0 ?? 0,
-                x1: b.bbox.x1 ?? 0,
-                y1: b.bbox.y1 ?? 0,
-              }
-            : { x0: 0, y0: 0, x1: 0, y1: 0 },
-        })),
-      };
-    } finally {
-      await worker.terminate();
+  async onModuleDestroy() {
+    if (this.worker) {
+      await this.worker.terminate();
+      this.worker = null;
+      this.workerReady = null;
     }
+  }
+
+  private async preprocess(buffer: Buffer): Promise<Buffer> {
+    const image = await Jimp.read(buffer);
+    image.greyscale().contrast(0.3).normalize();
+    return image.getBuffer("image/jpeg");
+  }
+
+  async extract(imageBuffer: Buffer): Promise<OcrResult> {
+    await this.ensureWorker();
+
+    const processed = await this.preprocess(imageBuffer);
+
+    const { data } = await this.worker!.recognize(processed);
+    this.logger.log(`OCR complete: ${data.text.length} chars, mean confidence ${data.confidence?.toFixed(1)}%`);
+
+    return {
+      text: data.text || "",
+      confidence: data.confidence ?? 0,
+      blocks: (data.blocks ?? []).map((b) => ({
+        text: b.text || "",
+        confidence: b.confidence ?? 0,
+        bbox: {
+          x0: b.bbox?.x0 ?? 0,
+          y0: b.bbox?.y0 ?? 0,
+          x1: b.bbox?.x1 ?? 0,
+          y1: b.bbox?.y1 ?? 0,
+        },
+      })),
+    };
   }
 }
