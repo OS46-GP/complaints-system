@@ -17,7 +17,7 @@ const ipv4Fetch = (url: string | URL | Request, init?: RequestInit) =>
   undiciFetch(url, { ...(init as object), dispatcher: ipv4Agent }) as Promise<Response>;
 
 const googleAI = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? "",
+  apiKey: process.env.GOOGLE_API_KEY ?? "",
   fetch: ipv4Fetch,
 });
 
