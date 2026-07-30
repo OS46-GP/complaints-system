@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams, Link } from "react-router";
-import { Plus, Loader2 } from "lucide-react";
+import { useSearchParams } from "react-router";
+import { Loader2 } from "lucide-react";
 
 import { PATHS } from "@/router/paths";
 import { PageHeader } from "@/components/shared/page-header";
-import { Button } from "@/components/ui/button";
+import { NewComplaintButton } from "@/features/complaint-list/new-complaint-button";
 import { ComplaintList } from "@/features/complaint-list/complaint-list";
 import { complaintsApi } from "@/features/complaint-list/api";
 import { mapApiComplaint } from "@/features/complaint-list/types";
@@ -55,12 +55,7 @@ export default function AdminComplaints() {
         title="إدارة الشكاوى"
         description="متابعة ومعالجة جميع الشكاوى الواردة"
       >
-        <Button asChild className="gap-2">
-          <Link to={PATHS.ADMIN.NEW_COMPLAINT}>
-            <Plus className="size-5" />
-            <span>شكوى جديدة</span>
-          </Link>
-        </Button>
+        <NewComplaintButton newComplaintPath={PATHS.ADMIN.NEW_COMPLAINT} ocrPath={PATHS.ADMIN.COMPLAINT_OCR} />
       </PageHeader>
 
       {isLoading ? (

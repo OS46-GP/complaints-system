@@ -1,5 +1,5 @@
-import { Plus, ArrowUp, ArrowDown } from "lucide-react";
-import { useLocation, Link } from "react-router";
+import { ArrowUp, ArrowDown } from "lucide-react";
+import { useLocation } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -7,6 +7,7 @@ import { SearchForm } from "@/components/shared/search-form";
 import { DataTableToolbar } from "@/components/shared/data-table";
 import { PATHS } from "@/router/paths";
 import { ComplaintFilterSheet, type FilterValues } from "@/features/complaint-list/complaint-filter-sheet";
+import { NewComplaintButton } from "@/features/complaint-list/new-complaint-button";
 import type { SortState } from "@/features/complaint-list/complaint-list";
 import {
   DropdownMenu,
@@ -114,12 +115,7 @@ export function ComplaintToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
         <Separator orientation="vertical" className="h-6" />
-        <Button asChild size="sm">
-          <Link to={newComplaintPath} className="gap-1 md:gap-2">
-            <Plus className="size-4" />
-            <span>جديد</span>
-          </Link>
-        </Button>
+        <NewComplaintButton newComplaintPath={newComplaintPath} ocrPath={isAdmin ? PATHS.ADMIN.COMPLAINT_OCR : PATHS.USER.COMPLAINT_OCR} />
       </div>
       <p className="font-heading text-body-lg text-muted-foreground whitespace-nowrap text-center">
         {start.toLocaleString("ar-SA")}–{end.toLocaleString("ar-SA")}

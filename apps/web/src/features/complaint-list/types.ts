@@ -122,6 +122,16 @@ export interface ReferenceItem {
   name: string;
 }
 
+export interface FieldResult {
+  value: string;
+  confidence: number;
+}
+
+export interface OcrIntakeResult {
+  fields: Record<string, FieldResult>;
+  imageUrl: string;
+}
+
 export function mapApiComplaint(api: ApiComplaint): ComplaintItem {
   const statusConfig = api.caseStatus
     ? CASE_STATUS_LABELS[api.caseStatus]
