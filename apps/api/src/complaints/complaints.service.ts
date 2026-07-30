@@ -81,13 +81,29 @@ export class ComplaintsService {
 
     const data: Record<string, unknown> = toRelationData(complaintData);
     parseDates(data);
-    data.citizen = { create: citizen };
     if (user) {
       data.createdBy = { connect: { id: user.id } };
     }
 
     const complaint = await this.prisma.client.$transaction(async (tx) => {
       const txPrisma = tx as typeof this.prisma.client;
+
+      if (citizen.nationalId?.trim()) {
+        const existing = await (txPrisma as any).citizen.findUnique({
+          where: { nationalId: citizen.nationalId },
+        });
+        if (existing) {
+          data.citizen = { connect: { id: existing.id } };
+          await (txPrisma as any).citizen.update({
+            where: { id: existing.id },
+            data: citizen,
+          });
+        } else {
+          data.citizen = { create: citizen };
+        }
+      } else {
+        data.citizen = { create: citizen };
+      }
 
       const counter = await (txPrisma as any).complaintYearCounter.upsert({
         where: { year: complaintData.statementYear },
@@ -263,17 +279,33 @@ export class ComplaintsService {
   }
 
   async update(id: string, dto: UpdateComplaintDto) {
-    await this.findById(id);
+    const current = await this.findById(id);
 
     const { citizen, ...complaintData } = dto;
 
     const data: Record<string, unknown> = toRelationData(complaintData);
     parseDates(data);
 
+    const currentCitizenId = (current as Record<string, unknown>).citizenId as string | undefined;
+
     if (citizen) {
-      data.citizen = {
-        update: citizen,
-      };
+      if (citizen.nationalId?.trim()) {
+        const existing = await (this.prisma.client as any).citizen.findUnique({
+          where: { nationalId: citizen.nationalId },
+          select: { id: true },
+        }) as { id: string } | null;
+        if (existing && existing.id !== currentCitizenId) {
+          data.citizen = { connect: { id: existing.id } };
+          await (this.prisma.client as any).citizen.update({
+            where: { id: existing.id },
+            data: citizen,
+          });
+        } else {
+          data.citizen = { update: citizen };
+        }
+      } else {
+        data.citizen = { update: citizen };
+      }
     }
 
     const complaint = await this.prisma.complaint.update({
