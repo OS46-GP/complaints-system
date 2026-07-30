@@ -43,17 +43,17 @@ const DEFAULT_DATA: ComplaintCreateFormData = {
 function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<ComplaintCreateFormData> {
   const get = (key: string) => fields[key]?.value ?? "";
   return {
-    subject: get("subject") || undefined,
+    subject: get("complaint_subject") || undefined,
     severity: (get("severity") as "Low" | "Medium" | "High") || undefined,
-    respondentName: get("respondentName") || undefined,
+    respondentName: get("complaint_respondentName") || undefined,
     annotation: get("annotation") || undefined,
     citizen: {
-      fullName: get("citizenName") || get("fullName") || "",
-      nationalId: get("nationalId") || undefined,
-      mobileNumber: get("mobileNumber") || undefined,
-      address: get("address") || undefined,
-      village: get("village") || undefined,
-      district: get("district") || undefined,
+      fullName: get("citizen_fullName") || "",
+      nationalId: get("citizen_nationalId") || undefined,
+      mobileNumber: get("citizen_mobileNumber") || undefined,
+      address: get("citizen_address") || undefined,
+      village: get("citizen_village") || undefined,
+      district: get("citizen_district") || undefined,
     },
   };
 }

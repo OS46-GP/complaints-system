@@ -36,7 +36,7 @@ export function OcrIntakePage() {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await axiosClient.post<OcrIntakeResult>("/api/intake/ocr", formData);
+      const res = await axiosClient.post<OcrIntakeResult>("/api/intake/ocr", formData, { timeout: 120000 });
       const data = res.data;
 
       navigate(newComplaintPath, { state: { ocrData: data.fields } });
