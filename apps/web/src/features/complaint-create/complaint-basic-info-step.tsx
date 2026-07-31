@@ -1,9 +1,21 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useDepartments,
+  useComplaintTypes,
+  useReceptionMethods,
+  useLocations,
+} from "@/features/complaint-list/hooks";
 import { complaintsApi } from "@/features/complaint-list/api";
 import type { LocationItem } from "@/features/complaint-list/types";
 
@@ -16,28 +28,25 @@ const SEVERITY_OPTIONS: { value: ComplaintCreateFormData["severity"]; label: str
 interface ComplaintBasicInfoStepProps {
   data: ComplaintCreateFormData;
   onChange: (partial: Partial<ComplaintCreateFormData>) => void;
+  ocrFields?: Set<string>;
 }
 
-export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoStepProps) {
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: complaintsApi.getDepartments,
-  });
+const selectTriggerClassName = (isOcr: boolean) =>
+  `w-full data-[size=default]:h-11 ${
+    isOcr
+      ? "border-success focus-visible:border-success focus-visible:ring-success/40"
+      : ""
+  }`;
 
-  const { data: complaintTypes } = useQuery({
-    queryKey: ["complaint-types"],
-    queryFn: complaintsApi.getComplaintTypes,
-  });
+const inputOcrClass =
+  "border-success focus-visible:border-success focus-visible:ring-success/40";
 
-  const { data: receptionMethods } = useQuery({
-    queryKey: ["reception-methods"],
-    queryFn: complaintsApi.getReceptionMethods,
-  });
-
-  const { data: locations } = useQuery({
-    queryKey: ["locations"],
-    queryFn: complaintsApi.getLocations,
-  });
+export function ComplaintBasicInfoStep({ data, onChange, ocrFields }: ComplaintBasicInfoStepProps) {
+  const isOcr = (field: string) => ocrFields?.has(field) ?? false;
+  const { data: departments } = useDepartments();
+  const { data: complaintTypes } = useComplaintTypes();
+  const { data: receptionMethods } = useReceptionMethods();
+  const { data: locations } = useLocations();
 
   const centers = useMemo(
     () => (locations ?? []).filter((location) => location.level === 2),
@@ -111,7 +120,7 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
           value={data.subject}
           onChange={(e) => onChange({ subject: e.target.value })}
           placeholder="أدخل عنواناً ملخصاً للشكوى"
-          className="h-11"
+          className={`h-11 ${isOcr("subject") ? inputOcrClass : ""}`}
         />
       </div>
 
@@ -128,7 +137,11 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
                 onChange={(e) => onChange({ severity: e.target.value as ComplaintCreateFormData["severity"] })}
                 className="hidden peer"
               />
-              <div className="h-11 border border-input rounded-lg flex items-center justify-center cursor-pointer transition-all font-heading text-label-sm px-1 hover:bg-surface-container-low peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary hover:peer-checked:bg-primary hover:peer-checked:text-primary-foreground">
+              <div className={`h-11 border border-input rounded-lg flex items-center justify-center cursor-pointer transition-all font-heading text-label-sm px-1 hover:bg-surface-container-low peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary hover:peer-checked:bg-primary hover:peer-checked:text-primary-foreground ${
+                isOcr("severity") && data.severity === option.value
+                  ? "peer-checked:ring-2 peer-checked:ring-success"
+                  : ""
+              }`}>
                 {option.label}
               </div>
             </label>
@@ -139,46 +152,58 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label>الفئة</Label>
-          <select
-            value={data.complaintTypeId}
-            onChange={(e) => onChange({ complaintTypeId: e.target.value })}
-            className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+          <Select
+            dir="rtl"
+            value={data.complaintTypeId || ""}
+            onValueChange={(value) => onChange({ complaintTypeId: value })}
           >
-            <option value="">اختر الفئة</option>
-            {complaintTypes?.map((t) => (
-              <option key={t.id} value={String(t.id)}>{t.name}</option>
-            ))}
-          </select>
+            <SelectTrigger className={selectTriggerClassName(isOcr("complaintTypeId"))}>
+              <SelectValue placeholder="اختر الفئة" />
+            </SelectTrigger>
+            <SelectContent>
+              {complaintTypes?.map((t) => (
+                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-col gap-2">
           <Label>طريقة الاستلام</Label>
-          <select
-            value={data.receptionMethodId}
-            onChange={(e) => onChange({ receptionMethodId: e.target.value })}
-            className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+          <Select
+            dir="rtl"
+            value={data.receptionMethodId || ""}
+            onValueChange={(value) => onChange({ receptionMethodId: value })}
           >
-            <option value="">اختر طريقة الاستلام</option>
-            {receptionMethods?.map((m) => (
-              <option key={m.id} value={String(m.id)}>{m.name}</option>
-            ))}
-          </select>
+            <SelectTrigger className={selectTriggerClassName(isOcr("receptionMethodId"))}>
+              <SelectValue placeholder="اختر طريقة الاستلام" />
+            </SelectTrigger>
+            <SelectContent>
+              {receptionMethods?.map((m) => (
+                <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label>الجهة المعنية</Label>
-          <select
-            value={data.departmentId}
-            onChange={(e) => onChange({ departmentId: e.target.value })}
-            className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+          <Select
+            dir="rtl"
+            value={data.departmentId || ""}
+            onValueChange={(value) => onChange({ departmentId: value })}
           >
-            <option value="">اختر الجهة</option>
-            {departments?.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
+            <SelectTrigger className={selectTriggerClassName(isOcr("departmentId"))}>
+              <SelectValue placeholder="اختر الجهة" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments?.map((d) => (
+                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -187,7 +212,7 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
             value={data.respondentName}
             onChange={(e) => onChange({ respondentName: e.target.value })}
             placeholder="الاسم (اختياري)"
-            className="h-11"
+            className={`h-11 ${isOcr("respondentName") ? inputOcrClass : ""}`}
           />
         </div>
       </div>
@@ -204,7 +229,7 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
               onChange={(e) => onChange({ citizen: { ...data.citizen, nationalId: e.target.value } })}
               onBlur={handleNationalIdBlur}
               placeholder="الرقم القومي"
-              className="h-11"
+              className={`h-11 ${isOcr("citizen.nationalId") ? inputOcrClass : ""}`}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -213,7 +238,7 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
               value={data.citizen.mobileNumber}
               onChange={(e) => onChange({ citizen: { ...data.citizen, mobileNumber: e.target.value } })}
               placeholder="رقم الجوال (اختياري)"
-              className="h-11"
+              className={`h-11 ${isOcr("citizen.mobileNumber") ? inputOcrClass : ""}`}
             />
           </div>
         </div>
@@ -223,7 +248,7 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
             value={data.citizen.fullName}
             onChange={(e) => onChange({ citizen: { ...data.citizen, fullName: e.target.value } })}
             placeholder="الاسم الكامل للمواطن"
-            className="h-11"
+            className={`h-11 ${isOcr("citizen.fullName") ? inputOcrClass : ""}`}
           />
         </div>
         <div className="flex flex-col gap-2 mt-4">
@@ -232,54 +257,62 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
             value={data.citizen.address}
             onChange={(e) => onChange({ citizen: { ...data.citizen, address: e.target.value } })}
             placeholder="العنوان (اختياري)"
-            className="h-11"
+            className={`h-11 ${isOcr("citizen.address") ? inputOcrClass : ""}`}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div className="flex flex-col gap-2">
             <Label>المركز</Label>
-            <select
-              value={data.citizen.district}
-              onChange={(e) =>
+            <Select
+              dir="rtl"
+              value={data.citizen.district || ""}
+              onValueChange={(value) =>
                 onChange({
                   citizen: {
                     ...data.citizen,
-                    district: e.target.value,
+                    district: value,
                     village: "",
                   },
                 })
               }
-              className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
             >
-              <option value="">اختر المركز</option>
-              {centers.map((center) => (
-                <option key={center.code} value={center.name}>
-                  {center.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className={selectTriggerClassName(isOcr("citizen.district"))}>
+                <SelectValue placeholder="اختر المركز" />
+              </SelectTrigger>
+              <SelectContent>
+                {centers.map((center) => (
+                  <SelectItem key={center.code} value={center.name}>
+                    {center.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex flex-col gap-2">
             <Label>القرية</Label>
-            <select
-              value={data.citizen.village}
-              onChange={(e) =>
+            <Select
+              dir="rtl"
+              value={data.citizen.village || ""}
+              onValueChange={(value) =>
                 onChange({
-                  citizen: { ...data.citizen, village: e.target.value },
+                  citizen: { ...data.citizen, village: value },
                 })
               }
-              disabled={!selectedCenter}
-              className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
             >
-              <option value="">
-                {selectedCenter ? "اختر القرية" : "اختر المركز أولاً"}
-              </option>
-              {villages.map((village) => (
-                <option key={village.code} value={village.name}>
-                  {village.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                disabled={!selectedCenter}
+                className={selectTriggerClassName(isOcr("citizen.village"))}
+              >
+                <SelectValue placeholder={selectedCenter ? "اختر القرية" : "اختر المركز أولاً"} />
+              </SelectTrigger>
+              <SelectContent>
+                {villages.map((village) => (
+                  <SelectItem key={village.code} value={village.name}>
+                    {village.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

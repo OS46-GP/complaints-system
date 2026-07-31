@@ -1,12 +1,18 @@
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import AppRouter from "./router";
 import { queryClient } from "./lib/query-client";
 
-import { ThemeProvider } from "./components/shared/theme-provider";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { ThemeProvider, useTheme } from "./components/shared/theme-provider";
+
+function ThemedToaster() {
+  const { theme } = useTheme();
+
+  return <Toaster position="top-right" theme={theme} />;
+}
 
 export default function App() {
   return (
@@ -14,15 +20,7 @@ export default function App() {
       <TooltipProvider delayDuration={0}>
         <QueryClientProvider client={queryClient}>
           <AppRouter />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: { borderRadius: "8px", fontSize: "14px" },
-              success: { duration: 3000 },
-              error: { duration: 5000 },
-            }}
-          />
+          <ThemedToaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
       </TooltipProvider>

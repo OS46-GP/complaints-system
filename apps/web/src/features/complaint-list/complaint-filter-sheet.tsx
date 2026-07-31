@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Filter, RotateCcw, Search, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,13 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { complaintsApi } from "@/features/complaint-list/api";
+import {
+  useDepartments,
+  useComplaintTypes,
+  useExaminationStatuses,
+  useReceptionMethods,
+  usePresentationStatuses,
+} from "@/features/complaint-list/hooks";
 
 export interface FilterValues {
   departmentId: string;
@@ -137,26 +142,11 @@ export function ComplaintFilterSheet({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<FilterValues>(filters);
 
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: complaintsApi.getDepartments,
-  });
-  const { data: complaintTypes } = useQuery({
-    queryKey: ["complaint-types"],
-    queryFn: complaintsApi.getComplaintTypes,
-  });
-  const { data: examinationStatuses } = useQuery({
-    queryKey: ["examination-statuses"],
-    queryFn: complaintsApi.getExaminationStatuses,
-  });
-  const { data: receptionMethods } = useQuery({
-    queryKey: ["reception-methods"],
-    queryFn: complaintsApi.getReceptionMethods,
-  });
-  const { data: presentationStatuses } = useQuery({
-    queryKey: ["presentation-statuses"],
-    queryFn: complaintsApi.getPresentationStatuses,
-  });
+  const { data: departments } = useDepartments();
+  const { data: complaintTypes } = useComplaintTypes();
+  const { data: examinationStatuses } = useExaminationStatuses();
+  const { data: receptionMethods } = useReceptionMethods();
+  const { data: presentationStatuses } = usePresentationStatuses();
 
   const departmentItems = useMemo(
     () => toComboItems(departments),

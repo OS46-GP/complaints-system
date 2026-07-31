@@ -1,16 +1,15 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Save, X, Loader2 } from "lucide-react";
 
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { BasicInfoSection } from "@/features/user-create/basic-info-section";
 import { PermissionsSection } from "@/features/user-create/permissions-section";
-import { usersApi } from "@/features/users/api";
+import { useCreateUser } from "@/features/users/hooks";
 import type { UserFormData } from "@/features/user-create/types";
 
 const schema = z.object({
@@ -22,7 +21,7 @@ const schema = z.object({
 
 export function UserCreateForm() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const mutation = useCreateUser();
 
   const {
     watch,
@@ -46,22 +45,13 @@ export function UserCreateForm() {
     }
   };
 
-  const mutation = useMutation({
-    mutationFn: (formData: UserFormData) =>
-      usersApi.create({
-        username: formData.username,
-        password: formData.password,
-        role: formData.role,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("تم إنشاء المستخدم بنجاح");
-      navigate(PATHS.ADMIN.USERS);
-    },
-  });
-
   const onSubmit = (formData: UserFormData) => {
-    mutation.mutate(formData);
+    mutation.mutate(formData, {
+      onSuccess: () => {
+        toast.success("تم إنشاء المستخدم بنجاح");
+        navigate(PATHS.ADMIN.USERS);
+      },
+    });
   };
 
   return (

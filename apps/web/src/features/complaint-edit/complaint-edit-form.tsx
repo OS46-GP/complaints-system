@@ -1,12 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
-import { updateComplaint, mapDetailsToForm } from "@/features/complaint-edit/api";
-import { getComplaintDetails } from "@/features/complaint-detail/api";
+import { mapDetailsToForm } from "@/features/complaint-edit/api";
+import { useUpdateComplaint } from "@/features/complaint-edit/hooks";
+import { useComplaint } from "@/features/complaint-detail/hooks";
+import { AsyncLoader } from "@/components/shared/async-loader";
+import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
@@ -23,18 +25,13 @@ interface ComplaintEditFormProps {
 export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const queryClient = useQueryClient();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
+  const updateMutation = useUpdateComplaint();
 
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const initialized = useRef(false);
 
-  const { data: details, isLoading } = useQuery({
-    queryKey: ["complaint", complaintId],
-    queryFn: () => getComplaintDetails(complaintId),
-    enabled: !!complaintId,
-  });
+  const { data: details, isLoading, isError, refetch } = useComplaint(complaintId);
 
   const [data, setData] = useState<ComplaintCreateFormData | null>(null);
 
@@ -49,11 +46,15 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
     setData((prev) => prev ? { ...prev, ...partial } : prev);
   }, []);
 
-  if (isLoading || !data) {
+  if (!data) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
+      <AsyncLoader
+        loading={isLoading}
+        error={isError}
+        onRetry={() => refetch()}
+        errorText="تعذر تحميل بيانات الشكوى"
+        skeleton={<FormSkeleton />}
+      />
     );
   }
 
@@ -82,17 +83,12 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
     try {
-      await updateComplaint(complaintId, data);
-      queryClient.invalidateQueries({ queryKey: ["complaints"] });
-      queryClient.invalidateQueries({ queryKey: ["complaint", complaintId] });
+      await updateMutation.mutateAsync({ id: complaintId, data });
       toast.success("تم تحديث الشكوى بنجاح");
       navigate(listPath);
     } catch {
       toast.error("حدث خطأ أثناء تحديث الشكوى");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -135,18 +131,18 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
                   <ArrowLeft className="size-4" />
                 </Button>
               ) : (
-                <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} className="gap-2">
-                  {isSubmitting ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+                <Button onClick={handleSubmit} disabled={updateMutation.isPending || !isFormValid} className="gap-2">
+                  {updateMutation.isPending ? "جارٍ الحفظ..." : "حفظ التعديلات"}
                   <Save className="size-4" />
                 </Button>
               )}
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !isFormValid}
+                disabled={updateMutation.isPending || !isFormValid}
                 variant="outline"
                 className="gap-2"
               >
-                {isSubmitting ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+                {updateMutation.isPending ? "جارٍ الحفظ..." : "حفظ التعديلات"}
                 <Save className="size-4" />
               </Button>
             </div>

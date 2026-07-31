@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import { Loader2, Archive } from "lucide-react";
+import { toast } from "sonner";
+import { Archive } from "lucide-react";
 
-import { getComplaintDetails } from "@/features/complaint-detail/api";
-import { submitComplaintArchive } from "@/features/complaint-archive/api";
+import { useComplaint } from "@/features/complaint-detail/hooks";
+import { useArchiveComplaint } from "@/features/complaint-archive/hooks";
+import { AsyncLoader } from "@/components/shared/async-loader";
+import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,25 +19,24 @@ interface ComplaintArchiveFormProps {
 export function ComplaintArchiveForm({ complaintId }: ComplaintArchiveFormProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const queryClient = useQueryClient();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
+  const archiveMutation = useArchiveComplaint();
 
   const [archiveNumber, setArchiveNumber] = useState("");
   const [archiveDate, setArchiveDate] = useState("");
   const [archiveLocation, setArchiveLocation] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: complaint, isLoading } = useQuery({
-    queryKey: ["complaint", complaintId],
-    queryFn: () => getComplaintDetails(complaintId),
-    enabled: !!complaintId,
-  });
+  const { data: complaint, isLoading, isError, refetch } = useComplaint(complaintId);
 
-  if (isLoading || !complaint) {
+  if (!complaint) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
+      <AsyncLoader
+        loading={isLoading}
+        error={isError}
+        onRetry={() => refetch()}
+        errorText="تعذر تحميل بيانات الشكوى"
+        skeleton={<FormSkeleton />}
+      />
     );
   }
 
@@ -44,21 +44,19 @@ export function ComplaintArchiveForm({ complaintId }: ComplaintArchiveFormProps)
 
   const handleSubmit = async () => {
     if (!isFormValid) return;
-    setIsSubmitting(true);
     try {
-      await submitComplaintArchive(complaintId, {
-        archiveNumber: archiveNumber.trim(),
-        archiveDate: archiveDate || undefined,
-        archiveLocation: archiveLocation.trim() || undefined,
+      await archiveMutation.mutateAsync({
+        id: complaintId,
+        payload: {
+          archiveNumber: archiveNumber.trim(),
+          archiveDate: archiveDate || undefined,
+          archiveLocation: archiveLocation.trim() || undefined,
+        },
       });
-      queryClient.invalidateQueries({ queryKey: ["complaints"] });
-      queryClient.invalidateQueries({ queryKey: ["complaint", complaintId] });
       toast.success("تم أرشفة الشكوى بنجاح");
       navigate(listPath);
     } catch {
       toast.error("حدث خطأ أثناء أرشفة الشكوى");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -107,8 +105,8 @@ export function ComplaintArchiveForm({ complaintId }: ComplaintArchiveFormProps)
           </div>
 
           <div className="flex flex-row-reverse justify-between items-center border-t border-border pt-6">
-            <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} className="gap-2">
-              {isSubmitting ? "جارٍ الأرشفة..." : "أرشفة"}
+            <Button onClick={handleSubmit} disabled={archiveMutation.isPending || !isFormValid} className="gap-2">
+              {archiveMutation.isPending ? "جارٍ الأرشفة..." : "أرشفة"}
               <Archive className="size-4" />
             </Button>
             <Button variant="ghost" onClick={() => navigate(listPath)} className="gap-2">

@@ -1,29 +1,23 @@
-import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, Link } from "react-router";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { PATHS } from "@/router/paths";
 import { PageHeader } from "@/components/shared/page-header";
+import { AsyncLoader } from "@/components/shared/async-loader";
 import { Button } from "@/components/ui/button";
 import { UserList } from "@/features/user-list/user-list";
-import { usersApi } from "@/features/users/api";
-import { mapApiUser } from "@/features/user-list/types";
+import { UserListSkeleton } from "@/features/user-list/user-list-skeleton";
+import { useUsers } from "@/features/users/hooks";
 
 export default function AdminUsers() {
   const [searchParams] = useSearchParams();
   const search = searchParams.get("search") ?? "";
   const role = searchParams.get("role") ?? "";
 
-  const { data: apiUsers, isLoading } = useQuery({
-    queryKey: ["users", search, role],
-    queryFn: () =>
-      usersApi.list({
-        search: search || undefined,
-        role: role || undefined,
-      }),
+  const { data: users, isLoading, isError, refetch } = useUsers({
+    search: search || undefined,
+    role: role || undefined,
   });
-
-  const users = apiUsers?.map(mapApiUser) ?? [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -39,13 +33,15 @@ export default function AdminUsers() {
         </Button>
       </PageHeader>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <UserList users={users} />
-      )}
+      <AsyncLoader
+        loading={isLoading}
+        error={isError}
+        onRetry={() => refetch()}
+        errorText="تعذر تحميل المستخدمين"
+        skeleton={<UserListSkeleton />}
+      >
+        <UserList users={users ?? []} />
+      </AsyncLoader>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Edit3, Info, AlertTriangle, CheckCircle2, SearchCheck } from "lucide-react";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { RecurrenceMatch } from "@/features/complaint-list/types";
@@ -15,6 +15,7 @@ interface FileItem {
 interface ComplaintReviewStepProps {
   data: ComplaintCreateFormData;
   files: FileItem[];
+  ocrFields?: Set<string>;
   onGoToStep: (step: number) => void;
 }
 
@@ -28,10 +29,12 @@ function ReviewRow({
   label,
   value,
   onEdit,
+  isOcr,
 }: {
   label: string;
   value: string;
   onEdit: () => void;
+  isOcr?: boolean;
 }) {
   return (
     <div className="flex flex-col md:flex-row md:justify-between md:items-start border-b border-border pb-4 last:border-b-0 last:pb-0 gap-2 md:gap-0">
@@ -46,6 +49,11 @@ function ReviewRow({
       <div className="text-right order-1 md:order-2">
         <span className="block font-heading text-label-sm text-muted-foreground mb-1">
           {label}
+          {isOcr && (
+            <span className="inline-block mr-2 align-middle px-1.5 py-0.5 rounded bg-success/15 text-success text-[10px] leading-none font-semibold">
+              OCR
+            </span>
+          )}
         </span>
         <p className="font-body text-body-md text-foreground break-words">{value || "—"}</p>
       </div>
@@ -53,7 +61,8 @@ function ReviewRow({
   );
 }
 
-export function ComplaintReviewStep({ data, files, onGoToStep }: ComplaintReviewStepProps) {
+export function ComplaintReviewStep({ data, files, ocrFields, onGoToStep }: ComplaintReviewStepProps) {
+  const isOcr = (field: string) => ocrFields?.has(field) ?? false;
   const fileNames = files.map((f) => f.file.name);
   const [checkState, setCheckState] = useState<{
     status: "idle" | "loading" | "done";
@@ -86,31 +95,37 @@ export function ComplaintReviewStep({ data, files, onGoToStep }: ComplaintReview
         <ReviewRow
           label="الموضوع"
           value={data.subject || "لم يتم إدخال عنوان"}
+          isOcr={isOcr("subject")}
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="الأولوية"
           value={SEVERITY_LABELS[data.severity] || "—"}
+          isOcr={isOcr("severity")}
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="المواطن"
           value={data.citizen.fullName || "—"}
+          isOcr={isOcr("citizen.fullName")}
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="الرقم القومي"
           value={data.citizen.nationalId || "—"}
+          isOcr={isOcr("citizen.nationalId")}
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="رقم الجوال"
           value={data.citizen.mobileNumber || "—"}
+          isOcr={isOcr("citizen.mobileNumber")}
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="وصف الشكوى"
           value={data.annotation || "لا يوجد وصف متاح"}
+          isOcr={isOcr("annotation")}
           onEdit={() => onGoToStep(2)}
         />
         <ReviewRow

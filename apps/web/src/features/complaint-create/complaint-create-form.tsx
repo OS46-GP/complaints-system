@@ -1,13 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { FieldResult } from "@/features/complaint-list/types";
-import { createComplaint } from "@/features/complaint-create/api";
-import { complaintsApi } from "@/features/complaint-list/api";
+import { useCreateComplaint } from "@/features/complaint-create/hooks";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
@@ -59,13 +57,35 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
   };
 }
 
+const OCR_KEY_TO_FIELD: Record<string, string> = {
+  complaint_subject: "subject",
+  severity: "severity",
+  complaint_respondentName: "respondentName",
+  annotation: "annotation",
+  citizen_fullName: "citizen.fullName",
+  citizen_nationalId: "citizen.nationalId",
+  citizen_mobileNumber: "citizen.mobileNumber",
+  citizen_address: "citizen.address",
+  citizen_village: "citizen.village",
+  citizen_district: "citizen.district",
+};
+
+const getNestedValue = (obj: Record<string, unknown>, path: string): string => {
+  let current: unknown = obj;
+  for (const part of path.split(".")) {
+    if (current === null || typeof current !== "object") return "";
+    current = (current as Record<string, unknown>)[part];
+  }
+  return typeof current === "string" ? current : "";
+};
+
 const TOTAL_STEPS = 4;
 
 export function ComplaintCreateForm() {
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
-  const queryClient = useQueryClient();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
+  const createMutation = useCreateComplaint();
   const [step, setStep] = useState(1);
 
   const ocrData = (state as { ocrData?: Record<string, FieldResult> } | null)?.ocrData;
@@ -75,7 +95,28 @@ export function ComplaintCreateForm() {
 
   const [data, setData] = useState<ComplaintCreateFormData>(initialData);
   const [files, setFiles] = useState<FileItem[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const ocrOriginal = useMemo(
+    () => (ocrData ? (ocrFieldsToFormData(ocrData) as Partial<ComplaintCreateFormData>) : null),
+    [ocrData],
+  );
+
+  const ocrFields = useMemo(() => {
+    const fields = new Set<string>();
+    if (!ocrOriginal) return fields;
+    for (const field of new Set(Object.values(OCR_KEY_TO_FIELD))) {
+      const ocrValue = getNestedValue(
+        ocrOriginal as unknown as Record<string, unknown>,
+        field,
+      );
+      const currentValue = getNestedValue(
+        data as unknown as Record<string, unknown>,
+        field,
+      );
+      if (ocrValue.trim() && ocrValue === currentValue) fields.add(field);
+    }
+    return fields;
+  }, [ocrOriginal, data]);
 
   const updateData = useCallback((partial: Partial<ComplaintCreateFormData>) => {
     setData((prev) => ({ ...prev, ...partial }));
@@ -105,19 +146,15 @@ export function ComplaintCreateForm() {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
     try {
-      const created = await createComplaint({ ...data, files: files.map((f) => f.file) });
-      if (created?.id) {
-        complaintsApi.analyze(created.id).catch(() => {});
-      }
-      queryClient.invalidateQueries({ queryKey: ["complaints"] });
+      await createMutation.mutateAsync({
+        ...data,
+        files: files.map((f) => f.file),
+      });
       toast.success("تم تقديم الشكوى بنجاح");
       navigate(listPath);
     } catch {
       toast.error("حدث خطأ أثناء تقديم الشكوى");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -139,10 +176,10 @@ export function ComplaintCreateForm() {
 
         <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
           {step === 1 && (
-            <ComplaintBasicInfoStep data={data} onChange={updateData} />
+            <ComplaintBasicInfoStep data={data} onChange={updateData} ocrFields={ocrFields} />
           )}
           {step === 2 && (
-            <ComplaintDescriptionStep data={data} onChange={updateData} />
+            <ComplaintDescriptionStep data={data} onChange={updateData} ocrFields={ocrFields} />
           )}
           {step === 3 && (
             <ComplaintAttachmentStep files={files} onFilesChange={setFiles} />
@@ -151,6 +188,7 @@ export function ComplaintCreateForm() {
             <ComplaintReviewStep
               data={data}
               files={files}
+              ocrFields={ocrFields}
               onGoToStep={setStep}
             />
           )}
@@ -162,8 +200,8 @@ export function ComplaintCreateForm() {
                 <ArrowLeft className="size-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
-                {isSubmitting ? "جارٍ الإرسال..." : "إرسال الشكوى"}
+              <Button onClick={handleSubmit} disabled={createMutation.isPending} className="gap-2">
+                {createMutation.isPending ? "جارٍ الإرسال..." : "إرسال الشكوى"}
                 <Send className="size-4" />
               </Button>
             )}

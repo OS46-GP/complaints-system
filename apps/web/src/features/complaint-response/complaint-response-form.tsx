@@ -1,16 +1,24 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import { Loader2, Send } from "lucide-react";
+import { toast } from "sonner";
+import { Send } from "lucide-react";
 
-import { getComplaintDetails } from "@/features/complaint-detail/api";
-import { submitComplaintResponse } from "@/features/complaint-response/api";
-import { complaintsApi } from "@/features/complaint-list/api";
+import { useComplaint } from "@/features/complaint-detail/hooks";
+import { useSubmitComplaintResponse } from "@/features/complaint-response/hooks";
+import { useExaminationStatuses } from "@/features/complaint-list/hooks";
+import { AsyncLoader } from "@/components/shared/async-loader";
+import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ComplaintResponseFormProps {
   complaintId: string;
@@ -19,32 +27,27 @@ interface ComplaintResponseFormProps {
 export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const queryClient = useQueryClient();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
+  const responseMutation = useSubmitComplaintResponse();
 
   const [responseText, setResponseText] = useState("");
   const [responseDate, setResponseDate] = useState("");
   const [responseNumber, setResponseNumber] = useState("");
   const [examinationStatusId, setExaminationStatusId] = useState("");
   const [examinationResult, setExaminationResult] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: complaint, isLoading } = useQuery({
-    queryKey: ["complaint", complaintId],
-    queryFn: () => getComplaintDetails(complaintId),
-    enabled: !!complaintId,
-  });
+  const { data: complaint, isLoading, isError, refetch } = useComplaint(complaintId);
+  const { data: examinationStatuses } = useExaminationStatuses();
 
-  const { data: examinationStatuses } = useQuery({
-    queryKey: ["examination-statuses"],
-    queryFn: complaintsApi.getExaminationStatuses,
-  });
-
-  if (isLoading || !complaint) {
+  if (!complaint) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
+      <AsyncLoader
+        loading={isLoading}
+        error={isError}
+        onRetry={() => refetch()}
+        errorText="تعذر تحميل بيانات الشكوى"
+        skeleton={<FormSkeleton />}
+      />
     );
   }
 
@@ -52,23 +55,21 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
 
   const handleSubmit = async () => {
     if (!isFormValid) return;
-    setIsSubmitting(true);
     try {
-      await submitComplaintResponse(complaintId, {
-        authorityResponseText: responseText.trim(),
-        authorityResponseDate: responseDate || undefined,
-        incomingResponseNumber: responseNumber.trim() || undefined,
-        examinationStatusId: examinationStatusId ? Number(examinationStatusId) : undefined,
-        examinationResult: examinationResult.trim() || undefined,
+      await responseMutation.mutateAsync({
+        id: complaintId,
+        payload: {
+          authorityResponseText: responseText.trim(),
+          authorityResponseDate: responseDate || undefined,
+          incomingResponseNumber: responseNumber.trim() || undefined,
+          examinationStatusId: examinationStatusId ? Number(examinationStatusId) : undefined,
+          examinationResult: examinationResult.trim() || undefined,
+        },
       });
-      queryClient.invalidateQueries({ queryKey: ["complaints"] });
-      queryClient.invalidateQueries({ queryKey: ["complaint", complaintId] });
       toast.success("تم إضافة الرد بنجاح");
       navigate(listPath);
     } catch {
       toast.error("حدث خطأ أثناء إضافة الرد");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -122,16 +123,20 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label>حالة الفحص</Label>
-                <select
-                  value={examinationStatusId}
-                  onChange={(e) => setExaminationStatusId(e.target.value)}
-                  className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+                <Select
+                  dir="rtl"
+                  value={examinationStatusId || ""}
+                  onValueChange={setExaminationStatusId}
                 >
-                  <option value="">اختر حالة الفحص</option>
-                  {examinationStatuses?.map((s) => (
-                    <option key={s.id} value={String(s.id)}>{s.name}</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full data-[size=default]:h-11">
+                    <SelectValue placeholder="اختر حالة الفحص" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {examinationStatuses?.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex flex-col gap-2">
                 <Label>نتيجة الفحص</Label>
@@ -146,8 +151,8 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
           </div>
 
           <div className="flex flex-row-reverse justify-between items-center border-t border-border pt-6">
-            <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} className="gap-2">
-              {isSubmitting ? "جارٍ الإرسال..." : "إضافة الرد"}
+            <Button onClick={handleSubmit} disabled={responseMutation.isPending || !isFormValid} className="gap-2">
+              {responseMutation.isPending ? "جارٍ الإرسال..." : "إضافة الرد"}
               <Send className="size-4" />
             </Button>
             <Button variant="ghost" onClick={() => navigate(listPath)} className="gap-2">
