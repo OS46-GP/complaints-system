@@ -2,11 +2,17 @@ import { Controller, Get, Post, Patch, Param, Body, UseGuards } from "@nestjs/co
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AiTriageService } from "./ai-triage.service";
 import { UpdateSeverityDto } from "./dto/update-severity.dto";
+import { CheckDuplicatesDto } from "../complaints/dto/check-duplicates.dto";
 
 @Controller("complaints")
 @UseGuards(JwtAuthGuard)
 export class AiTriageController {
   constructor(private readonly aiTriageService: AiTriageService) {}
+
+  @Post("check-duplicates")
+  checkDuplicates(@Body() dto: CheckDuplicatesDto) {
+    return this.aiTriageService.checkDuplicates(dto);
+  }
 
   @Get(":id/links")
   getLinks(@Param("id") id: string) {

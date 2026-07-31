@@ -3,11 +3,13 @@ import { PrismaService, Prisma } from "../prisma/prisma.service";
 import { EmbeddingService } from "./embedding.service";
 import { Severity } from "@prisma/client";
 import { getOrCreateAgent, ENABLE_AI } from "./agents/triage-agent";
+import { CheckDuplicatesDto } from "../complaints/dto/check-duplicates.dto";
 import type {
   AnalyzeResult,
   SeverityLevel,
   RecurrenceMatch,
   RecurrenceCandidate,
+  RecurrenceInput,
 } from "./interfaces/analyze-result.interface";
 
 function sanitizeForLog(value: string): string {
@@ -73,6 +75,28 @@ export class AiTriageService {
     return { severity, recurrenceMatches };
   }
 
+  async checkDuplicates(
+    dto: CheckDuplicatesDto,
+  ): Promise<{ recurrenceMatches: RecurrenceMatch[] }> {
+    const candidate: RecurrenceInput = {
+      subject: dto.subject,
+      statementYear: new Date().getFullYear(),
+      arrivalDate: dto.arrivalDate ? new Date(dto.arrivalDate) : new Date(),
+      departmentId: dto.departmentId ?? null,
+      citizen: {
+        nationalId: dto.citizen?.nationalId ?? null,
+        village: dto.citizen?.village ?? null,
+        district: dto.citizen?.district ?? null,
+      },
+    };
+
+    const recurrenceMatches = await this.detectRecurrence(candidate, {
+      persist: false,
+    });
+
+    return { recurrenceMatches };
+  }
+
   async updateSeverity(
     id: string,
     severity: SeverityLevel,
@@ -90,24 +114,16 @@ export class AiTriageService {
     return { severity };
   }
 
-  private async detectRecurrence(complaint: {
-    id: string;
-    subject: string;
-    complaintNumber: number;
-    statementYear: number;
-    arrivalDate: Date;
-    departmentId: string | null;
-    citizen: {
-      nationalId: string | null;
-      village: string | null;
-      district: string | null;
-    };
-    examinationStatus?: { name: string } | null;
-  }): Promise<RecurrenceMatch[]> {
+  private async detectRecurrence(
+    complaint: RecurrenceInput,
+    options?: { persist?: boolean },
+  ): Promise<RecurrenceMatch[]> {
+    const persist = options?.persist ?? true;
+
     // Stage 1: Structured narrowing
     const stage1Candidates = await this.structuredNarrowing(complaint);
     if (stage1Candidates.length === 0) {
-      await this.upsertCurrentEmbedding(complaint);
+      if (persist) await this.upsertCurrentEmbedding(complaint);
       return [];
     }
 
@@ -117,12 +133,17 @@ export class AiTriageService {
       complaint,
     );
     if (exactMatches.length > 0) {
-      await this.upsertCurrentEmbedding(complaint);
+      if (persist) {
+        await this.upsertCurrentEmbedding(complaint);
+        if (complaint.id) {
+          await this.linkRecurrences(complaint.id, exactMatches);
+        }
+      }
       return this.toRecurrenceMatches(exactMatches);
     }
 
     if (!ENABLE_AI) {
-      await this.upsertCurrentEmbedding(complaint);
+      if (persist) await this.upsertCurrentEmbedding(complaint);
       return [];
     }
 
@@ -135,7 +156,7 @@ export class AiTriageService {
     );
 
     if (similar.length === 0) {
-      await this.upsertCurrentEmbedding(complaint);
+      if (persist) await this.upsertCurrentEmbedding(complaint);
       return [];
     }
 
@@ -145,30 +166,23 @@ export class AiTriageService {
 
     // Stage 3: Agent reasoning
     const confirmed = await this.agentRecurrenceReasoning(complaint, candidatesForAgent);
-    await this.upsertCurrentEmbedding(complaint);
+    if (persist) await this.upsertCurrentEmbedding(complaint);
 
-    await this.linkRecurrences(complaint.id, confirmed);
+    if (persist && complaint.id) {
+      await this.linkRecurrences(complaint.id, confirmed);
+    }
 
     return this.toRecurrenceMatches(confirmed);
   }
 
-  private async structuredNarrowing(complaint: {
-    id: string;
-    complaintNumber: number;
-    statementYear: number;
-    arrivalDate: Date;
-    departmentId: string | null;
-    citizen: {
-      nationalId: string | null;
-      village: string | null;
-      district: string | null;
-    };
-  }): Promise<RecurrenceCandidate[]> {
-    const { citizen, departmentId } = complaint;
+  private async structuredNarrowing(
+    complaint: RecurrenceInput,
+  ): Promise<RecurrenceCandidate[]> {
+    const { citizen, departmentId, id } = complaint;
     const timeWindowStart = new Date(Date.now() - RECURRENCE_TIME_WINDOW_MS);
 
     const where: Prisma.ComplaintWhereInput = {
-      id: { not: complaint.id },
+      ...(id ? { id: { not: id } } : {}),
       createdAt: { gte: timeWindowStart },
     };
 
@@ -213,14 +227,17 @@ export class AiTriageService {
 
   private async agentRecurrenceReasoning(
     complaint: {
-      complaintNumber: number;
+      complaintNumber?: number;
       statementYear: number;
       subject: string;
     },
     candidates: RecurrenceCandidate[],
   ): Promise<RecurrenceCandidate[]> {
     try {
-      const newComplaintText = `#${complaint.complaintNumber}/${complaint.statementYear}: "${complaint.subject}"`;
+      const newComplaintText =
+        complaint.complaintNumber != null
+          ? `#${complaint.complaintNumber}/${complaint.statementYear}: "${complaint.subject}"`
+          : `"${complaint.subject}"`;
 
       const candidateText = candidates
         .map(
@@ -310,36 +327,49 @@ No explanation.`;
   }
 
   async getLinks(complaintId: string): Promise<AnalyzeResult> {
-    const links = await this.prisma.complaintLink.findMany({
-      where: {
-        OR: [{ sourceId: complaintId }, { targetId: complaintId }],
-      },
+    const visited = new Set<string>([complaintId]);
+    const frontier = [complaintId];
+    const groupIds = new Set<string>();
+
+    while (frontier.length > 0) {
+      const batch = frontier.splice(0, 500);
+      const links = await this.prisma.complaintLink.findMany({
+        where: {
+          OR: [{ sourceId: { in: batch } }, { targetId: { in: batch } }],
+        },
+        select: { sourceId: true, targetId: true },
+      });
+
+      for (const link of links) {
+        for (const id of [link.sourceId, link.targetId]) {
+          if (!visited.has(id)) {
+            visited.add(id);
+            groupIds.add(id);
+            frontier.push(id);
+          }
+        }
+      }
+    }
+
+    if (groupIds.size === 0) {
+      return { severity: "LOW", recurrenceMatches: [] };
+    }
+
+    const complaints = await this.prisma.complaint.findMany({
+      where: { id: { in: [...groupIds] } },
       include: {
-        source: {
-          include: {
-            citizen: true,
-            department: true,
-            examinationStatus: true,
-            actions: { orderBy: { actionDate: "desc" } },
-          },
-        },
-        target: {
-          include: {
-            citizen: true,
-            department: true,
-            examinationStatus: true,
-            actions: { orderBy: { actionDate: "desc" } },
-          },
-        },
+        citizen: true,
+        department: true,
+        examinationStatus: true,
+        actions: { orderBy: { actionDate: "desc" } },
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    const linkedComplaints = links.map((l) => {
-      const c = l.sourceId === complaintId ? l.target : l.source;
-      return this.toRecurrenceMatch(c);
-    });
-
-    return { severity: "LOW", recurrenceMatches: linkedComplaints };
+    return {
+      severity: "LOW",
+      recurrenceMatches: complaints.map((c) => this.toRecurrenceMatch(c)),
+    };
   }
 
   private toRecurrenceMatch(complaint: {
@@ -384,12 +414,13 @@ No explanation.`;
   }
 
   private async upsertCurrentEmbedding(complaint: {
-    id: string;
+    id?: string;
     subject: string;
     departmentId: string | null;
     citizen: { village: string | null; district: string | null };
   }): Promise<void> {
     try {
+      if (!complaint.id) return;
       const location =
         complaint.citizen?.village || complaint.citizen?.district || null;
       await this.embeddingService.ensureEmbedding(

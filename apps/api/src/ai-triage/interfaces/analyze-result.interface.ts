@@ -21,6 +21,21 @@ export interface AnalyzeResult {
   recurrenceMatches: RecurrenceMatch[];
 }
 
+export interface RecurrenceInput {
+  id?: string;
+  subject: string;
+  complaintNumber?: number;
+  statementYear: number;
+  arrivalDate: Date;
+  departmentId: string | null;
+  citizen: {
+    nationalId: string | null;
+    village: string | null;
+    district: string | null;
+  };
+  examinationStatus?: { name: string } | null;
+}
+
 export interface RecurrenceCandidate {
   id: string;
   complaintNumber: number;
