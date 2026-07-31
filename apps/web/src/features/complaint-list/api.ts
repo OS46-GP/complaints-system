@@ -1,5 +1,5 @@
 import { axiosClient } from "@/api/axios-client";
-import type { ApiComplaint, PaginatedComplaintResponse, Department, ReferenceItem } from "@/features/complaint-list/types";
+import type { ApiComplaint, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload } from "@/features/complaint-list/types";
 
 export interface ListComplaintsParams {
   page?: number;
@@ -73,4 +73,18 @@ export const complaintsApi = {
     axiosClient.get<ReferenceItem[]>("/api/complaints/presentation-statuses").then((res) => res.data),
   getExaminationStatuses: () =>
     axiosClient.get<ReferenceItem[]>("/api/complaints/examination-statuses").then((res) => res.data),
+  getLocations: () =>
+    axiosClient.get<LocationItem[]>("/api/complaints/locations").then((res) => res.data),
+  checkDuplicates: (payload: CheckDuplicatesPayload) =>
+    axiosClient
+      .post<{ recurrenceMatches: RecurrenceMatch[] }>("/api/complaints/check-duplicates", payload)
+      .then((res) => res.data),
+  analyze: (id: string) =>
+    axiosClient
+      .post<{ severity: string; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/analyze`)
+      .then((res) => res.data),
+  getLinks: (id: string) =>
+    axiosClient
+      .get<{ severity: string; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/links`)
+      .then((res) => res.data),
 };

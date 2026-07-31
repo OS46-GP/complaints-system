@@ -122,6 +122,41 @@ export interface ReferenceItem {
   name: string;
 }
 
+export interface LocationItem {
+  code: string;
+  name: string;
+  parentCode: string | null;
+  level: number;
+  levelDesc: string | null;
+}
+
+export interface RecurrenceMatch {
+  id: string;
+  complaintNumber: number;
+  statementYear: number;
+  arrivalDate: string;
+  subject: string;
+  examinationStatus: string | null;
+  endDate: string | null;
+  actions: {
+    id: string;
+    action: string;
+    actionDate: string;
+    notes: string | null;
+  }[];
+}
+
+export interface CheckDuplicatesPayload {
+  subject: string;
+  departmentId?: string;
+  arrivalDate?: string;
+  citizen?: {
+    nationalId?: string;
+    village?: string;
+    district?: string;
+  };
+}
+
 export interface FieldResult {
   value: string;
   confidence: number;

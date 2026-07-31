@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { complaintsApi } from "@/features/complaint-list/api";
+import type { LocationItem } from "@/features/complaint-list/types";
 
 const SEVERITY_OPTIONS: { value: ComplaintCreateFormData["severity"]; label: string }[] = [
   { value: "High", label: "عاجل" },
@@ -30,6 +32,52 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
     queryKey: ["reception-methods"],
     queryFn: complaintsApi.getReceptionMethods,
   });
+
+  const { data: locations } = useQuery({
+    queryKey: ["locations"],
+    queryFn: complaintsApi.getLocations,
+  });
+
+  const centers = useMemo(
+    () => (locations ?? []).filter((location) => location.level === 2),
+    [locations],
+  );
+
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, LocationItem[]>();
+    for (const location of locations ?? []) {
+      if (!location.parentCode) continue;
+      const list = map.get(location.parentCode) ?? [];
+      list.push(location);
+      map.set(location.parentCode, list);
+    }
+    return map;
+  }, [locations]);
+
+  const villagesForCenter = (centerCode: string): LocationItem[] => {
+    const result: LocationItem[] = [];
+    const seenNames = new Set<string>();
+    const visit = (code: string) => {
+      for (const child of childrenByParent.get(code) ?? []) {
+        if (child.level <= 4) {
+          if (!seenNames.has(child.name)) {
+            seenNames.add(child.name);
+            result.push(child);
+          }
+          if (child.level < 4) visit(child.code);
+        }
+      }
+    };
+    visit(centerCode);
+    return result.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+  };
+
+  const selectedCenter = centers.find(
+    (center) => center.name === data.citizen.district,
+  );
+  const villages = selectedCenter
+    ? villagesForCenter(selectedCenter.code)
+    : [];
 
   return (
     <div className="space-y-6">
@@ -162,22 +210,49 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div className="flex flex-col gap-2">
-            <Label>القرية</Label>
-            <Input
-              value={data.citizen.village}
-              onChange={(e) => onChange({ citizen: { ...data.citizen, village: e.target.value } })}
-              placeholder="القرية (اختياري)"
-              className="h-11"
-            />
+            <Label>المركز</Label>
+            <select
+              value={data.citizen.district}
+              onChange={(e) =>
+                onChange({
+                  citizen: {
+                    ...data.citizen,
+                    district: e.target.value,
+                    village: "",
+                  },
+                })
+              }
+              className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+            >
+              <option value="">اختر المركز</option>
+              {centers.map((center) => (
+                <option key={center.code} value={center.name}>
+                  {center.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label>المركز</Label>
-            <Input
-              value={data.citizen.district}
-              onChange={(e) => onChange({ citizen: { ...data.citizen, district: e.target.value } })}
-              placeholder="المركز (اختياري)"
-              className="h-11"
-            />
+            <Label>القرية</Label>
+            <select
+              value={data.citizen.village}
+              onChange={(e) =>
+                onChange({
+                  citizen: { ...data.citizen, village: e.target.value },
+                })
+              }
+              disabled={!selectedCenter}
+              className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+            >
+              <option value="">
+                {selectedCenter ? "اختر القرية" : "اختر المركز أولاً"}
+              </option>
+              {villages.map((village) => (
+                <option key={village.code} value={village.name}>
+                  {village.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

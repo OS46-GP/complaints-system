@@ -353,6 +353,42 @@ export class ComplaintsService {
     });
   }
 
+  async getLocations() {
+    const all = await this.prisma.location.findMany({
+      orderBy: [{ level: "asc" }, { name: "asc" }],
+    });
+
+    const childrenOf = new Map<string, typeof all>();
+    for (const location of all) {
+      if (location.parentCode) {
+        const list = childrenOf.get(location.parentCode) ?? [];
+        list.push(location);
+        childrenOf.set(location.parentCode, list);
+      }
+    }
+
+    const governorate = all
+      .filter((location) => location.level === 1)
+      .sort(
+        (a, b) =>
+          (childrenOf.get(b.code) ?? []).filter((c) => c.level === 2).length -
+          (childrenOf.get(a.code) ?? []).filter((c) => c.level === 2).length,
+      )[0];
+
+    if (!governorate) return [];
+
+    const result: typeof all = [];
+    const visit = (location: (typeof all)[number]) => {
+      result.push(location);
+      for (const child of childrenOf.get(location.code) ?? []) {
+        visit(child);
+      }
+    };
+    visit(governorate);
+
+    return result;
+  }
+
   async remove(id: string) {
     await this.findById(id);
     await this.prisma.complaint.delete({ where: { id } });

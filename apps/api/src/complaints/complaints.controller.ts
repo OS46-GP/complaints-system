@@ -76,6 +76,11 @@ export class ComplaintsController {
     return this.complaintsService.getPresentationStatuses();
   }
 
+  @Get("locations")
+  getLocations() {
+    return this.complaintsService.getLocations();
+  }
+
   @Post(":id/files")
   @UseInterceptors(FileInterceptor("file"))
   uploadFile(

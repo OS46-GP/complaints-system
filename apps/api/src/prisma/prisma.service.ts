@@ -58,6 +58,10 @@ export class PrismaService implements OnModuleInit {
   get complaintLink() {
     return prisma.complaintLink;
   }
+
+  get location() {
+    return prisma.location;
+  }
 }
 
 export { Prisma };
