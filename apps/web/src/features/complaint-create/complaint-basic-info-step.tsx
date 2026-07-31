@@ -1,8 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
+import { Search, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
+import { OcrFieldIcon } from "@/features/complaint-create/ocr-field-icon";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -19,29 +30,18 @@ import {
 import { complaintsApi } from "@/features/complaint-list/api";
 import type { LocationItem } from "@/features/complaint-list/types";
 
-const SEVERITY_OPTIONS: { value: ComplaintCreateFormData["severity"]; label: string }[] = [
+const SEVERITY_OPTIONS: { value: ComplaintCreateFormValues["severity"]; label: string }[] = [
   { value: "High", label: "عاجل" },
   { value: "Medium", label: "متوسط" },
   { value: "Low", label: "عادي" },
 ];
 
 interface ComplaintBasicInfoStepProps {
-  data: ComplaintCreateFormData;
-  onChange: (partial: Partial<ComplaintCreateFormData>) => void;
   ocrFields?: Set<string>;
 }
 
-const selectTriggerClassName = (isOcr: boolean) =>
-  `w-full data-[size=default]:h-11 ${
-    isOcr
-      ? "border-success focus-visible:border-success focus-visible:ring-success/40"
-      : ""
-  }`;
-
-const inputOcrClass =
-  "border-success focus-visible:border-success focus-visible:ring-success/40";
-
-export function ComplaintBasicInfoStep({ data, onChange, ocrFields }: ComplaintBasicInfoStepProps) {
+export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProps) {
+  const form = useFormContext<ComplaintCreateFormValues>();
   const isOcr = (field: string) => ocrFields?.has(field) ?? false;
   const { data: departments } = useDepartments();
   const { data: complaintTypes } = useComplaintTypes();
@@ -82,238 +82,424 @@ export function ComplaintBasicInfoStep({ data, onChange, ocrFields }: ComplaintB
     return result.sort((a, b) => a.name.localeCompare(b.name, "ar"));
   };
 
-  const selectedCenter = centers.find(
-    (center) => center.name === data.citizen.district,
-  );
-  const villages = selectedCenter
-    ? villagesForCenter(selectedCenter.code)
-    : [];
+  const district = form.watch("citizen.district");
+  const selectedCenter = centers.find((center) => center.name === district);
+  const villages = selectedCenter ? villagesForCenter(selectedCenter.code) : [];
 
-  const handleNationalIdBlur = async () => {
-    const nationalId = data.citizen.nationalId.trim();
-    if (!nationalId) return;
+  const [isCitizenLookupLoading, setIsCitizenLookupLoading] = useState(false);
+  const lookedUpNationalId = useRef<string>("");
+
+  const clearLookedUpCitizen = () => {
+    const citizen = form.getValues("citizen");
+    if (
+      citizen.fullName ||
+      citizen.mobileNumber ||
+      citizen.address ||
+      citizen.village ||
+      citizen.district
+    ) {
+      form.setValue("citizen", {
+        ...citizen,
+        fullName: "",
+        mobileNumber: "",
+        address: "",
+        village: "",
+        district: "",
+      });
+      toast.info("تم مسح بيانات المواطن بعد تغيير الرقم القومي");
+    }
+  };
+
+  const handleNationalIdChange = (value: string, onFieldChange: (value: string) => void) => {
+    onFieldChange(value);
+    if (lookedUpNationalId.current && value.trim() !== lookedUpNationalId.current) {
+      lookedUpNationalId.current = "";
+      clearLookedUpCitizen();
+    }
+  };
+
+  const lookupCitizen = async () => {
+    const isValid = await form.trigger("citizen.nationalId");
+    if (!isValid) return;
+    setIsCitizenLookupLoading(true);
     try {
-      const citizen = await complaintsApi.getCitizenByNationalId(nationalId);
+      const citizen = await complaintsApi.getCitizenByNationalId(
+        form.getValues("citizen.nationalId").trim(),
+      );
       if (citizen) {
-        onChange({
-          citizen: {
-            ...data.citizen,
-            fullName: citizen.fullName,
-            mobileNumber: citizen.mobileNumber || "",
-            address: citizen.address || "",
-            village: citizen.village || "",
-            district: citizen.district || "",
-          },
+        form.setValue("citizen", {
+          ...form.getValues("citizen"),
+          fullName: citizen.fullName,
+          mobileNumber: citizen.mobileNumber || "",
+          address: citizen.address || "",
+          village: citizen.village || "",
+          district: citizen.district || "",
         });
-        toast.success("تم إكمال بيانات المواطن تلقائياً");
+        lookedUpNationalId.current = form.getValues("citizen.nationalId").trim();
+        toast.success("تم العثور على المواطن وإكمال بياناته تلقائياً");
+      } else {
+        toast.error("لم يتم العثور على مواطن بهذا الرقم القومي");
       }
     } catch {
-      // ignore lookup errors
+      toast.error("تعذر جلب بيانات المواطن");
+    } finally {
+      setIsCitizenLookupLoading(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <Label>موضوع الشكوى</Label>
-        <Input
-          value={data.subject}
-          onChange={(e) => onChange({ subject: e.target.value })}
-          placeholder="أدخل عنواناً ملخصاً للشكوى"
-          className={`h-11 ${isOcr("subject") ? inputOcrClass : ""}`}
+      <FormField
+        control={form.control}
+        name="subject"
+        render={({ field, fieldState }) => (
+          <FormItem>
+            <FormLabel>
+              موضوع الشكوى <span className="text-destructive">*</span>
+            </FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  placeholder="أدخل عنواناً ملخصاً للشكوى"
+                  className={cn("h-11", isOcr("subject") && "pe-10")}
+                />
+                {isOcr("subject") && (
+                  <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
+                )}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="severity"
+        render={({ field, fieldState }) => (
+          <FormItem>
+            <FormLabel>الأولوية</FormLabel>
+            <div className="flex gap-2">
+              {SEVERITY_OPTIONS.map((option) => (
+                <label key={option.value} className="flex-1">
+                  <Input
+                    type="radio"
+                    name="severity"
+                    value={option.value}
+                    checked={field.value === option.value}
+                    onChange={() => field.onChange(option.value)}
+                    className="hidden peer"
+                  />
+                  <div
+                    className={cn(
+                      "h-11 border border-input rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all font-heading text-label-sm px-1 hover:bg-surface-container-low peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary hover:peer-checked:bg-primary hover:peer-checked:text-primary-foreground",
+                      fieldState.invalid && "border-destructive",
+                    )}
+                  >
+                    {field.value === option.value && isOcr("severity") && (
+                      <OcrFieldIcon className="peer-checked:text-primary-foreground [&_svg]:size-3.5" />
+                    )}
+                    {option.label}
+                  </div>
+                </label>
+              ))}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="complaintTypeId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                الفئة <span className="text-destructive">*</span>
+              </FormLabel>
+              <Select dir="rtl" value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full data-[size=default]:h-11">
+                    {isOcr("complaintTypeId") && <OcrFieldIcon />}
+                    <SelectValue placeholder="اختر الفئة" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {complaintTypes?.map((t) => (
+                    <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="receptionMethodId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>طريقة الاستلام</FormLabel>
+              <Select dir="rtl" value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full data-[size=default]:h-11">
+                    {isOcr("receptionMethodId") && <OcrFieldIcon />}
+                    <SelectValue placeholder="اختر طريقة الاستلام" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {receptionMethods?.map((m) => (
+                    <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label>الأولوية</Label>
-        <div className="flex gap-2">
-          {SEVERITY_OPTIONS.map((option) => (
-            <label key={option.value} className="flex-1">
-              <input
-                type="radio"
-                name="severity"
-                value={option.value}
-                checked={data.severity === option.value}
-                onChange={(e) => onChange({ severity: e.target.value as ComplaintCreateFormData["severity"] })}
-                className="hidden peer"
-              />
-              <div className={`h-11 border border-input rounded-lg flex items-center justify-center cursor-pointer transition-all font-heading text-label-sm px-1 hover:bg-surface-container-low peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary hover:peer-checked:bg-primary hover:peer-checked:text-primary-foreground ${
-                isOcr("severity") && data.severity === option.value
-                  ? "peer-checked:ring-2 peer-checked:ring-success"
-                  : ""
-              }`}>
-                {option.label}
-              </div>
-            </label>
-          ))}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>الفئة</Label>
-          <Select
-            dir="rtl"
-            value={data.complaintTypeId || ""}
-            onValueChange={(value) => onChange({ complaintTypeId: value })}
-          >
-            <SelectTrigger className={selectTriggerClassName(isOcr("complaintTypeId"))}>
-              <SelectValue placeholder="اختر الفئة" />
-            </SelectTrigger>
-            <SelectContent>
-              {complaintTypes?.map((t) => (
-                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FormField
+          control={form.control}
+          name="departmentId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>الجهة المعنية</FormLabel>
+              <Select dir="rtl" value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-full data-[size=default]:h-11">
+                    {isOcr("departmentId") && <OcrFieldIcon />}
+                    <SelectValue placeholder="اختر الجهة" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {departments?.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="flex flex-col gap-2">
-          <Label>طريقة الاستلام</Label>
-          <Select
-            dir="rtl"
-            value={data.receptionMethodId || ""}
-            onValueChange={(value) => onChange({ receptionMethodId: value })}
-          >
-            <SelectTrigger className={selectTriggerClassName(isOcr("receptionMethodId"))}>
-              <SelectValue placeholder="اختر طريقة الاستلام" />
-            </SelectTrigger>
-            <SelectContent>
-              {receptionMethods?.map((m) => (
-                <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>الجهة المعنية</Label>
-          <Select
-            dir="rtl"
-            value={data.departmentId || ""}
-            onValueChange={(value) => onChange({ departmentId: value })}
-          >
-            <SelectTrigger className={selectTriggerClassName(isOcr("departmentId"))}>
-              <SelectValue placeholder="اختر الجهة" />
-            </SelectTrigger>
-            <SelectContent>
-              {departments?.map((d) => (
-                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label>اسم المقدم</Label>
-          <Input
-            value={data.respondentName}
-            onChange={(e) => onChange({ respondentName: e.target.value })}
-            placeholder="الاسم (اختياري)"
-            className={`h-11 ${isOcr("respondentName") ? inputOcrClass : ""}`}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="respondentName"
+          render={({ field, fieldState }) => (
+            <FormItem>
+              <FormLabel>اسم المقدم</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="الاسم (اختياري)"
+                    className={cn("h-11", isOcr("respondentName") && "pe-10")}
+                  />
+                  {isOcr("respondentName") && (
+                    <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
+                  )}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
       <div className="border-t border-border pt-6">
         <p className="font-heading text-headline-md text-foreground mb-4">معلومات المواطن</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <Label>
-              الرقم القومي <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              value={data.citizen.nationalId}
-              onChange={(e) => onChange({ citizen: { ...data.citizen, nationalId: e.target.value } })}
-              onBlur={handleNationalIdBlur}
-              placeholder="الرقم القومي"
-              className={`h-11 ${isOcr("citizen.nationalId") ? inputOcrClass : ""}`}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>رقم الجوال</Label>
-            <Input
-              value={data.citizen.mobileNumber}
-              onChange={(e) => onChange({ citizen: { ...data.citizen, mobileNumber: e.target.value } })}
-              placeholder="رقم الجوال (اختياري)"
-              className={`h-11 ${isOcr("citizen.mobileNumber") ? inputOcrClass : ""}`}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 mt-4">
-          <Label>الاسم الكامل</Label>
-          <Input
-            value={data.citizen.fullName}
-            onChange={(e) => onChange({ citizen: { ...data.citizen, fullName: e.target.value } })}
-            placeholder="الاسم الكامل للمواطن"
-            className={`h-11 ${isOcr("citizen.fullName") ? inputOcrClass : ""}`}
+          <FormField
+            control={form.control}
+            name="citizen.nationalId"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>
+                  الرقم القومي <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        onChange={(e) =>
+                          handleNationalIdChange(e.target.value, field.onChange)
+                        }
+                        placeholder="الرقم القومي"
+                        className={cn(
+                          "h-11",
+                          isOcr("citizen.nationalId") && "pe-10",
+                        )}
+                      />
+                      {isOcr("citizen.nationalId") && (
+                        <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      size="icon"
+                      onClick={lookupCitizen}
+                      disabled={isCitizenLookupLoading || !field.value.trim()}
+                      title="البحث عن بيانات المواطن"
+                      className="h-11 w-11 shrink-0 rounded-md active:not-aria-[haspopup]:translate-y-0"
+                    >
+                      {isCitizenLookupLoading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Search className="size-4" />
+                      )}
+                    </Button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="citizen.mobileNumber"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>رقم الجوال</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="رقم الجوال (اختياري)"
+                      className={cn("h-11", isOcr("citizen.mobileNumber") && "pe-10")}
+                    />
+                    {isOcr("citizen.mobileNumber") && (
+                      <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-        <div className="flex flex-col gap-2 mt-4">
-          <Label>العنوان</Label>
-          <Input
-            value={data.citizen.address}
-            onChange={(e) => onChange({ citizen: { ...data.citizen, address: e.target.value } })}
-            placeholder="العنوان (اختياري)"
-            className={`h-11 ${isOcr("citizen.address") ? inputOcrClass : ""}`}
-          />
-        </div>
+
+        <FormField
+          control={form.control}
+          name="citizen.fullName"
+          render={({ field, fieldState }) => (
+            <FormItem className="mt-4">
+              <FormLabel>
+                الاسم الكامل <span className="text-destructive">*</span>
+              </FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="الاسم الكامل للمواطن"
+                    className={cn("h-11", isOcr("citizen.fullName") && "pe-10")}
+                  />
+                  {isOcr("citizen.fullName") && (
+                    <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
+                  )}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="citizen.address"
+          render={({ field, fieldState }) => (
+            <FormItem className="mt-4">
+              <FormLabel>العنوان</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    placeholder="العنوان (اختياري)"
+                    className={cn("h-11", isOcr("citizen.address") && "pe-10")}
+                  />
+                  {isOcr("citizen.address") && (
+                    <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
+                  )}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div className="flex flex-col gap-2">
-            <Label>المركز</Label>
-            <Select
-              dir="rtl"
-              value={data.citizen.district || ""}
-              onValueChange={(value) =>
-                onChange({
-                  citizen: {
-                    ...data.citizen,
-                    district: value,
-                    village: "",
-                  },
-                })
-              }
-            >
-              <SelectTrigger className={selectTriggerClassName(isOcr("citizen.district"))}>
-                <SelectValue placeholder="اختر المركز" />
-              </SelectTrigger>
-              <SelectContent>
-                {centers.map((center) => (
-                  <SelectItem key={center.code} value={center.name}>
-                    {center.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>القرية</Label>
-            <Select
-              dir="rtl"
-              value={data.citizen.village || ""}
-              onValueChange={(value) =>
-                onChange({
-                  citizen: { ...data.citizen, village: value },
-                })
-              }
-            >
-              <SelectTrigger
-                disabled={!selectedCenter}
-                className={selectTriggerClassName(isOcr("citizen.village"))}
-              >
-                <SelectValue placeholder={selectedCenter ? "اختر القرية" : "اختر المركز أولاً"} />
-              </SelectTrigger>
-              <SelectContent>
-                {villages.map((village) => (
-                  <SelectItem key={village.code} value={village.name}>
-                    {village.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FormField
+            control={form.control}
+            name="citizen.district"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>المركز</FormLabel>
+                <Select
+                  dir="rtl"
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue("citizen.village", "");
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full data-[size=default]:h-11">
+                      {isOcr("citizen.district") && <OcrFieldIcon />}
+                      <SelectValue placeholder="اختر المركز" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {centers.map((center) => (
+                      <SelectItem key={center.code} value={center.name}>
+                        {center.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="citizen.village"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>القرية</FormLabel>
+                <Select dir="rtl" value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger
+                      disabled={!selectedCenter}
+                      className="w-full data-[size=default]:h-11"
+                    >
+                      {isOcr("citizen.village") && <OcrFieldIcon />}
+                      <SelectValue placeholder={selectedCenter ? "اختر القرية" : "اختر المركز أولاً"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {villages.map((village) => (
+                      <SelectItem key={village.code} value={village.name}>
+                        {village.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
       </div>
     </div>

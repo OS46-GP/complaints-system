@@ -1,9 +1,17 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
+import {
+  complaintEditSchema,
+  emptyFormValues,
+  STEP_FIELDS,
+  type ComplaintCreateFormValues,
+} from "@/features/complaint-create/validations";
 import { mapDetailsToForm } from "@/features/complaint-edit/api";
 import { useUpdateComplaint } from "@/features/complaint-edit/hooks";
 import { useComplaint } from "@/features/complaint-detail/hooks";
@@ -11,12 +19,19 @@ import { AsyncLoader } from "@/components/shared/async-loader";
 import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
 import { ComplaintBasicInfoStep } from "@/features/complaint-create/complaint-basic-info-step";
 import { ComplaintDescriptionStep } from "@/features/complaint-create/complaint-description-step";
 import { ComplaintReviewStep } from "@/features/complaint-create/complaint-review-step";
 
 const TOTAL_STEPS = 3;
+
+const EDIT_STEP_FIELDS: (typeof STEP_FIELDS)[number][] = [
+  STEP_FIELDS[0],
+  STEP_FIELDS[1],
+  [],
+];
 
 interface ComplaintEditFormProps {
   complaintId: string;
@@ -27,26 +42,23 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
   const { pathname } = useLocation();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
   const updateMutation = useUpdateComplaint();
-
   const [step, setStep] = useState(1);
-  const initialized = useRef(false);
 
   const { data: details, isLoading, isError, refetch } = useComplaint(complaintId);
 
-  const [data, setData] = useState<ComplaintCreateFormData | null>(null);
+  const form = useForm<ComplaintCreateFormValues>({
+    resolver: zodResolver(complaintEditSchema),
+    defaultValues: emptyFormValues,
+    mode: "onTouched",
+  });
 
   useEffect(() => {
-    if (details && !initialized.current) {
-      initialized.current = true;
-      setData(mapDetailsToForm(details));
+    if (details) {
+      form.reset({ ...mapDetailsToForm(details), files: [] });
     }
-  }, [details]);
+  }, [details, form]);
 
-  const updateData = useCallback((partial: Partial<ComplaintCreateFormData>) => {
-    setData((prev) => prev ? { ...prev, ...partial } : prev);
-  }, []);
-
-  if (!data) {
+  if (!details) {
     return (
       <AsyncLoader
         loading={isLoading}
@@ -58,21 +70,11 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
     );
   }
 
-  const isFormValid =
-    data.subject.trim().length > 0 &&
-    data.citizen.fullName.trim().length > 0 &&
-    data.citizen.nationalId.trim().length > 0;
-
-  const canProceed = () => {
-    if (step === 1) return isFormValid;
-    return true;
-  };
-
-  const handleNext = () => {
-    if (step < TOTAL_STEPS) {
-      setStep((s) => s + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+  const handleNext = async () => {
+    const isValid = await form.trigger(EDIT_STEP_FIELDS[step - 1]);
+    if (!isValid) return;
+    setStep((s) => s + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePrev = () => {
@@ -82,14 +84,23 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
     }
   };
 
-  const handleSubmit = async () => {
-    try {
-      await updateMutation.mutateAsync({ id: complaintId, data });
-      toast.success("تم تحديث الشكوى بنجاح");
-      navigate(listPath);
-    } catch {
-      toast.error("حدث خطأ أثناء تحديث الشكوى");
-    }
+  const handleSubmit = (values: ComplaintCreateFormValues) => {
+    const payload: ComplaintCreateFormData = {
+      ...values,
+      files: values.files.map((item) => item.file),
+    };
+    updateMutation.mutate(
+      { id: complaintId, data: payload },
+      {
+        onSuccess: () => {
+          toast.success("تم تحديث الشكوى بنجاح");
+          navigate(listPath);
+        },
+        onError: () => {
+          toast.error("حدث خطأ أثناء تحديث الشكوى");
+        },
+      },
+    );
   };
 
   return (
@@ -108,53 +119,49 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
           <ComplaintStepper currentStep={step} />
         </div>
 
-        <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
-          {step === 1 && (
-            <ComplaintBasicInfoStep data={data} onChange={updateData} />
-          )}
-          {step === 2 && (
-            <ComplaintDescriptionStep data={data} onChange={updateData} />
-          )}
-          {step === 3 && (
-            <ComplaintReviewStep
-              data={data}
-              files={[]}
-              onGoToStep={setStep}
-            />
-          )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
+              {step === 1 && <ComplaintBasicInfoStep />}
+              {step === 2 && <ComplaintDescriptionStep />}
+              {step === 3 && <ComplaintReviewStep onGoToStep={setStep} />}
 
-          <div className="mt-6 md:mt-10 flex flex-row-reverse justify-between items-center border-t border-border pt-4 md:pt-6">
-            <div className="flex gap-2">
-              {step < TOTAL_STEPS ? (
-                <Button onClick={handleNext} disabled={!canProceed()} className="gap-2">
-                  التالي
-                  <ArrowLeft className="size-4" />
-                </Button>
-              ) : (
-                <Button onClick={handleSubmit} disabled={updateMutation.isPending || !isFormValid} className="gap-2">
-                  {updateMutation.isPending ? "جارٍ الحفظ..." : "حفظ التعديلات"}
-                  <Save className="size-4" />
-                </Button>
-              )}
-              <Button
-                onClick={handleSubmit}
-                disabled={updateMutation.isPending || !isFormValid}
-                variant="outline"
-                className="gap-2"
-              >
-                {updateMutation.isPending ? "جارٍ الحفظ..." : "حفظ التعديلات"}
-                <Save className="size-4" />
-              </Button>
+              <div className="mt-6 md:mt-10 flex flex-row-reverse justify-between items-center border-t border-border pt-4 md:pt-6">
+                {step < TOTAL_STEPS ? (
+                  <Button type="button" onClick={handleNext} className="gap-2">
+                    التالي
+                    <ArrowLeft className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={updateMutation.isPending}
+                    className="gap-2"
+                  >
+                    {updateMutation.isPending ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        جارٍ الحفظ...
+                      </>
+                    ) : (
+                      <>
+                        حفظ التعديلات
+                        <Save className="size-4" />
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {step > 1 && (
+                  <Button type="button" variant="ghost" onClick={handlePrev} className="gap-2">
+                    <ArrowRight className="size-4" />
+                    السابق
+                  </Button>
+                )}
+              </div>
             </div>
-
-            {step > 1 && (
-              <Button variant="ghost" onClick={handlePrev} className="gap-2">
-                <ArrowRight className="size-4" />
-                السابق
-              </Button>
-            )}
-          </div>
-        </div>
+          </form>
+        </Form>
       </div>
     </div>
   );

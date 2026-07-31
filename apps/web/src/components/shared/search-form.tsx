@@ -96,7 +96,7 @@ export function SearchForm({
             </button>
           )}
         </div>
-        <Button type="submit" size="sm" variant="secondary">
+        <Button type="submit" size="icon">
           <Search className="size-4" />
         </Button>
       </form>
