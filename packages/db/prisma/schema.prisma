@@ -153,6 +153,7 @@ model Complaint {
   files            ComplaintFile[]
   linksFrom        ComplaintLink[] @relation("LinkedFrom")
   linksTo          ComplaintLink[] @relation("LinkedTo")
+  socialDrafts     SocialDraft[]
 
   @@unique([complaintNumber, statementYear])
   @@index([citizenId])
@@ -227,4 +228,48 @@ model GeneratedReport {
 
   @@index([generatedAt])
   @@index([type])
+}
+
+enum SocialDraftStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum GroupType {
+  Group
+  Page
+}
+
+model MonitoredGroup {
+  id        String    @id @default(cuid())
+  groupId   String    @unique
+  name      String
+  type      GroupType @default(Group)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isActive])
+}
+
+model SocialDraft {
+  id           String           @id @default(cuid())
+  sourcePostId String           @unique
+  sourceLink   String
+  postText     String
+  authorName   String?
+  postedAt     DateTime
+  detectedAt   DateTime         @default(now())
+  status       SocialDraftStatus @default(Pending)
+  groupId      String?
+  groupName    String?
+  notes        String?
+  complaintId  String?
+  complaint    Complaint?       @relation(fields: [complaintId], references: [id], onDelete: SetNull)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([status])
+  @@index([detectedAt])
 }
