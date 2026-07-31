@@ -1,5 +1,5 @@
 import { axiosClient } from "@/api/axios-client";
-import type { ApiComplaint, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload } from "@/features/complaint-list/types";
+import type { ApiComplaint, ApiCitizen, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload } from "@/features/complaint-list/types";
 
 export interface ListComplaintsParams {
   page?: number;
@@ -75,6 +75,10 @@ export const complaintsApi = {
     axiosClient.get<ReferenceItem[]>("/api/complaints/examination-statuses").then((res) => res.data),
   getLocations: () =>
     axiosClient.get<LocationItem[]>("/api/complaints/locations").then((res) => res.data),
+  getCitizenByNationalId: (nationalId: string) =>
+    axiosClient
+      .get<ApiCitizen | null>(`/api/complaints/citizens/${encodeURIComponent(nationalId)}`)
+      .then((res) => res.data),
   checkDuplicates: (payload: CheckDuplicatesPayload) =>
     axiosClient
       .post<{ recurrenceMatches: RecurrenceMatch[] }>("/api/complaints/check-duplicates", payload)

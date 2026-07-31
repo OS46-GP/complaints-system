@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,6 +79,29 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
   const villages = selectedCenter
     ? villagesForCenter(selectedCenter.code)
     : [];
+
+  const handleNationalIdBlur = async () => {
+    const nationalId = data.citizen.nationalId.trim();
+    if (!nationalId) return;
+    try {
+      const citizen = await complaintsApi.getCitizenByNationalId(nationalId);
+      if (citizen) {
+        onChange({
+          citizen: {
+            ...data.citizen,
+            fullName: citizen.fullName,
+            mobileNumber: citizen.mobileNumber || "",
+            address: citizen.address || "",
+            village: citizen.village || "",
+            district: citizen.district || "",
+          },
+        });
+        toast.success("تم إكمال بيانات المواطن تلقائياً");
+      }
+    } catch {
+      // ignore lookup errors
+    }
+  };
 
   return (
     <div className="space-y-6">
