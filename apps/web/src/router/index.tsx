@@ -260,10 +260,10 @@ const AppRouter = () => {
               }
             />
             <Route
-              path={PATHS.USER.COMPLAINT_DETAIL(":id")}
+              path={PATHS.USER.COMPLAINTS}
               element={
                 <SuspenseBoundary>
-                  <UserComplaintDetailPage />
+                  <UserComplaintsPage />
                 </SuspenseBoundary>
               }
             />
