@@ -5,6 +5,7 @@ import { ComplaintEvidenceGallery } from "@/features/complaint-detail/complaint-
 import { ComplaintTimeline } from "@/features/complaint-detail/complaint-timeline";
 import { ComplaintMetaPanel } from "@/features/complaint-detail/complaint-meta-panel";
 import { ComplaintQuickActions } from "@/features/complaint-detail/complaint-quick-actions";
+import { ComplaintLinksPanel } from "@/features/complaint-detail/complaint-links-panel";
 import { Button } from "@/components/ui/button";
 
 interface ComplaintDetailsViewProps {
@@ -71,6 +72,7 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
 
         <div className="col-span-12 lg:col-span-3 space-y-4 md:space-y-6">
           <ComplaintMetaPanel complaint={complaint} />
+          <ComplaintLinksPanel complaintId={complaint.id} />
           <ComplaintQuickActions complaintId={complaint.id} />
         </div>
       </div>

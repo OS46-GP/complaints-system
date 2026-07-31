@@ -1,5 +1,5 @@
 import { complaintsApi } from "@/features/complaint-list/api";
-import type { ApiComplaint } from "@/features/complaint-list/types";
+import type { ApiComplaint, RecurrenceMatch } from "@/features/complaint-list/types";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
 function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
@@ -50,4 +50,14 @@ function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
 export async function getComplaintDetails(id: string) {
   const api = await complaintsApi.getById(id);
   return mapToDetails(api);
+}
+
+export async function getComplaintLinks(id: string): Promise<RecurrenceMatch[]> {
+  const data = await complaintsApi.getLinks(id);
+  return data.recurrenceMatches;
+}
+
+export async function analyzeComplaint(id: string): Promise<RecurrenceMatch[]> {
+  const data = await complaintsApi.analyze(id);
+  return data.recurrenceMatches;
 }

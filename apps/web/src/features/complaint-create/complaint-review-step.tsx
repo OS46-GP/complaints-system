@@ -1,5 +1,11 @@
-import { Edit3, Info } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { Edit3, Info, AlertTriangle, CheckCircle2, SearchCheck } from "lucide-react";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
+import type { RecurrenceMatch } from "@/features/complaint-list/types";
+import { complaintsApi } from "@/features/complaint-list/api";
+import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
+import { Button } from "@/components/ui/button";
 
 interface FileItem {
   file: File;
@@ -49,6 +55,30 @@ function ReviewRow({
 
 export function ComplaintReviewStep({ data, files, onGoToStep }: ComplaintReviewStepProps) {
   const fileNames = files.map((f) => f.file.name);
+  const [checkState, setCheckState] = useState<{
+    status: "idle" | "loading" | "done";
+    matches: RecurrenceMatch[];
+  }>({ status: "idle", matches: [] });
+
+  const handleCheck = async () => {
+    setCheckState({ status: "loading", matches: [] });
+    try {
+      const result = await complaintsApi.checkDuplicates({
+        subject: data.subject,
+        departmentId: data.departmentId || undefined,
+        arrivalDate: new Date().toISOString(),
+        citizen: {
+          nationalId: data.citizen.nationalId || undefined,
+          village: data.citizen.village || undefined,
+          district: data.citizen.district || undefined,
+        },
+      });
+      setCheckState({ status: "done", matches: result.recurrenceMatches });
+    } catch {
+      toast.error("تعذر التحقق من الشكاوى المشابهة");
+      setCheckState({ status: "idle", matches: [] });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -92,6 +122,47 @@ export function ComplaintReviewStep({ data, files, onGoToStep }: ComplaintReview
           }
           onEdit={() => onGoToStep(3)}
         />
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface-container-lowest p-4 md:p-6">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          <div>
+            <h3 className="font-heading text-title-sm text-foreground">
+              التحقق من الشكاوى المشابهة
+            </h3>
+            <p className="font-body text-body-sm text-muted-foreground mt-1">
+              تحقق من وجود شكاوى مكررة أو مشابهة قبل الإرسال.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCheck}
+            disabled={checkState.status === "loading" || !data.subject.trim()}
+            className="gap-2"
+          >
+            <SearchCheck className="size-4" />
+            {checkState.status === "loading" ? "جارٍ التحقق..." : "التحقق من التكرار"}
+          </Button>
+        </div>
+
+        {checkState.status === "done" &&
+          (checkState.matches.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 text-warning">
+                <AlertTriangle className="size-5 shrink-0" />
+                <p className="font-body text-body-md">
+                  تم العثور على {checkState.matches.length} شكوى مشابهة. راجعها قبل الإرسال.
+                </p>
+              </div>
+              <RecurrenceMatchList matches={checkState.matches} />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success">
+              <CheckCircle2 className="size-5 shrink-0" />
+              <p className="font-body text-body-md">لا توجد شكاوى مشابهة.</p>
+            </div>
+          ))}
       </div>
 
       <div className="flex items-center gap-2 p-4 bg-primary-container/10 rounded-lg">

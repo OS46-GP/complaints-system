@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { FieldResult } from "@/features/complaint-list/types";
 import { createComplaint } from "@/features/complaint-create/api";
+import { complaintsApi } from "@/features/complaint-list/api";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
@@ -105,7 +106,10 @@ export function ComplaintCreateForm() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await createComplaint({ ...data, files: files.map((f) => f.file) });
+      const created = await createComplaint({ ...data, files: files.map((f) => f.file) });
+      if (created?.id) {
+        complaintsApi.analyze(created.id).catch(() => {});
+      }
       queryClient.invalidateQueries({ queryKey: ["complaints"] });
       toast.success("تم تقديم الشكوى بنجاح");
       navigate(listPath);
