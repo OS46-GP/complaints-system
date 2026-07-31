@@ -49,11 +49,11 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
     annotation: get("annotation") || undefined,
     citizen: {
       fullName: get("citizen_fullName") || "",
-      nationalId: get("citizen_nationalId") || undefined,
-      mobileNumber: get("citizen_mobileNumber") || undefined,
-      address: get("citizen_address") || undefined,
-      village: get("citizen_village") || undefined,
-      district: get("citizen_district") || undefined,
+      nationalId: get("citizen_nationalId") || "",
+      mobileNumber: get("citizen_mobileNumber") || "",
+      address: get("citizen_address") || "",
+      village: get("citizen_village") || "",
+      district: get("citizen_district") || "",
     },
   };
 }
