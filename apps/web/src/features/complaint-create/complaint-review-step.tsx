@@ -99,7 +99,7 @@ export function ComplaintReviewStep({ data, files, onGoToStep }: ComplaintReview
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
-          label="رقم الهوية"
+          label="الرقم القومي"
           value={data.citizen.nationalId || "—"}
           onEdit={() => onGoToStep(1)}
         />

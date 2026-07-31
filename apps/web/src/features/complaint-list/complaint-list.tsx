@@ -26,14 +26,14 @@ interface ComplaintListProps {
 }
 
 const columns: DataTableColumn[] = [
-  { key: "id", label: "رقم الشكوى" },
-  { key: "subject", label: "الموضوع" },
-  { key: "citizen", label: "المواطن" },
-  { key: "department", label: "القسم" },
-  { key: "severity", label: "الأولوية" },
-  { key: "status", label: "الحالة" },
-  { key: "createdAt", label: "تاريخ الإنشاء" },
-  { key: "actions", label: "الإجراءات", className: "text-center" },
+  { key: "id", label: "رقم الشكوى", className: "w-28" },
+  { key: "subject", label: "الموضوع", className: "w-[30%]" },
+  { key: "citizen", label: "المواطن", className: "w-40" },
+  { key: "department", label: "القسم", className: "w-40" },
+  { key: "severity", label: "الأولوية", className: "w-24" },
+  { key: "status", label: "الحالة", className: "w-32" },
+  { key: "createdAt", label: "تاريخ الإنشاء", className: "w-36" },
+  { key: "actions", label: "الإجراءات", className: "w-20 text-center" },
 ];
 
 function filtersFromParams(params: URLSearchParams): FilterValues {
@@ -137,7 +137,7 @@ export function ComplaintList({
             ))}
           </div>
 
-          <DataTable className="hidden md:block w-full overflow-x-auto">
+          <DataTable className="hidden md:block w-full" tableClassName="table-fixed">
             <DataTableHeader columns={columns} />
             <DataTableBody>
               {complaints.map((complaint) => (

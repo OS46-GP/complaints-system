@@ -284,6 +284,14 @@ export class ComplaintsService {
     return this.addCaseStatus(complaint);
   }
 
+  async findCitizenByNationalId(nationalId: string) {
+    const trimmed = nationalId?.trim();
+    if (!trimmed) return null;
+    return this.prisma.citizen.findUnique({
+      where: { nationalId: trimmed },
+    });
+  }
+
   async update(id: string, dto: UpdateComplaintDto) {
     const current = await this.findById(id);
 

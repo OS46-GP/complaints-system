@@ -81,6 +81,11 @@ export class ComplaintsController {
     return this.complaintsService.getLocations();
   }
 
+  @Get("citizens/:nationalId")
+  findCitizenByNationalId(@Param("nationalId") nationalId: string) {
+    return this.complaintsService.findCitizenByNationalId(nationalId);
+  }
+
   @Post(":id/files")
   @UseInterceptors(FileInterceptor("file"))
   uploadFile(

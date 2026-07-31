@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import toast from "react-hot-toast";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import {
   useReceptionMethods,
   useLocations,
 } from "@/features/complaint-list/hooks";
+import { complaintsApi } from "@/features/complaint-list/api";
 import type { LocationItem } from "@/features/complaint-list/types";
 
 const SEVERITY_OPTIONS: { value: ComplaintCreateFormData["severity"]; label: string }[] = [
@@ -67,6 +69,29 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
   const villages = selectedCenter
     ? villagesForCenter(selectedCenter.code)
     : [];
+
+  const handleNationalIdBlur = async () => {
+    const nationalId = data.citizen.nationalId.trim();
+    if (!nationalId) return;
+    try {
+      const citizen = await complaintsApi.getCitizenByNationalId(nationalId);
+      if (citizen) {
+        onChange({
+          citizen: {
+            ...data.citizen,
+            fullName: citizen.fullName,
+            mobileNumber: citizen.mobileNumber || "",
+            address: citizen.address || "",
+            village: citizen.village || "",
+            district: citizen.district || "",
+          },
+        });
+        toast.success("تم إكمال بيانات المواطن تلقائياً");
+      }
+    } catch {
+      // ignore lookup errors
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -159,22 +184,16 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
 
       <div className="border-t border-border pt-6">
         <p className="font-heading text-headline-md text-foreground mb-4">معلومات المواطن</p>
-        <div className="flex flex-col gap-2 mb-4">
-          <Label>الاسم الكامل</Label>
-          <Input
-            value={data.citizen.fullName}
-            onChange={(e) => onChange({ citizen: { ...data.citizen, fullName: e.target.value } })}
-            placeholder="الاسم الكامل للمواطن"
-            className="h-11"
-          />
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>رقم الهوية</Label>
+            <Label>
+              الرقم القومي <span className="text-destructive">*</span>
+            </Label>
             <Input
               value={data.citizen.nationalId}
               onChange={(e) => onChange({ citizen: { ...data.citizen, nationalId: e.target.value } })}
-              placeholder="رقم الهوية (اختياري)"
+              onBlur={handleNationalIdBlur}
+              placeholder="الرقم القومي"
               className="h-11"
             />
           </div>
@@ -187,6 +206,15 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
               className="h-11"
             />
           </div>
+        </div>
+        <div className="flex flex-col gap-2 mt-4">
+          <Label>الاسم الكامل</Label>
+          <Input
+            value={data.citizen.fullName}
+            onChange={(e) => onChange({ citizen: { ...data.citizen, fullName: e.target.value } })}
+            placeholder="الاسم الكامل للمواطن"
+            className="h-11"
+          />
         </div>
         <div className="flex flex-col gap-2 mt-4">
           <Label>العنوان</Label>

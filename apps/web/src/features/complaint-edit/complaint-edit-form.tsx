@@ -58,7 +58,10 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
     );
   }
 
-  const isFormValid = data.subject.trim().length > 0 && data.citizen.fullName.trim().length > 0;
+  const isFormValid =
+    data.subject.trim().length > 0 &&
+    data.citizen.fullName.trim().length > 0 &&
+    data.citizen.nationalId.trim().length > 0;
 
   const canProceed = () => {
     if (step === 1) return isFormValid;
