@@ -7,6 +7,7 @@ import { useComplaint } from "@/features/complaint-detail/hooks";
 import { useSubmitComplaintResponse } from "@/features/complaint-response/hooks";
 import { useExaminationStatuses } from "@/features/complaint-list/hooks";
 import { AsyncLoader } from "@/components/shared/async-loader";
+import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
         error={isError}
         onRetry={() => refetch()}
         errorText="تعذر تحميل بيانات الشكوى"
+        skeleton={<FormSkeleton />}
       />
     );
   }

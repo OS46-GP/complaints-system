@@ -2,6 +2,7 @@ import toast from "react-hot-toast";
 import { Link2, RefreshCw } from "lucide-react";
 import { useComplaintLinks, useAnalyzeComplaint } from "@/features/complaint-detail/hooks";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 interface ComplaintLinksPanelProps {
@@ -22,7 +23,11 @@ export function ComplaintLinksPanel({ complaintId }: ComplaintLinksPanelProps) {
       </div>
 
       {isLoading ? (
-        <p className="font-body text-body-md text-muted-foreground">جارٍ التحميل...</p>
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
       ) : isError ? (
         <div className="space-y-3">
           <p className="font-body text-body-md text-muted-foreground">

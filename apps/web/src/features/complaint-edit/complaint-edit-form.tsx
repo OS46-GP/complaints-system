@@ -8,6 +8,7 @@ import { mapDetailsToForm } from "@/features/complaint-edit/api";
 import { useUpdateComplaint } from "@/features/complaint-edit/hooks";
 import { useComplaint } from "@/features/complaint-detail/hooks";
 import { AsyncLoader } from "@/components/shared/async-loader";
+import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
@@ -52,6 +53,7 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
         error={isError}
         onRetry={() => refetch()}
         errorText="تعذر تحميل بيانات الشكوى"
+        skeleton={<FormSkeleton />}
       />
     );
   }

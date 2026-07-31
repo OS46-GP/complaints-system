@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { AsyncLoader } from "@/components/shared/async-loader";
 import { NewComplaintButton } from "@/features/complaint-list/new-complaint-button";
 import { ComplaintList } from "@/features/complaint-list/complaint-list";
+import { ComplaintListSkeleton } from "@/features/complaint-list/complaint-list-skeleton";
 import { useComplaintsFromSearchParams } from "@/features/complaint-list/hooks";
 
 const PAGE_SIZE = 10;
@@ -31,6 +32,7 @@ export default function UserComplaints() {
         error={isError}
         onRetry={() => refetch()}
         errorText="تعذر تحميل الشكاوى"
+        skeleton={<ComplaintListSkeleton />}
       >
         <ComplaintList
           complaints={complaints}

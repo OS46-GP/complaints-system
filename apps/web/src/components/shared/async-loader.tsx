@@ -1,37 +1,27 @@
 import type { ReactNode } from "react";
-import { AlertCircle, Loader2, RotateCcw } from "lucide-react";
+import { AlertCircle, RotateCcw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AsyncLoaderProps {
   loading?: boolean;
   error?: boolean;
-  loadingText?: string;
   errorText?: string;
   onRetry?: () => void;
+  skeleton?: ReactNode;
   className?: string;
   children?: ReactNode;
 }
 
-function LoaderState({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) {
+function DefaultSkeleton() {
   return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center gap-3 py-20",
-        className,
-      )}
-    >
-      <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      <span className="font-body text-body-md text-muted-foreground">
-        {text}
-      </span>
+    <div className="flex flex-col gap-4 py-8">
+      <Skeleton className="h-8 w-1/3" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-2/3" />
     </div>
   );
 }
@@ -69,14 +59,18 @@ function ErrorState({
 export function AsyncLoader({
   loading,
   error,
-  loadingText = "جارٍ التحميل...",
   errorText = "حدث خطأ أثناء تحميل البيانات",
   onRetry,
+  skeleton,
   className,
   children,
 }: AsyncLoaderProps) {
   if (loading) {
-    return <LoaderState text={loadingText} className={className} />;
+    return (
+      <div className={cn("w-full", className)} aria-busy="true">
+        {skeleton ?? <DefaultSkeleton />}
+      </div>
+    );
   }
 
   if (error) {

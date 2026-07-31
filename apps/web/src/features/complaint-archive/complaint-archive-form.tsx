@@ -6,6 +6,7 @@ import { Archive } from "lucide-react";
 import { useComplaint } from "@/features/complaint-detail/hooks";
 import { useArchiveComplaint } from "@/features/complaint-archive/hooks";
 import { AsyncLoader } from "@/components/shared/async-loader";
+import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ export function ComplaintArchiveForm({ complaintId }: ComplaintArchiveFormProps)
         error={isError}
         onRetry={() => refetch()}
         errorText="تعذر تحميل بيانات الشكوى"
+        skeleton={<FormSkeleton />}
       />
     );
   }

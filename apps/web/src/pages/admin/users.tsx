@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { AsyncLoader } from "@/components/shared/async-loader";
 import { Button } from "@/components/ui/button";
 import { UserList } from "@/features/user-list/user-list";
+import { UserListSkeleton } from "@/features/user-list/user-list-skeleton";
 import { useUsers } from "@/features/users/hooks";
 
 export default function AdminUsers() {
@@ -37,6 +38,7 @@ export default function AdminUsers() {
         error={isError}
         onRetry={() => refetch()}
         errorText="تعذر تحميل المستخدمين"
+        skeleton={<UserListSkeleton />}
       >
         <UserList users={users ?? []} />
       </AsyncLoader>

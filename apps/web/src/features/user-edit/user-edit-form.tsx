@@ -9,6 +9,7 @@ import { Save, X, Loader2 } from "lucide-react";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { AsyncLoader } from "@/components/shared/async-loader";
+import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { BasicInfoSection } from "@/features/user-create/basic-info-section";
 import { PermissionsSection } from "@/features/user-create/permissions-section";
 import { useUser, useUpdateUser } from "@/features/users/hooks";
@@ -75,12 +76,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
   };
 
   if (isLoading) {
-    return (
-      <AsyncLoader
-        loading
-        loadingText="جارٍ تحميل بيانات المستخدم..."
-      />
-    );
+    return <AsyncLoader loading skeleton={<FormSkeleton />} />;
   }
 
   if (isError) {

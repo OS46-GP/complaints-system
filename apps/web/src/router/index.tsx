@@ -10,6 +10,7 @@ import AuthLayout from "@/layouts/auth-layout";
 import AdminLayout from "@/layouts/admin-layout";
 import UserLayout from "@/layouts/user-layout";
 import DefaultLayout from "@/layouts/default-layout";
+import { PageLoader } from "@/components/shared/page-loader";
 
 const LoginPage = lazy(() => import("@/pages/auth/login"));
 const RegisterPage = lazy(() => import("@/pages/auth/register"));
@@ -57,12 +58,8 @@ const UserSettingsPage = lazy(() => import("@/pages/user/settings"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 const ForbiddenPage = lazy(() => import("@/pages/forbidden"));
 
-function Loading() {
-  return <div>جارى التحميل ...</div>;
-}
-
 function SuspenseBoundary({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<Loading />}>{children}</Suspense>;
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
 
 const AppRouter = () => {

@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import { AsyncLoader } from "@/components/shared/async-loader";
 import { useComplaint } from "@/features/complaint-detail/hooks";
 import { ComplaintDetailsView } from "@/features/complaint-detail/complaint-details-view";
+import { ComplaintDetailsSkeleton } from "@/features/complaint-detail/complaint-details-skeleton";
 
 export default function AdminComplaintDetail() {
   const { id } = useParams();
@@ -15,6 +16,7 @@ export default function AdminComplaintDetail() {
         error={isError}
         onRetry={() => refetch()}
         errorText="تعذر تحميل بيانات الشكوى"
+        skeleton={<ComplaintDetailsSkeleton />}
       >
         {complaint ? (
           <ComplaintDetailsView complaint={complaint} />
