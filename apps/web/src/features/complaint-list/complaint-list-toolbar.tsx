@@ -74,6 +74,7 @@ export function ComplaintToolbar({
         <SearchForm
           defaultValue={search}
           onSubmit={onSearchSubmit}
+          placeholder="بحث بالاسم أو الموضوع أو الرقم"
           inputClassName="w-48"
         />
         <ComplaintFilterSheet

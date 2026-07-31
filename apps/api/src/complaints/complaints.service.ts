@@ -194,9 +194,15 @@ export class ComplaintsService {
     }
 
     if (name) {
-      where.citizen = {
-        fullName: { contains: name, mode: "insensitive" },
-      };
+      const trimmed = name.trim();
+      const numeric = /^\d+$/.test(trimmed) ? parseInt(trimmed, 10) : null;
+      where.OR = [
+        { citizen: { fullName: { contains: trimmed, mode: "insensitive" } } },
+        { subject: { contains: trimmed, mode: "insensitive" } },
+        ...(numeric !== null && !Number.isNaN(numeric)
+          ? [{ complaintNumber: numeric }]
+          : []),
+      ];
     }
 
     if (complaintNumber) {
