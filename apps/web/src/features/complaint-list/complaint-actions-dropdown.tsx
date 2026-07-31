@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
   MoreHorizontal,
@@ -22,8 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
+import { useDeleteComplaint } from "@/features/complaint-list/hooks";
 import { PATHS } from "@/router/paths";
-import { complaintsApi } from "@/features/complaint-list/api";
 
 interface ComplaintActionsDropdownProps {
   complaintId: string;
@@ -38,9 +37,8 @@ export function ComplaintActionsDropdown({
   const { pathname } = useLocation();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const deleteMutation = useDeleteComplaint();
   const isAdmin = pathname.startsWith("/admin");
-
   const detailPath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_DETAIL(complaintId)
     : PATHS.USER.COMPLAINT_DETAIL(complaintId);
@@ -53,15 +51,6 @@ export function ComplaintActionsDropdown({
   const archivePath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_ARCHIVE(complaintId)
     : PATHS.USER.COMPLAINT_ARCHIVE(complaintId);
-
-  const deleteMutation = useMutation({
-    mutationFn: () => complaintsApi.remove(complaintId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["complaints"] });
-      toast.success("تم حذف الشكوى بنجاح");
-      setDeleteOpen(false);
-    },
-  });
 
   const handleView = () => navigate(detailPath);
   const handleEdit = () => navigate(editPath);
@@ -121,7 +110,14 @@ export function ComplaintActionsDropdown({
         cancelLabel="إلغاء"
         variant="destructive"
         loading={deleteMutation.isPending}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() =>
+          deleteMutation.mutate(complaintId, {
+            onSuccess: () => {
+              toast.success("تم حذف الشكوى بنجاح");
+              setDeleteOpen(false);
+            },
+          })
+        }
       />
 
       <ComplaintSummaryDialog

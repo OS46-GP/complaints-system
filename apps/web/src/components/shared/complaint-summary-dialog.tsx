@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { Loader2, RotateCcw, Sparkles } from "lucide-react";
 
 import {
@@ -11,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { complaintsApi } from "@/features/complaint-list/api";
+import { useSummarizeComplaint } from "@/features/complaint-list/hooks";
 
 interface ComplaintSummaryDialogProps {
   open: boolean;
@@ -26,9 +25,7 @@ export function ComplaintSummaryDialog({
   complaintId,
   complaintLabel,
 }: ComplaintSummaryDialogProps) {
-  const summarizeMutation = useMutation({
-    mutationFn: () => complaintsApi.summarize(complaintId),
-  });
+  const summarizeMutation = useSummarizeComplaint(complaintId);
 
   useEffect(() => {
     if (open) {

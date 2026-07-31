@@ -1,9 +1,13 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { complaintsApi } from "@/features/complaint-list/api";
+import {
+  useDepartments,
+  useComplaintTypes,
+  useReceptionMethods,
+  useLocations,
+} from "@/features/complaint-list/hooks";
 import type { LocationItem } from "@/features/complaint-list/types";
 
 const SEVERITY_OPTIONS: { value: ComplaintCreateFormData["severity"]; label: string }[] = [
@@ -18,25 +22,10 @@ interface ComplaintBasicInfoStepProps {
 }
 
 export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoStepProps) {
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: complaintsApi.getDepartments,
-  });
-
-  const { data: complaintTypes } = useQuery({
-    queryKey: ["complaint-types"],
-    queryFn: complaintsApi.getComplaintTypes,
-  });
-
-  const { data: receptionMethods } = useQuery({
-    queryKey: ["reception-methods"],
-    queryFn: complaintsApi.getReceptionMethods,
-  });
-
-  const { data: locations } = useQuery({
-    queryKey: ["locations"],
-    queryFn: complaintsApi.getLocations,
-  });
+  const { data: departments } = useDepartments();
+  const { data: complaintTypes } = useComplaintTypes();
+  const { data: receptionMethods } = useReceptionMethods();
+  const { data: locations } = useLocations();
 
   const centers = useMemo(
     () => (locations ?? []).filter((location) => location.level === 2),

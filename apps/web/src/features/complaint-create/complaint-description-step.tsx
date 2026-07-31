@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Label } from "@/components/ui/label";
-import { complaintsApi } from "@/features/complaint-list/api";
+import { usePresentationStatuses } from "@/features/complaint-list/hooks";
 
 interface ComplaintDescriptionStepProps {
   data: ComplaintCreateFormData;
@@ -9,10 +8,7 @@ interface ComplaintDescriptionStepProps {
 }
 
 export function ComplaintDescriptionStep({ data, onChange }: ComplaintDescriptionStepProps) {
-  const { data: presentationStatuses } = useQuery({
-    queryKey: ["presentation-statuses"],
-    queryFn: complaintsApi.getPresentationStatuses,
-  });
+  const { data: presentationStatuses } = usePresentationStatuses();
 
   return (
     <div className="space-y-6">

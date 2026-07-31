@@ -1,7 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Link2, RefreshCw } from "lucide-react";
-import { getComplaintLinks, analyzeComplaint } from "@/features/complaint-detail/api";
+import { useComplaintLinks, useAnalyzeComplaint } from "@/features/complaint-detail/hooks";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
 import { Button } from "@/components/ui/button";
 
@@ -10,22 +9,8 @@ interface ComplaintLinksPanelProps {
 }
 
 export function ComplaintLinksPanel({ complaintId }: ComplaintLinksPanelProps) {
-  const queryClient = useQueryClient();
-
-  const { data: links, isLoading } = useQuery({
-    queryKey: ["complaint-links", complaintId],
-    queryFn: () => getComplaintLinks(complaintId),
-  });
-
-  const analyzeMutation = useMutation({
-    mutationFn: () => analyzeComplaint(complaintId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["complaint-links", complaintId] });
-    },
-    onError: () => {
-      toast.error("تعذر إجراء التحليل");
-    },
-  });
+  const { data: links, isLoading, isError, refetch } = useComplaintLinks(complaintId);
+  const analyzeMutation = useAnalyzeComplaint(complaintId);
 
   const matches = links ?? [];
 
@@ -38,6 +23,22 @@ export function ComplaintLinksPanel({ complaintId }: ComplaintLinksPanelProps) {
 
       {isLoading ? (
         <p className="font-body text-body-md text-muted-foreground">جارٍ التحميل...</p>
+      ) : isError ? (
+        <div className="space-y-3">
+          <p className="font-body text-body-md text-muted-foreground">
+            تعذر تحميل الشكاوى المرتبطة.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="gap-2"
+          >
+            <RefreshCw className="size-4" />
+            إعادة المحاولة
+          </Button>
+        </div>
       ) : matches.length > 0 ? (
         <RecurrenceMatchList matches={matches} emptyText="" />
       ) : (
@@ -49,7 +50,11 @@ export function ComplaintLinksPanel({ complaintId }: ComplaintLinksPanelProps) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => analyzeMutation.mutate()}
+            onClick={() =>
+              analyzeMutation.mutate(undefined, {
+                onError: () => toast.error("تعذر إجراء التحليل"),
+              })
+            }
             disabled={analyzeMutation.isPending}
             className="gap-2"
           >

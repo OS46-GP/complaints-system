@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
   MoreHorizontal,
@@ -20,7 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { usersApi } from "@/features/users/api";
+import { useDeleteUser } from "@/features/users/hooks";
 
 interface UserActionsDropdownProps {
   userId: string;
@@ -33,16 +32,7 @@ export function UserActionsDropdown({
 }: UserActionsDropdownProps) {
   const navigate = useNavigate();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const deleteMutation = useMutation({
-    mutationFn: () => usersApi.remove(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("تم حذف المستخدم بنجاح");
-      setDeleteOpen(false);
-    },
-  });
+  const deleteMutation = useDeleteUser();
 
   const handleEdit = () => navigate(PATHS.ADMIN.USER_DETAIL(userId));
   const handlePermissions = () => {};
@@ -86,7 +76,14 @@ export function UserActionsDropdown({
         cancelLabel="إلغاء"
         variant="destructive"
         loading={deleteMutation.isPending}
-        onConfirm={() => deleteMutation.mutate()}
+        onConfirm={() =>
+          deleteMutation.mutate(userId, {
+            onSuccess: () => {
+              toast.success("تم حذف المستخدم بنجاح");
+              setDeleteOpen(false);
+            },
+          })
+        }
       />
     </>
   );

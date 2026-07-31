@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,9 +8,10 @@ import { Save, X, Loader2 } from "lucide-react";
 
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
+import { AsyncLoader } from "@/components/shared/async-loader";
 import { BasicInfoSection } from "@/features/user-create/basic-info-section";
 import { PermissionsSection } from "@/features/user-create/permissions-section";
-import { usersApi } from "@/features/users/api";
+import { useUser, useUpdateUser } from "@/features/users/hooks";
 import type { UserEditFormData } from "@/features/user-edit/types";
 
 interface UserEditFormProps {
@@ -27,12 +27,9 @@ const schema = z.object({
 
 export function UserEditForm({ userId }: UserEditFormProps) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const mutation = useUpdateUser(userId);
 
-  const { data: existingUser, isLoading } = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => usersApi.getById(userId),
-  });
+  const { data: existingUser, isLoading, isError, refetch } = useUser(userId);
 
   const {
     watch,
@@ -68,28 +65,31 @@ export function UserEditForm({ userId }: UserEditFormProps) {
     }
   };
 
-  const mutation = useMutation({
-    mutationFn: (formData: UserEditFormData) =>
-      usersApi.update(userId, {
-        password: formData.password || undefined,
-        role: formData.role,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("تم تحديث المستخدم بنجاح");
-      navigate(PATHS.ADMIN.USERS);
-    },
-  });
-
   const onSubmit = (formData: UserEditFormData) => {
-    mutation.mutate(formData);
+    mutation.mutate(formData, {
+      onSuccess: () => {
+        toast.success("تم تحديث المستخدم بنجاح");
+        navigate(PATHS.ADMIN.USERS);
+      },
+    });
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
+      <AsyncLoader
+        loading
+        loadingText="جارٍ تحميل بيانات المستخدم..."
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <AsyncLoader
+        error
+        errorText="تعذر تحميل بيانات المستخدم"
+        onRetry={() => refetch()}
+      />
     );
   }
 
