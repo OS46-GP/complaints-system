@@ -49,7 +49,7 @@ export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
         {complaint.createdAt}
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 text-center">
-        <ComplaintActionsDropdown complaintId={complaint.id} />
+        <ComplaintActionsDropdown complaintId={complaint.id} complaintLabel={complaint.displayId} />
       </DataTableCell>
     </DataTableRow>
   );

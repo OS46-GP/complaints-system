@@ -8,6 +8,7 @@ import {
   Pencil,
   MessageSquareReply,
   Archive,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 
@@ -20,19 +21,23 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
 import { PATHS } from "@/router/paths";
 import { complaintsApi } from "@/features/complaint-list/api";
 
 interface ComplaintActionsDropdownProps {
   complaintId: string;
+  complaintLabel?: string;
 }
 
 export function ComplaintActionsDropdown({
   complaintId,
+  complaintLabel,
 }: ComplaintActionsDropdownProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const queryClient = useQueryClient();
   const isAdmin = pathname.startsWith("/admin");
 
@@ -63,6 +68,7 @@ export function ComplaintActionsDropdown({
   const handleResponse = () => navigate(responsePath);
   const handleArchive = () => navigate(archivePath);
   const handleDelete = () => setDeleteOpen(true);
+  const handleSummary = () => setSummaryOpen(true);
 
   return (
     <>
@@ -77,6 +83,11 @@ export function ComplaintActionsDropdown({
             <Eye className="size-4" />
             عرض التفاصيل
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleSummary} className="w-full gap-2">
+            <Sparkles className="size-4 text-primary" />
+            الملخص الذكي
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleEdit} className="w-full gap-2">
             <Pencil className="size-4" />
             تعديل
@@ -111,6 +122,13 @@ export function ComplaintActionsDropdown({
         variant="destructive"
         loading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate()}
+      />
+
+      <ComplaintSummaryDialog
+        open={summaryOpen}
+        onOpenChange={setSummaryOpen}
+        complaintId={complaintId}
+        complaintLabel={complaintLabel ?? complaintId}
       />
     </>
   );

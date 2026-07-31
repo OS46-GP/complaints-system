@@ -73,7 +73,7 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
         <div className="col-span-12 lg:col-span-3 space-y-4 md:space-y-6">
           <ComplaintMetaPanel complaint={complaint} />
           <ComplaintLinksPanel complaintId={complaint.id} />
-          <ComplaintQuickActions complaintId={complaint.id} />
+          <ComplaintQuickActions complaintId={complaint.id} complaintLabel={complaint.displayId} />
         </div>
       </div>
     </>
