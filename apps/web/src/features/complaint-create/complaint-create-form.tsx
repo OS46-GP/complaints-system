@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Edit3, Info, AlertTriangle, CheckCircle2, SearchCheck } from "lucide-react";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { RecurrenceMatch } from "@/features/complaint-list/types";

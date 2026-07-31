@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Archive } from "lucide-react";
 
 import { useComplaint } from "@/features/complaint-detail/hooks";

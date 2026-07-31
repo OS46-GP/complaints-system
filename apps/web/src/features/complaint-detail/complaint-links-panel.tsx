@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Link2, RefreshCw } from "lucide-react";
 import { useComplaintLinks, useAnalyzeComplaint } from "@/features/complaint-detail/hooks";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";

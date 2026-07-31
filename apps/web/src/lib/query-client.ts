@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { QueryClient } from "@tanstack/react-query";
 
 import type { ApiError } from "@/types/common-types";

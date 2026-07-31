@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
