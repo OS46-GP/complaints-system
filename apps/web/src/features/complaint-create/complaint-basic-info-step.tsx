@@ -194,22 +194,16 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
 
       <div className="border-t border-border pt-6">
         <p className="font-heading text-headline-md text-foreground mb-4">معلومات المواطن</p>
-        <div className="flex flex-col gap-2 mb-4">
-          <Label>الاسم الكامل</Label>
-          <Input
-            value={data.citizen.fullName}
-            onChange={(e) => onChange({ citizen: { ...data.citizen, fullName: e.target.value } })}
-            placeholder="الاسم الكامل للمواطن"
-            className="h-11"
-          />
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <Label>رقم الهوية</Label>
+            <Label>
+              الرقم القومي <span className="text-destructive">*</span>
+            </Label>
             <Input
               value={data.citizen.nationalId}
               onChange={(e) => onChange({ citizen: { ...data.citizen, nationalId: e.target.value } })}
-              placeholder="رقم الهوية (اختياري)"
+              onBlur={handleNationalIdBlur}
+              placeholder="الرقم القومي"
               className="h-11"
             />
           </div>
@@ -222,6 +216,15 @@ export function ComplaintBasicInfoStep({ data, onChange }: ComplaintBasicInfoSte
               className="h-11"
             />
           </div>
+        </div>
+        <div className="flex flex-col gap-2 mt-4">
+          <Label>الاسم الكامل</Label>
+          <Input
+            value={data.citizen.fullName}
+            onChange={(e) => onChange({ citizen: { ...data.citizen, fullName: e.target.value } })}
+            placeholder="الاسم الكامل للمواطن"
+            className="h-11"
+          />
         </div>
         <div className="flex flex-col gap-2 mt-4">
           <Label>العنوان</Label>

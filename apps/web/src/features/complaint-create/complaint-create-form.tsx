@@ -85,6 +85,7 @@ export function ComplaintCreateForm() {
     if (step === 1) {
       if (!data.subject.trim()) return false;
       if (!data.citizen.fullName.trim()) return false;
+      if (!data.citizen.nationalId.trim()) return false;
     }
     return true;
   };

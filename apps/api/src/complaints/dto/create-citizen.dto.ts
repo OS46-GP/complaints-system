@@ -5,9 +5,9 @@ export class CreateCitizenDto {
   @IsNotEmpty()
   fullName!: string;
 
-  @IsOptional()
   @IsString()
-  nationalId?: string;
+  @IsNotEmpty()
+  nationalId!: string;
 
   @IsOptional()
   @IsString()
