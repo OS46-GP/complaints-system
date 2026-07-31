@@ -20,9 +20,10 @@ interface DataTableProps {
   children: ReactNode;
   toolbar?: ReactNode;
   className?: string;
+  tableClassName?: string;
 }
 
-export function DataTable({ children, toolbar, className }: DataTableProps) {
+export function DataTable({ children, toolbar, className, tableClassName }: DataTableProps) {
   return (
     <div
       className={cn(
@@ -31,7 +32,7 @@ export function DataTable({ children, toolbar, className }: DataTableProps) {
       )}
     >
       {toolbar}
-      <Table>{children}</Table>
+      <Table className={tableClassName}>{children}</Table>
     </div>
   );
 }

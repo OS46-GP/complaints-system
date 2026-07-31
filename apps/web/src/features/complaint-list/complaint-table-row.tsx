@@ -1,8 +1,10 @@
+import { useNavigate, useLocation } from "react-router";
 import type { ComplaintItem } from "@/features/complaint-list/types";
 import { ComplaintActionsDropdown } from "@/features/complaint-list/complaint-actions-dropdown";
 import { ComplaintPriority } from "@/features/complaint-list/complaint-priority";
 import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
+import { PATHS } from "@/router/paths";
 import {
   Tooltip,
   TooltipTrigger,
@@ -14,8 +16,18 @@ interface ComplaintTableRowProps {
 }
 
 export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
+  const detailPath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_DETAIL(complaint.id)
+    : PATHS.USER.COMPLAINT_DETAIL(complaint.id);
+
   return (
-    <DataTableRow className="hover:bg-surface-container-low transition-colors group">
+    <DataTableRow
+      className="hover:bg-surface-container-low transition-colors group cursor-pointer"
+      onClick={() => navigate(detailPath)}
+    >
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data font-bold text-primary">
         {complaint.displayId}
       </DataTableCell>
@@ -33,10 +45,10 @@ export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
           </Tooltip>
         </div>
       </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-foreground">
+      <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-foreground whitespace-normal break-words">
         {complaint.citizenName}
       </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-muted-foreground">
+      <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-muted-foreground whitespace-normal break-words">
         {complaint.departmentName}
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4">
@@ -48,8 +60,11 @@ export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data text-muted-foreground">
         {complaint.createdAt}
       </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4 text-center">
-        <ComplaintActionsDropdown complaintId={complaint.id} complaintLabel={complaint.displayId} />
+      <DataTableCell
+        className="p-0 px-6 py-4 text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ComplaintActionsDropdown complaintId={complaint.id} />
       </DataTableCell>
     </DataTableRow>
   );
