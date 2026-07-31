@@ -5,13 +5,13 @@ import type { ComplaintCreateFormData } from "@/features/complaint-create/types"
 export function mapDetailsToForm(details: ComplaintDetailsData): ComplaintCreateFormData {
   return {
     subject: details.subject,
-    complaintTypeId: "",
+    complaintTypeId: details.complaintTypeId ? String(details.complaintTypeId) : "",
     severity: details.severity,
-    receptionMethodId: "",
-    respondentName: "",
-    departmentId: "",
+    receptionMethodId: details.receptionMethodId ? String(details.receptionMethodId) : "",
+    respondentName: details.respondentName ?? "",
+    departmentId: details.departmentId ?? "",
     annotation: details.annotation ?? "",
-    presentationStatusId: "",
+    presentationStatusId: details.presentationStatusId ? String(details.presentationStatusId) : "",
     citizen: {
       fullName: details.citizenName,
       nationalId: details.citizenNationalId ?? "",

@@ -21,10 +21,16 @@ export interface ComplaintDetailsData {
   citizenVillage: string | null;
   citizenDistrict: string | null;
   departmentName: string | null;
+  departmentId: string | null;
   complaintTypeName: string | null;
+  complaintTypeId: number | null;
   receptionMethodName: string | null;
+  receptionMethodId: number | null;
   examinationStatusName: string | null;
+  examinationStatusId: number | null;
   presentationStatusName: string | null;
+  presentationStatusId: number | null;
+  respondentName: string | null;
   createdBy: string | null;
   createdAt: string;
   files: ComplaintFileItem[];
