@@ -1,29 +1,29 @@
+import { useFormContext } from "react-hook-form";
+import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
 import { FileUploadArea } from "@/features/complaint-create/file-upload-area";
+import { FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-interface FileItem {
-  file: File;
-  id: string;
-}
+export function ComplaintAttachmentStep() {
+  const form = useFormContext<ComplaintCreateFormValues>();
 
-interface ComplaintAttachmentStepProps {
-  files: FileItem[];
-  onFilesChange: (files: FileItem[]) => void;
-}
-
-export function ComplaintAttachmentStep({ files, onFilesChange }: ComplaintAttachmentStepProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <p className="font-heading text-headline-md text-foreground">
-          المرفقات والوثائق
-        </p>
-        <FileUploadArea
-          files={files}
-          onFilesChange={onFilesChange}
-          accept=".pdf,.jpg,.png,.doc,.docx"
-          maxSizeMB={10}
-        />
-      </div>
+      <FormField
+        control={form.control}
+        name="files"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>المرفقات والوثائق</FormLabel>
+            <FileUploadArea
+              files={field.value}
+              onFilesChange={(files) => field.onChange(files)}
+              accept=".pdf,.jpg,.png,.doc,.docx"
+              maxSizeMB={10}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

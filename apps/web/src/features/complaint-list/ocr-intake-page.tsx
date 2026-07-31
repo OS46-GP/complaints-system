@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router";
 import { Upload, FileText, Loader2, ScanLine, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PATHS } from "@/router/paths";
 import { axiosClient } from "@/api/axios-client";
 import { PageHeader } from "@/components/shared/page-header";
@@ -65,7 +66,7 @@ export function OcrIntakePage() {
           <label
             className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer hover:bg-surface-container-low"
           >
-            <input
+            <Input
               ref={inputRef}
               type="file"
               accept={ALLOWED_TYPES.join(",")}

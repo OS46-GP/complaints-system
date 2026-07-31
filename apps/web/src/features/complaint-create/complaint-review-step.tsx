@@ -1,20 +1,14 @@
 import { useState } from "react";
+import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { Edit3, Info, AlertTriangle, CheckCircle2, SearchCheck } from "lucide-react";
-import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
+import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
 import type { RecurrenceMatch } from "@/features/complaint-list/types";
 import { complaintsApi } from "@/features/complaint-list/api";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
 import { Button } from "@/components/ui/button";
 
-interface FileItem {
-  file: File;
-  id: string;
-}
-
 interface ComplaintReviewStepProps {
-  data: ComplaintCreateFormData;
-  files: FileItem[];
   ocrFields?: Set<string>;
   onGoToStep: (step: number) => void;
 }
@@ -61,9 +55,11 @@ function ReviewRow({
   );
 }
 
-export function ComplaintReviewStep({ data, files, ocrFields, onGoToStep }: ComplaintReviewStepProps) {
+export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewStepProps) {
+  const form = useFormContext<ComplaintCreateFormValues>();
+  const data = form.watch();
   const isOcr = (field: string) => ocrFields?.has(field) ?? false;
-  const fileNames = files.map((f) => f.file.name);
+  const fileNames = data.files.map((f) => f.file.name);
   const [checkState, setCheckState] = useState<{
     status: "idle" | "loading" | "done";
     matches: RecurrenceMatch[];
@@ -130,11 +126,7 @@ export function ComplaintReviewStep({ data, files, ocrFields, onGoToStep }: Comp
         />
         <ReviewRow
           label="المرفقات"
-          value={
-            fileNames.length > 0
-              ? fileNames.join("، ")
-              : "لا توجد مرفقات"
-          }
+          value={fileNames.length > 0 ? fileNames.join("، ") : "لا توجد مرفقات"}
           onEdit={() => onGoToStep(3)}
         />
       </div>

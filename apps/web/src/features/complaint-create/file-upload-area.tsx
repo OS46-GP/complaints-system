@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import { Upload, Trash2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 interface FileItem {
   file: File;
@@ -58,7 +59,7 @@ export function FileUploadArea({
             : "border-border hover:bg-surface-container-low",
         )}
       >
-        <input
+        <Input
           ref={inputRef}
           type="file"
           multiple

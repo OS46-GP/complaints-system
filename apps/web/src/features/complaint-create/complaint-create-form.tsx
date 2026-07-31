@@ -1,45 +1,31 @@
-import { useState, useCallback, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Send, Loader2 } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { FieldResult } from "@/features/complaint-list/types";
+import {
+  complaintCreateSchema,
+  emptyFormValues,
+  STEP_FIELDS,
+  type ComplaintCreateFormValues,
+} from "@/features/complaint-create/validations";
 import { useCreateComplaint } from "@/features/complaint-create/hooks";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
 import { ComplaintBasicInfoStep } from "@/features/complaint-create/complaint-basic-info-step";
 import { ComplaintDescriptionStep } from "@/features/complaint-create/complaint-description-step";
 import { ComplaintAttachmentStep } from "@/features/complaint-create/complaint-attachment-step";
 import { ComplaintReviewStep } from "@/features/complaint-create/complaint-review-step";
 
-interface FileItem {
-  file: File;
-  id: string;
-}
+const DEFAULT_DATA: ComplaintCreateFormValues = emptyFormValues;
 
-const DEFAULT_DATA: ComplaintCreateFormData = {
-  subject: "",
-  complaintTypeId: "",
-  severity: "Medium",
-  receptionMethodId: "",
-  respondentName: "",
-  departmentId: "",
-  annotation: "",
-  presentationStatusId: "",
-  citizen: {
-    fullName: "",
-    nationalId: "",
-    mobileNumber: "",
-    address: "",
-    village: "",
-    district: "",
-  },
-  files: [],
-};
-
-function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<ComplaintCreateFormData> {
+function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<ComplaintCreateFormValues> {
   const get = (key: string) => fields[key]?.value ?? "";
   return {
     subject: get("complaint_subject") || undefined,
@@ -79,7 +65,7 @@ const getNestedValue = (obj: Record<string, unknown>, path: string): string => {
   return typeof current === "string" ? current : "";
 };
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = STEP_FIELDS.length;
 
 export function ComplaintCreateForm() {
   const navigate = useNavigate();
@@ -89,17 +75,16 @@ export function ComplaintCreateForm() {
   const [step, setStep] = useState(1);
 
   const ocrData = (state as { ocrData?: Record<string, FieldResult> } | null)?.ocrData;
-  const initialData = ocrData
-    ? { ...DEFAULT_DATA, ...ocrFieldsToFormData(ocrData) }
-    : DEFAULT_DATA;
-
-  const [data, setData] = useState<ComplaintCreateFormData>(initialData);
-  const [files, setFiles] = useState<FileItem[]>([]);
-
   const ocrOriginal = useMemo(
-    () => (ocrData ? (ocrFieldsToFormData(ocrData) as Partial<ComplaintCreateFormData>) : null),
+    () => (ocrData ? (ocrFieldsToFormData(ocrData) as Partial<ComplaintCreateFormValues>) : null),
     [ocrData],
   );
+
+  const form = useForm<ComplaintCreateFormValues>({
+    resolver: zodResolver(complaintCreateSchema),
+    defaultValues: ocrOriginal ? { ...DEFAULT_DATA, ...ocrOriginal } : DEFAULT_DATA,
+    mode: "onTouched",
+  });
 
   const ocrFields = useMemo(() => {
     const fields = new Set<string>();
@@ -109,33 +94,16 @@ export function ComplaintCreateForm() {
         ocrOriginal as unknown as Record<string, unknown>,
         field,
       );
-      const currentValue = getNestedValue(
-        data as unknown as Record<string, unknown>,
-        field,
-      );
-      if (ocrValue.trim() && ocrValue === currentValue) fields.add(field);
+      if (ocrValue.trim()) fields.add(field);
     }
     return fields;
-  }, [ocrOriginal, data]);
+  }, [ocrOriginal]);
 
-  const updateData = useCallback((partial: Partial<ComplaintCreateFormData>) => {
-    setData((prev) => ({ ...prev, ...partial }));
-  }, []);
-
-  const canProceed = () => {
-    if (step === 1) {
-      if (!data.subject.trim()) return false;
-      if (!data.citizen.fullName.trim()) return false;
-      if (!data.citizen.nationalId.trim()) return false;
-    }
-    return true;
-  };
-
-  const handleNext = () => {
-    if (step < TOTAL_STEPS) {
-      setStep((s) => s + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+  const handleNext = async () => {
+    const isValid = await form.trigger(STEP_FIELDS[step - 1]);
+    if (!isValid) return;
+    setStep((s) => s + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePrev = () => {
@@ -145,17 +113,20 @@ export function ComplaintCreateForm() {
     }
   };
 
-  const handleSubmit = async () => {
-    try {
-      await createMutation.mutateAsync({
-        ...data,
-        files: files.map((f) => f.file),
-      });
-      toast.success("تم تقديم الشكوى بنجاح");
-      navigate(listPath);
-    } catch {
-      toast.error("حدث خطأ أثناء تقديم الشكوى");
-    }
+  const handleSubmit = (values: ComplaintCreateFormValues) => {
+    const payload: ComplaintCreateFormData = {
+      ...values,
+      files: values.files.map((item) => item.file),
+    };
+    createMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success("تم تقديم الشكوى بنجاح");
+        navigate(listPath);
+      },
+      onError: () => {
+        toast.error("حدث خطأ أثناء تقديم الشكوى");
+      },
+    });
   };
 
   return (
@@ -174,46 +145,50 @@ export function ComplaintCreateForm() {
           <ComplaintStepper currentStep={step} />
         </div>
 
-        <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
-          {step === 1 && (
-            <ComplaintBasicInfoStep data={data} onChange={updateData} ocrFields={ocrFields} />
-          )}
-          {step === 2 && (
-            <ComplaintDescriptionStep data={data} onChange={updateData} ocrFields={ocrFields} />
-          )}
-          {step === 3 && (
-            <ComplaintAttachmentStep files={files} onFilesChange={setFiles} />
-          )}
-          {step === 4 && (
-            <ComplaintReviewStep
-              data={data}
-              files={files}
-              ocrFields={ocrFields}
-              onGoToStep={setStep}
-            />
-          )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
+              {step === 1 && <ComplaintBasicInfoStep ocrFields={ocrFields} />}
+              {step === 2 && <ComplaintDescriptionStep ocrFields={ocrFields} />}
+              {step === 3 && <ComplaintAttachmentStep />}
+              {step === 4 && <ComplaintReviewStep ocrFields={ocrFields} onGoToStep={setStep} />}
 
-          <div className="mt-6 md:mt-10 flex flex-row-reverse justify-between items-center border-t border-border pt-4 md:pt-6">
-            {step < TOTAL_STEPS ? (
-              <Button onClick={handleNext} disabled={!canProceed()} className="gap-2">
-                التالي
-                <ArrowLeft className="size-4" />
-              </Button>
-            ) : (
-              <Button onClick={handleSubmit} disabled={createMutation.isPending} className="gap-2">
-                {createMutation.isPending ? "جارٍ الإرسال..." : "إرسال الشكوى"}
-                <Send className="size-4" />
-              </Button>
-            )}
+              <div className="mt-6 md:mt-10 flex flex-row-reverse justify-between items-center border-t border-border pt-4 md:pt-6">
+                {step < TOTAL_STEPS ? (
+                  <Button type="button" onClick={handleNext} className="gap-2">
+                    التالي
+                    <ArrowLeft className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending}
+                    className="gap-2"
+                  >
+                    {createMutation.isPending ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        جارٍ الإرسال...
+                      </>
+                    ) : (
+                      <>
+                        إرسال الشكوى
+                        <Send className="size-4" />
+                      </>
+                    )}
+                  </Button>
+                )}
 
-            {step > 1 && (
-              <Button variant="ghost" onClick={handlePrev} className="gap-2">
-                <ArrowRight className="size-4" />
-                السابق
-              </Button>
-            )}
-          </div>
-        </div>
+                {step > 1 && (
+                  <Button type="button" variant="ghost" onClick={handlePrev} className="gap-2">
+                    <ArrowRight className="size-4" />
+                    السابق
+                  </Button>
+                )}
+              </div>
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );

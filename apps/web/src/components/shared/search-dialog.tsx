@@ -34,9 +34,13 @@ export function SearchDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="md:hidden flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden text-muted-foreground hover:text-accent-foreground transition-colors"
+        >
           <Search className="size-5" />
-        </button>
+        </Button>
       </DialogTrigger>
       <DialogContent showCloseButton={false} className="gap-0 p-0 sm:max-w-lg">
         <DialogHeader className="flex flex-row items-center justify-between border-b border-border px-4 py-3">

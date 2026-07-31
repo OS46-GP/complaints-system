@@ -1,3 +1,8 @@
+export interface FileItem {
+  file: File;
+  id: string;
+}
+
 export interface ComplaintCreateFormData {
   subject: string;
   complaintTypeId: string;
