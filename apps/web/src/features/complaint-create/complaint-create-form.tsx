@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
@@ -57,6 +57,28 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
   };
 }
 
+const OCR_KEY_TO_FIELD: Record<string, string> = {
+  complaint_subject: "subject",
+  severity: "severity",
+  complaint_respondentName: "respondentName",
+  annotation: "annotation",
+  citizen_fullName: "citizen.fullName",
+  citizen_nationalId: "citizen.nationalId",
+  citizen_mobileNumber: "citizen.mobileNumber",
+  citizen_address: "citizen.address",
+  citizen_village: "citizen.village",
+  citizen_district: "citizen.district",
+};
+
+const getNestedValue = (obj: Record<string, unknown>, path: string): string => {
+  let current: unknown = obj;
+  for (const part of path.split(".")) {
+    if (current === null || typeof current !== "object") return "";
+    current = (current as Record<string, unknown>)[part];
+  }
+  return typeof current === "string" ? current : "";
+};
+
 const TOTAL_STEPS = 4;
 
 export function ComplaintCreateForm() {
@@ -73,6 +95,28 @@ export function ComplaintCreateForm() {
 
   const [data, setData] = useState<ComplaintCreateFormData>(initialData);
   const [files, setFiles] = useState<FileItem[]>([]);
+
+  const ocrOriginal = useMemo(
+    () => (ocrData ? (ocrFieldsToFormData(ocrData) as Partial<ComplaintCreateFormData>) : null),
+    [ocrData],
+  );
+
+  const ocrFields = useMemo(() => {
+    const fields = new Set<string>();
+    if (!ocrOriginal) return fields;
+    for (const field of new Set(Object.values(OCR_KEY_TO_FIELD))) {
+      const ocrValue = getNestedValue(
+        ocrOriginal as unknown as Record<string, unknown>,
+        field,
+      );
+      const currentValue = getNestedValue(
+        data as unknown as Record<string, unknown>,
+        field,
+      );
+      if (ocrValue.trim() && ocrValue === currentValue) fields.add(field);
+    }
+    return fields;
+  }, [ocrOriginal, data]);
 
   const updateData = useCallback((partial: Partial<ComplaintCreateFormData>) => {
     setData((prev) => ({ ...prev, ...partial }));
@@ -132,10 +176,10 @@ export function ComplaintCreateForm() {
 
         <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
           {step === 1 && (
-            <ComplaintBasicInfoStep data={data} onChange={updateData} />
+            <ComplaintBasicInfoStep data={data} onChange={updateData} ocrFields={ocrFields} />
           )}
           {step === 2 && (
-            <ComplaintDescriptionStep data={data} onChange={updateData} />
+            <ComplaintDescriptionStep data={data} onChange={updateData} ocrFields={ocrFields} />
           )}
           {step === 3 && (
             <ComplaintAttachmentStep files={files} onFilesChange={setFiles} />
@@ -144,6 +188,7 @@ export function ComplaintCreateForm() {
             <ComplaintReviewStep
               data={data}
               files={files}
+              ocrFields={ocrFields}
               onGoToStep={setStep}
             />
           )}

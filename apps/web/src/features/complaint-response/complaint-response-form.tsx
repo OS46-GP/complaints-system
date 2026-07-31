@@ -12,6 +12,13 @@ import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ComplaintResponseFormProps {
   complaintId: string;
@@ -116,16 +123,20 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label>حالة الفحص</Label>
-                <select
-                  value={examinationStatusId}
-                  onChange={(e) => setExaminationStatusId(e.target.value)}
-                  className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+                <Select
+                  dir="rtl"
+                  value={examinationStatusId || ""}
+                  onValueChange={setExaminationStatusId}
                 >
-                  <option value="">اختر حالة الفحص</option>
-                  {examinationStatuses?.map((s) => (
-                    <option key={s.id} value={String(s.id)}>{s.name}</option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full data-[size=default]:h-11">
+                    <SelectValue placeholder="اختر حالة الفحص" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {examinationStatuses?.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex flex-col gap-2">
                 <Label>نتيجة الفحص</Label>

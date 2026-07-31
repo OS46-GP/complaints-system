@@ -1,14 +1,23 @@
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { usePresentationStatuses } from "@/features/complaint-list/hooks";
 
 interface ComplaintDescriptionStepProps {
   data: ComplaintCreateFormData;
   onChange: (partial: Partial<ComplaintCreateFormData>) => void;
+  ocrFields?: Set<string>;
 }
 
-export function ComplaintDescriptionStep({ data, onChange }: ComplaintDescriptionStepProps) {
+export function ComplaintDescriptionStep({ data, onChange, ocrFields }: ComplaintDescriptionStepProps) {
   const { data: presentationStatuses } = usePresentationStatuses();
+  const isOcr = (field: string) => ocrFields?.has(field) ?? false;
 
   return (
     <div className="space-y-6">
@@ -19,7 +28,11 @@ export function ComplaintDescriptionStep({ data, onChange }: ComplaintDescriptio
           onChange={(e) => onChange({ annotation: e.target.value })}
           placeholder="يرجى كتابة تفاصيل الشكوى بشكل كامل وواضح..."
           rows={8}
-          className="w-full rounded-lg border border-input bg-transparent p-4 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 placeholder:text-muted-foreground dark:bg-input/30 resize-y"
+          className={`w-full rounded-lg border bg-transparent p-4 text-sm shadow-xs transition-colors focus-visible:ring-3 disabled:opacity-50 placeholder:text-muted-foreground dark:bg-input/30 resize-y ${
+            isOcr("annotation")
+              ? "border-success focus-visible:border-success focus-visible:ring-success/40"
+              : "border-input focus-visible:border-ring focus-visible:ring-ring/50"
+          }`}
         />
         <p className="text-label-sm text-muted-foreground text-left mt-1">
           اشرح الموقف، التواريخ، والأشخاص المعنيين إن وجدوا.
@@ -28,16 +41,20 @@ export function ComplaintDescriptionStep({ data, onChange }: ComplaintDescriptio
 
       <div className="flex flex-col gap-2">
         <Label>حالة التقديم</Label>
-        <select
-          value={data.presentationStatusId}
-          onChange={(e) => onChange({ presentationStatusId: e.target.value })}
-          className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+        <Select
+          dir="rtl"
+          value={data.presentationStatusId || ""}
+          onValueChange={(value) => onChange({ presentationStatusId: value })}
         >
-          <option value="">اختر حالة التقديم</option>
-          {presentationStatuses?.map((s) => (
-            <option key={s.id} value={String(s.id)}>{s.name}</option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full data-[size=default]:h-11">
+            <SelectValue placeholder="اختر حالة التقديم" />
+          </SelectTrigger>
+          <SelectContent>
+            {presentationStatuses?.map((s) => (
+              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
