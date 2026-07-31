@@ -9,5 +9,6 @@ import { ComplaintFilesService } from "./complaint-files.service";
   imports: [PrismaModule, AiTriageModule],
   controllers: [ComplaintsController],
   providers: [ComplaintsService, ComplaintFilesService],
+  exports: [ComplaintsService],
 })
 export class ComplaintsModule {}
