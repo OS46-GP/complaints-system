@@ -1,0 +1,36 @@
+meta {
+  name: Add Monitored Group
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/social/groups
+  body: json
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "groupId": "123456789",
+    "name": "مجلس مدينة شبين الكوم",
+    "type": "Group"
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.id: $notNull
+  res.body.groupId: eq("123456789")
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.id) {
+    bru.setVar("monitoredGroupId", data.id);
+  }
+}
