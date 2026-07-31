@@ -19,7 +19,7 @@ export function ComplaintCard({ complaint }: ComplaintCardProps) {
             {complaint.subject}
           </h3>
         </div>
-        <ComplaintActionsDropdown complaintId={complaint.id} />
+        <ComplaintActionsDropdown complaintId={complaint.id} complaintLabel={complaint.displayId} />
       </div>
       <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-label-sm font-heading">
         <div>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import {
   ArrowUp,
@@ -6,10 +7,12 @@ import {
   Pencil,
   MessageSquareReply,
   Archive,
+  Sparkles,
   XCircle,
   Printer,
   ChevronLeft,
 } from "lucide-react";
+import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
 
 interface ActionItem {
   icon: React.ReactNode;
@@ -20,11 +23,16 @@ interface ActionItem {
 
 interface ComplaintQuickActionsProps {
   complaintId: string;
+  complaintLabel?: string;
 }
 
-export function ComplaintQuickActions({ complaintId }: ComplaintQuickActionsProps) {
+export function ComplaintQuickActions({
+  complaintId,
+  complaintLabel,
+}: ComplaintQuickActionsProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const isAdmin = pathname.startsWith("/admin");
   const editPath = isAdmin
     ? `/admin/complaints/${complaintId}/edit`
@@ -37,6 +45,7 @@ export function ComplaintQuickActions({ complaintId }: ComplaintQuickActionsProp
     : `/user/complaints/${complaintId}/archive`;
 
   const actions: ActionItem[] = [
+    { icon: <Sparkles className="size-5" />, label: "الملخص الذكي", onClick: () => setSummaryOpen(true) },
     { icon: <Pencil className="size-5" />, label: "تعديل الشكوى", onClick: () => navigate(editPath) },
     { icon: <MessageSquareReply className="size-5" />, label: "إضافة رد", onClick: () => navigate(responsePath) },
     { icon: <Archive className="size-5" />, label: "أرشفة", onClick: () => navigate(archivePath) },
@@ -90,6 +99,13 @@ export function ComplaintQuickActions({ complaintId }: ComplaintQuickActionsProp
           </button>
         ))}
       </div>
+
+      <ComplaintSummaryDialog
+        open={summaryOpen}
+        onOpenChange={setSummaryOpen}
+        complaintId={complaintId}
+        complaintLabel={complaintLabel ?? complaintId}
+      />
     </div>
   );
 }
