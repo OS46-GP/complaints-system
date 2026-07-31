@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { ComplaintSummaryDialog } from "@/features/complaint-list/complaint-summary-dialog";
+import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
 import { PATHS } from "@/router/paths";
 import { complaintsApi } from "@/features/complaint-list/api";
 
