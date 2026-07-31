@@ -1,0 +1,23 @@
+meta {
+  name: List Drafts
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/social/drafts
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+query {
+  status: Pending
+}
+
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+}

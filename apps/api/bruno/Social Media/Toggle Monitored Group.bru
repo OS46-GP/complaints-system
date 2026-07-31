@@ -1,0 +1,26 @@
+meta {
+  name: Toggle Monitored Group
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/social/groups/{{monitoredGroupId}}/toggle
+  body: json
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "isActive": false
+  }
+}
+
+assert {
+  res.status: eq(200)
+  res.body.isActive: eq(false)
+}

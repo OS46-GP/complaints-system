@@ -1,0 +1,19 @@
+meta {
+  name: List Monitored Groups
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/social/groups
+  body: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+}
