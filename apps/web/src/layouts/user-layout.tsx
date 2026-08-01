@@ -5,6 +5,7 @@ import {
   PlusCircle,
   Settings,
   User,
+  Radio,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -16,6 +17,7 @@ const navItems = [
   { title: "لوحة التحكم", url: PATHS.USER.DASHBOARD, icon: LayoutDashboard },
   { title: "الشكاوى", url: PATHS.USER.COMPLAINTS, icon: ClipboardList },
   { title: "شكوى جديدة", url: PATHS.USER.NEW_COMPLAINT, icon: PlusCircle },
+  { title: "مراقبة وسائل التواصل", url: PATHS.USER.SOCIAL_MONITORING, icon: Radio },
   { title: "الإعدادات", url: PATHS.USER.SETTINGS, icon: Settings },
 ];
 

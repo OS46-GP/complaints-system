@@ -28,6 +28,7 @@ export const PATHS = {
     COMPLAINT_EDIT: (id: string) => `/user/complaints/${id}/edit`,
     COMPLAINT_RESPONSE: (id: string) => `/user/complaints/${id}/response`,
     COMPLAINT_ARCHIVE: (id: string) => `/user/complaints/${id}/archive`,
+    SOCIAL_MONITORING: "/user/social-monitoring",
     SETTINGS: "/user/settings",
   },
 

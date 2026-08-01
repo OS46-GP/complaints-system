@@ -56,6 +56,9 @@ const UserComplaintArchivePage = lazy(
 const UserComplaintDetailPage = lazy(
   () => import("@/pages/user/complaint-detail"),
 );
+const UserSocialMonitoringPage = lazy(
+  () => import("@/pages/user/social-monitoring"),
+);
 const UserSettingsPage = lazy(() => import("@/pages/user/settings"));
 
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
@@ -272,6 +275,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserComplaintsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.SOCIAL_MONITORING}
+              element={
+                <SuspenseBoundary>
+                  <UserSocialMonitoringPage />
                 </SuspenseBoundary>
               }
             />
