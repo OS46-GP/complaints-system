@@ -15,9 +15,10 @@ import type { SocialDraftStatus } from "@/features/social/types";
 interface DraftsToolbarProps {
   status: SocialDraftStatus | "";
   onStatusChange: (status: SocialDraftStatus | "") => void;
+  showPoll?: boolean;
 }
 
-export function DraftsToolbar({ status, onStatusChange }: DraftsToolbarProps) {
+export function DraftsToolbar({ status, onStatusChange, showPoll = true }: DraftsToolbarProps) {
   const pollMutation = usePoll();
 
   const handlePoll = () => {
@@ -52,18 +53,20 @@ export function DraftsToolbar({ status, onStatusChange }: DraftsToolbarProps) {
         </SelectContent>
       </Select>
 
-      <Button
-        className="gap-2"
-        disabled={pollMutation.isPending}
-        onClick={handlePoll}
-      >
-        {pollMutation.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Radar className="size-4" />
-        )}
-        {pollMutation.isPending ? "جارٍ المسح..." : "مسح المنشورات الآن"}
-      </Button>
+      {showPoll && (
+        <Button
+          className="gap-2"
+          disabled={pollMutation.isPending}
+          onClick={handlePoll}
+        >
+          {pollMutation.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Radar className="size-4" />
+          )}
+          {pollMutation.isPending ? "جارٍ المسح..." : "مسح المنشورات الآن"}
+        </Button>
+      )}
     </div>
   );
 }

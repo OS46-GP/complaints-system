@@ -3,7 +3,11 @@ import { Inbox, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePoll } from "@/features/social/hooks";
 
-export function DraftsEmptyState() {
+interface DraftsEmptyStateProps {
+  showPoll?: boolean;
+}
+
+export function DraftsEmptyState({ showPoll = true }: DraftsEmptyStateProps) {
   const pollMutation = usePoll();
 
   return (
@@ -17,19 +21,25 @@ export function DraftsEmptyState() {
           شغّل عملية مسح المنشورات لالتقاط المنشورات الجديدة من المجموعات المُراقبة
         </p>
       </div>
-      <Button
-        variant="outline"
-        className="gap-2"
-        disabled={pollMutation.isPending}
-        onClick={() => pollMutation.mutate()}
-      >
-        {pollMutation.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
+        {showPoll ? (
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={pollMutation.isPending}
+            onClick={() => pollMutation.mutate()}
+          >
+            {pollMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <RefreshCw className="size-4" />
+            )}
+            {pollMutation.isPending ? "جارٍ المسح..." : "مسح المنشورات الآن"}
+          </Button>
         ) : (
-          <RefreshCw className="size-4" />
+          <p className="text-body-sm text-muted-foreground">
+            تظهر هنا المنشورات التي يلتقطها نظام المراقبة من المجموعات المُتابعة
+          </p>
         )}
-        {pollMutation.isPending ? "جارٍ المسح..." : "مسح المنشورات الآن"}
-      </Button>
     </div>
   );
 }
