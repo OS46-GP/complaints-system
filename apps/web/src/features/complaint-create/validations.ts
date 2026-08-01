@@ -8,7 +8,9 @@ const fileItemSchema = z.object({
 
 const citizenSchema = z.object({
   fullName: z.string().trim().min(3, "الاسم الكامل للمواطن مطلوب"),
-  nationalId: z.string().regex(/^\d{14}$/, "الرقم القومي يجب أن يتكون من 14 رقماً"),
+  nationalId: z
+    .string()
+    .regex(/^$|^\d{14}$/, "الرقم القومي يجب أن يتكون من 14 رقماً"),
   mobileNumber: z
     .string()
     .regex(/^$|^01[0125]\d{8}$/, "أدخل رقم جوال مصري صحيح (11 رقماً يبدأ بـ 01)"),
