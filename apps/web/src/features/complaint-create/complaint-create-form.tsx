@@ -46,6 +46,22 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
 }
 
 function socialDraftToFormData(draft: SocialDraft): Partial<ComplaintCreateFormValues> {
+  const extracted = draft.extractedFields;
+  if (extracted) {
+    return {
+      subject: extracted.subject.trim() || "شكوى من منشور على فيسبوك",
+      annotation: extracted.annotation.trim() || draft.postText.trim(),
+      severity: extracted.severity,
+      citizen: {
+        fullName: extracted.citizenFullName.trim() || draft.authorName || "",
+        nationalId: extracted.citizenNationalId.trim() || "",
+        mobileNumber: extracted.citizenMobileNumber.trim() || "",
+        address: "",
+        village: extracted.citizenVillage.trim() || "",
+        district: extracted.citizenDistrict.trim() || "",
+      },
+    };
+  }
   const subject = draft.postText.trim().slice(0, 200);
   return {
     subject: subject || "شكوى من منشور على فيسبوك",

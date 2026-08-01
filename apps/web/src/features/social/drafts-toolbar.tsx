@@ -25,6 +25,8 @@ export function DraftsToolbar({ status, onStatusChange }: DraftsToolbarProps) {
       onSuccess: (result) => {
         if (result.draftsCreated.length > 0) {
           toast.success(`تم التقاط ${result.draftsCreated.length} منشور جديد`);
+        } else if (result.aiFiltered > 0 || result.spamSkipped > 0) {
+          toast.info("لا توجد منشورات جديدة (تم استبعاد الإعلانات والمحتوى غير ذي الصلة)");
         } else {
           toast.info("لا توجد منشورات جديدة");
         }

@@ -18,6 +18,17 @@ export interface AddGroupPayload {
 
 export type SocialDraftStatus = "Pending" | "Approved" | "Rejected";
 
+export interface SocialDraftExtractedFields {
+  subject: string;
+  annotation: string;
+  citizenFullName: string;
+  citizenNationalId: string;
+  citizenMobileNumber: string;
+  citizenVillage: string;
+  citizenDistrict: string;
+  severity: "Low" | "Medium" | "High";
+}
+
 export interface SocialDraft {
   id: string;
   sourcePostId: string;
@@ -30,6 +41,7 @@ export interface SocialDraft {
   groupId: string | null;
   groupName: string | null;
   notes: string | null;
+  extractedFields: SocialDraftExtractedFields | null;
   complaintId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +51,7 @@ export interface PollResult {
   groupsPolled: number;
   postsFetched: number;
   spamSkipped: number;
+  aiFiltered: number;
   duplicatesSkipped: number;
   draftsCreated: SocialDraft[];
 }
