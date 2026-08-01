@@ -28,8 +28,7 @@ export class SocialController {
   @Roles(UserRole.Admin)
   @UseGuards(RolesGuard)
   async triggerPoll() {
-    await this.monitorService.poll();
-    return { polled: true };
+    return this.monitorService.poll();
   }
 
   @Get("drafts")

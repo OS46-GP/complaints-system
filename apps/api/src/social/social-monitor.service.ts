@@ -8,6 +8,9 @@ const SPAM_PATTERNS = [
   /(?:click|tap|follow)\s*(?:here|link|the\s*link)/i,
   /(?:free|win|earn|cash|prize|lottery|winner)/i,
   /https?:\/\/[^\s]+\s*https?:\/\/[^\s]+/,
+  /(?:للبيع|معروض للبيع|مطلوب\s*(?:للبيع|للشراء|أرض|شقة|قطعة)|بيع\s*و|شراء\s*)/,
+  /(?:سعر|خصم|عرض\s*خاص|إعلان|اعلان|للإيجار|للايجار)/,
+  /(?:ت\.\s*\d|واتساب|واتس\s*اب|للتواصل|رقم\s*التواصل|مع\s*الف سلامة)/,
 ];
 
 const MIN_TEXT_LENGTH = 20;
@@ -31,22 +34,40 @@ export class SocialMonitorService {
 
     if (groups.length === 0) {
       this.logger.log("No active monitored groups — skipping poll");
-      return;
+      return {
+        groupsPolled: 0,
+        postsFetched: 0,
+        spamSkipped: 0,
+        duplicatesSkipped: 0,
+        draftsCreated: [],
+      };
     }
+
+    const draftsCreated = [];
+    let postsFetched = 0;
+    let spamSkipped = 0;
+    let duplicatesSkipped = 0;
 
     for (const group of groups) {
       try {
         const posts = await this.provider.fetchPosts(group.groupId, group.name);
 
         for (const post of posts) {
-          if (this.isSpam(post.message)) continue;
+          postsFetched++;
+          if (this.isSpam(post.message)) {
+            spamSkipped++;
+            continue;
+          }
 
           const existing = await this.prisma.client.socialDraft.findUnique({
             where: { sourcePostId: post.id },
           });
-          if (existing) continue;
+          if (existing) {
+            duplicatesSkipped++;
+            continue;
+          }
 
-          await this.prisma.client.socialDraft.create({
+          const draft = await this.prisma.client.socialDraft.create({
             data: {
               sourcePostId: post.id,
               sourceLink: post.permalinkUrl,
@@ -58,6 +79,7 @@ export class SocialMonitorService {
             },
           });
 
+          draftsCreated.push(draft);
           this.logger.log(`Created draft from post ${post.id} in ${group.name}`);
         }
       } catch (error) {
@@ -66,6 +88,14 @@ export class SocialMonitorService {
         );
       }
     }
+
+    return {
+      groupsPolled: groups.length,
+      postsFetched,
+      spamSkipped,
+      duplicatesSkipped,
+      draftsCreated,
+    };
   }
 
   private isSpam(text: string): boolean {

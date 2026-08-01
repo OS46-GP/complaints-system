@@ -2,9 +2,11 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { ComplaintsService } from "../complaints/complaints.service";
+import { Prisma } from "@prisma/client";
 
 type SocialDraftStatus = "Pending" | "Approved" | "Rejected";
 
@@ -81,7 +83,17 @@ export class SocialService {
     name: string;
     type: "Group" | "Page";
   }) {
-    return this.prisma.client.monitoredGroup.create({ data });
+    try {
+      return await this.prisma.client.monitoredGroup.create({ data });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new ConflictException("Group is already monitored");
+      }
+      throw error;
+    }
   }
 
   async removeMonitoredGroup(id: string) {
