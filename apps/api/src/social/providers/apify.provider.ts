@@ -13,12 +13,13 @@ export class ApifyProvider implements SocialDataSourceProvider {
       return [];
     }
 
-    const actorId = process.env.APIFY_FACEBOOK_ACTOR || "danek/facebook-pages-posts-ppr";
+    const actorId = this.normalizeActorId(
+      process.env.APIFY_FACEBOOK_ACTOR || "apify/facebook-groups-scraper",
+    );
 
     const input = {
-      page_id: groupId,
-      max_posts: 25,
-      start_date: this.daysAgo(1),
+      startUrls: [{ url: `https://www.facebook.com/groups/${groupId}` }],
+      resultsLimit: 10,
     };
 
     const response = await fetch(
@@ -43,13 +44,11 @@ export class ApifyProvider implements SocialDataSourceProvider {
     if (!result) return [];
 
     return result.map((p: Record<string, unknown>) => ({
-      id: String(p.post_id ?? ""),
-      message: String(p.message ?? ""),
-      authorName: (p.author as Record<string, unknown>)?.name as string | undefined,
-      postedAt: p.timestamp
-        ? new Date((p.timestamp as number) * 1000)
-        : new Date(),
-      permalinkUrl: String(p.url ?? `https://facebook.com/${p.post_id}`),
+      id: String(p.legacyId ?? p.id ?? ""),
+      message: String(p.text ?? ""),
+      authorName: (p.user as Record<string, unknown>)?.name as string | undefined,
+      postedAt: p.time ? new Date(p.time as string) : new Date(),
+      permalinkUrl: String(p.url ?? `https://facebook.com/${p.legacyId}`),
     })).filter((p: SocialPost) => p.message);
   }
 
@@ -89,9 +88,7 @@ export class ApifyProvider implements SocialDataSourceProvider {
     return null;
   }
 
-  private daysAgo(n: number): string {
-    const d = new Date();
-    d.setDate(d.getDate() - n);
-    return d.toISOString().split("T")[0];
+  private normalizeActorId(actorId: string): string {
+    return actorId.replace(/\/(?=[^/]+$)/, "~");
   }
 }

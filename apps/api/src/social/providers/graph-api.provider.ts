@@ -24,7 +24,7 @@ export class GraphApiProvider implements SocialDataSourceProvider {
     const url = new URL(`https://graph.facebook.com/v22.0/${groupId}/feed`);
     url.searchParams.set("access_token", accessToken);
     url.searchParams.set("fields", "id,message,from,created_time,permalink_url");
-    url.searchParams.set("limit", "25");
+    url.searchParams.set("limit", "10");
 
     const response = await fetch(url.toString());
     if (!response.ok) {
