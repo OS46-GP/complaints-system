@@ -321,9 +321,7 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
             name="citizen.nationalId"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>
-                  الرقم القومي <span className="text-destructive">*</span>
-                </FormLabel>
+                <FormLabel>الرقم القومي</FormLabel>
                 <FormControl>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
