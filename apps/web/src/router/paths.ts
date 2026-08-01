@@ -15,6 +15,7 @@ export const PATHS = {
     USERS: "/admin/users",
     NEW_USER: "/admin/users/create",
     USER_DETAIL: (id: string) => `/admin/users/${id}`,
+    SOCIAL_MONITORING: "/admin/social-monitoring",
     SETTINGS: "/admin/settings",
   },
 

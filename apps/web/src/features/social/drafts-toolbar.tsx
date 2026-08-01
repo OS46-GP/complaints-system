@@ -1,0 +1,67 @@
+import { toast } from "sonner";
+import { Loader2, Radar } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePoll } from "@/features/social/hooks";
+import type { SocialDraftStatus } from "@/features/social/types";
+
+interface DraftsToolbarProps {
+  status: SocialDraftStatus | "";
+  onStatusChange: (status: SocialDraftStatus | "") => void;
+}
+
+export function DraftsToolbar({ status, onStatusChange }: DraftsToolbarProps) {
+  const pollMutation = usePoll();
+
+  const handlePoll = () => {
+    pollMutation.mutate(undefined, {
+      onSuccess: (result) => {
+        if (result.draftsCreated.length > 0) {
+          toast.success(`تم التقاط ${result.draftsCreated.length} منشور جديد`);
+        } else {
+          toast.info("لا توجد منشورات جديدة");
+        }
+      },
+      onError: () => toast.error("تعذر مسح المنشورات"),
+    });
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Select
+        value={status}
+        onValueChange={(value) => onStatusChange(value as SocialDraftStatus | "")}
+      >
+        <SelectTrigger className="w-48">
+          <SelectValue placeholder="كل الحالات" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">كل الحالات</SelectItem>
+          <SelectItem value="Pending">بانتظار المراجعة</SelectItem>
+          <SelectItem value="Approved">مُعتمدة</SelectItem>
+          <SelectItem value="Rejected">مرفوضة</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Button
+        className="gap-2"
+        disabled={pollMutation.isPending}
+        onClick={handlePoll}
+      >
+        {pollMutation.isPending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Radar className="size-4" />
+        )}
+        {pollMutation.isPending ? "جارٍ المسح..." : "مسح المنشورات الآن"}
+      </Button>
+    </div>
+  );
+}
