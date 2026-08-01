@@ -2,6 +2,9 @@ import { Injectable, Logger, Inject } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SOCIAL_DATA_SOURCE_TOKEN } from "./providers";
 import type { SocialDataSourceProvider } from "./providers";
+import type { SocialPost } from "./providers/social-data-source.interface";
+import { analyzePosts, ENABLE_AI } from "./agents/social-intake-agent";
+import type { PostToAnalyze, SocialIntakeResult } from "./agents/social-intake-agent";
 
 const SPAM_PATTERNS = [
   /(?:buy|sell|shop|order|discount|price|offer|limited)\s*(?:now|today|online)/i,
@@ -38,14 +41,17 @@ export class SocialMonitorService {
         groupsPolled: 0,
         postsFetched: 0,
         spamSkipped: 0,
+        aiFiltered: 0,
         duplicatesSkipped: 0,
         draftsCreated: [],
       };
     }
 
     const draftsCreated = [];
+    const pending: { post: SocialPost; group: { groupId: string; name: string } }[] = [];
     let postsFetched = 0;
     let spamSkipped = 0;
+    let aiFiltered = 0;
     let duplicatesSkipped = 0;
 
     for (const group of groups) {
@@ -58,29 +64,7 @@ export class SocialMonitorService {
             spamSkipped++;
             continue;
           }
-
-          const existing = await this.prisma.client.socialDraft.findUnique({
-            where: { sourcePostId: post.id },
-          });
-          if (existing) {
-            duplicatesSkipped++;
-            continue;
-          }
-
-          const draft = await this.prisma.client.socialDraft.create({
-            data: {
-              sourcePostId: post.id,
-              sourceLink: post.permalinkUrl,
-              postText: post.message,
-              authorName: post.authorName || null,
-              postedAt: post.postedAt,
-              groupId: group.groupId,
-              groupName: group.name,
-            },
-          });
-
-          draftsCreated.push(draft);
-          this.logger.log(`Created draft from post ${post.id} in ${group.name}`);
+          pending.push({ post, group });
         }
       } catch (error) {
         this.logger.error(
@@ -89,10 +73,76 @@ export class SocialMonitorService {
       }
     }
 
+    const analyses = new Map<
+      number,
+      { isRelevant: boolean; fields: SocialIntakeResult["fields"] | null }
+    >();
+    if (ENABLE_AI && pending.length > 0) {
+      const toAnalyze: PostToAnalyze[] = pending.map((p) => ({
+        text: p.post.message,
+        authorName: p.post.authorName,
+      }));
+      this.logger.log(
+        `Running AI intake on ${toAnalyze.length} posts in a single batch call`,
+      );
+      const results = await analyzePosts(toAnalyze);
+      for (const result of results) {
+        const hasExtraction =
+          result.fields.subject ||
+          result.fields.annotation ||
+          result.fields.citizenFullName ||
+          result.fields.citizenNationalId ||
+          result.fields.citizenMobileNumber ||
+          result.fields.citizenVillage ||
+          result.fields.citizenDistrict ||
+          result.fields.severity !== "Medium";
+        analyses.set(result.index, {
+          isRelevant: result.isRelevant,
+          fields: hasExtraction ? result.fields : null,
+        });
+      }
+    }
+
+    for (let i = 0; i < pending.length; i++) {
+      const { post, group } = pending[i];
+      const analysis = analyses.get(i);
+
+      if (analysis && !analysis.isRelevant) {
+        aiFiltered++;
+        this.logger.log(`AI filtered post ${post.id} in ${group.name}`);
+        continue;
+      }
+
+      const existing = await this.prisma.client.socialDraft.findUnique({
+        where: { sourcePostId: post.id },
+      });
+      if (existing) {
+        duplicatesSkipped++;
+        continue;
+      }
+
+      const draft = await this.prisma.client.socialDraft.create({
+        data: {
+          sourcePostId: post.id,
+          sourceLink: post.permalinkUrl,
+          postText: post.message,
+          authorName: post.authorName || null,
+          postedAt: post.postedAt,
+          groupId: group.groupId,
+          groupName: group.name,
+          ...(analysis?.fields ? { extractedFields: analysis.fields } : {}),
+        },
+      });
+
+      draftsCreated.push(draft);
+      this.logger.log(`Created draft from post ${post.id} in ${group.name}`);
+    }
+
     return {
       groupsPolled: groups.length,
       postsFetched,
       spamSkipped,
+      aiFiltered,
       duplicatesSkipped,
       draftsCreated,
     };
