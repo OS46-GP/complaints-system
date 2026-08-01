@@ -5,17 +5,13 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { ComplaintsService } from "../complaints/complaints.service";
 import { Prisma } from "@prisma/client";
 
 type SocialDraftStatus = "Pending" | "Approved" | "Rejected";
 
 @Injectable()
 export class SocialService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly complaintsService: ComplaintsService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async listDrafts(status?: SocialDraftStatus) {
     const where: Record<string, unknown> = {};
@@ -25,37 +21,6 @@ export class SocialService {
       where,
       orderBy: { detectedAt: "desc" },
     });
-  }
-
-  async approveDraft(id: string, userId: string) {
-    const draft = await this.prisma.client.socialDraft.findUnique({
-      where: { id },
-    });
-    if (!draft) throw new NotFoundException("Social draft not found");
-    if (draft.status !== "Pending")
-      throw new BadRequestException("Draft is not pending");
-
-    const complaint = await this.complaintsService.create(
-      {
-        statementYear: new Date().getFullYear(),
-        arrivalDate: draft.postedAt.toISOString(),
-        subject: draft.postText,
-        citizen: {
-          fullName: draft.authorName || "مواطن",
-        },
-      },
-      { id: userId, role: "Official" },
-    );
-
-    await this.prisma.client.socialDraft.update({
-      where: { id },
-      data: {
-        status: "Approved" as SocialDraftStatus,
-        complaintId: (complaint as Record<string, unknown>).id as string,
-      },
-    });
-
-    return complaint;
   }
 
   async rejectDraft(id: string, notes?: string) {
@@ -69,6 +34,23 @@ export class SocialService {
     return this.prisma.client.socialDraft.update({
       where: { id },
       data: { status: "Rejected" as SocialDraftStatus, notes },
+    });
+  }
+
+  async linkDraftToComplaint(id: string, complaintId: string) {
+    const draft = await this.prisma.client.socialDraft.findUnique({
+      where: { id },
+    });
+    if (!draft) throw new NotFoundException("Social draft not found");
+    if (draft.status !== "Pending")
+      throw new BadRequestException("Draft is not pending");
+
+    return this.prisma.client.socialDraft.update({
+      where: { id },
+      data: {
+        status: "Approved" as SocialDraftStatus,
+        complaintId,
+      },
     });
   }
 
