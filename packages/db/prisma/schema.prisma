@@ -265,6 +265,7 @@ model SocialDraft {
   groupId      String?
   groupName    String?
   notes        String?
+  extractedFields Json?
   complaintId  String?
   complaint    Complaint?       @relation(fields: [complaintId], references: [id], onDelete: SetNull)
   createdAt    DateTime         @default(now())
