@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, Send, Loader2 } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { FieldResult } from "@/features/complaint-list/types";
+import type { SocialDraft } from "@/features/social/types";
+import { socialApi } from "@/features/social/api";
 import {
   complaintCreateSchema,
   emptyFormValues,
@@ -39,6 +41,22 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
       address: get("citizen_address") || "",
       village: get("citizen_village") || "",
       district: get("citizen_district") || "",
+    },
+  };
+}
+
+function socialDraftToFormData(draft: SocialDraft): Partial<ComplaintCreateFormValues> {
+  const subject = draft.postText.trim().slice(0, 200);
+  return {
+    subject: subject || "شكوى من منشور على فيسبوك",
+    annotation: draft.postText.trim(),
+    citizen: {
+      fullName: draft.authorName || "",
+      nationalId: "",
+      mobileNumber: "",
+      address: "",
+      village: "",
+      district: "",
     },
   };
 }
@@ -80,9 +98,19 @@ export function ComplaintCreateForm() {
     [ocrData],
   );
 
+  const socialDraft = (state as { socialDraft?: SocialDraft } | null)?.socialDraft;
+  const socialOriginal = useMemo(
+    () => (socialDraft ? socialDraftToFormData(socialDraft) : null),
+    [socialDraft],
+  );
+
   const form = useForm<ComplaintCreateFormValues>({
     resolver: zodResolver(complaintCreateSchema),
-    defaultValues: ocrOriginal ? { ...DEFAULT_DATA, ...ocrOriginal } : DEFAULT_DATA,
+    defaultValues: ocrOriginal
+      ? { ...DEFAULT_DATA, ...ocrOriginal }
+      : socialOriginal
+        ? { ...DEFAULT_DATA, ...socialOriginal }
+        : DEFAULT_DATA,
     mode: "onTouched",
   });
 
@@ -119,7 +147,10 @@ export function ComplaintCreateForm() {
       files: values.files.map((item) => item.file),
     };
     createMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (created) => {
+        if (socialDraft?.id && created?.id) {
+          socialApi.linkDraft(socialDraft.id, created.id).catch(() => {});
+        }
         toast.success("تم تقديم الشكوى بنجاح");
         navigate(listPath);
       },
