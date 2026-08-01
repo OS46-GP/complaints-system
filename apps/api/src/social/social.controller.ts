@@ -4,11 +4,9 @@ import {
   Post,
   Param,
   Body,
-  Req,
   UseGuards,
   Query,
 } from "@nestjs/common";
-import { Request } from "express";
 import { UserRole } from "@prisma/client";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -38,20 +36,17 @@ export class SocialController {
     return this.socialService.listDrafts(status);
   }
 
-  @Post("drafts/:id/approve")
-  approveDraft(@Param("id") id: string, @Req() req: Request) {
-    return this.socialService.approveDraft(
-      id,
-      (req.user as { id: string }).id,
-    );
-  }
-
   @Post("drafts/:id/reject")
   rejectDraft(
     @Param("id") id: string,
     @Body("notes") notes?: string,
   ) {
     return this.socialService.rejectDraft(id, notes);
+  }
+
+  @Post("drafts/:id/link")
+  linkDraft(@Param("id") id: string, @Body("complaintId") complaintId: string) {
+    return this.socialService.linkDraftToComplaint(id, complaintId);
   }
 
   @Get("groups")
