@@ -36,6 +36,9 @@ const AdminUsersPage = lazy(() => import("@/pages/admin/users"));
 const AdminCreateUserPage = lazy(() => import("@/pages/admin/create-user"));
 const AdminUserDetailPage = lazy(() => import("@/pages/admin/user-detail"));
 const AdminSettingsPage = lazy(() => import("@/pages/admin/settings"));
+const AdminSocialMonitoringPage = lazy(
+  () => import("@/pages/admin/social-monitoring"),
+);
 
 const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
 const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
@@ -184,6 +187,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminUserDetailPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.SOCIAL_MONITORING}
+              element={
+                <SuspenseBoundary>
+                  <AdminSocialMonitoringPage />
                 </SuspenseBoundary>
               }
             />

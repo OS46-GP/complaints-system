@@ -8,6 +8,7 @@ import {
   BarChart3,
   Settings,
   Shield,
+  Radio,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -20,6 +21,7 @@ const navItems = [
   { title: "الشكاوى", url: PATHS.ADMIN.COMPLAINTS, icon: ClipboardList },
   { title: "الأقسام", url: "#", icon: Building2 },
   { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },
+  { title: "مراقبة السوشيال ميديا", url: PATHS.ADMIN.SOCIAL_MONITORING, icon: Radio },
   { title: "التقارير", url: "#", icon: FileBarChart },
   { title: "التحليلات", url: "#", icon: BarChart3 },
   { title: "الإعدادات", url: PATHS.ADMIN.SETTINGS, icon: Settings },
