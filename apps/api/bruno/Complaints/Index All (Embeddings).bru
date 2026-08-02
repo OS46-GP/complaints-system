@@ -5,15 +5,25 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/complaints/index
-  body: none
+  url: {{baseUrl}}/complaints/reindex-embeddings
+  body: json
+  auth: none
 }
 
 headers {
   Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "limit": 100
+  }
 }
 
 assert {
   res.status: eq(201)
   res.body.indexed: $notNull
+  res.body.skipped: $notNull
+  res.body.nextCursor: $notNull
 }

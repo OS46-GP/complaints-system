@@ -97,6 +97,58 @@ export class AiTriageService {
     return { recurrenceMatches };
   }
 
+  async reindexEmbeddings(
+    limit = 100,
+    cursor?: string,
+  ): Promise<{ indexed: number; skipped: number; nextCursor: string | null }> {
+    const complaints = await this.prisma.complaint.findMany({
+      select: {
+        id: true,
+        subject: true,
+        departmentId: true,
+        citizen: {
+          select: { village: true, district: true },
+        },
+      },
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
+    });
+
+    let indexed = 0;
+    let skipped = 0;
+
+    for (const complaint of complaints) {
+      try {
+        const location =
+          complaint.citizen?.village || complaint.citizen?.district || null;
+        await this.embeddingService.upsertEmbedding(
+          complaint.id,
+          complaint.subject,
+          complaint.departmentId,
+          location,
+        );
+        indexed++;
+      } catch (error) {
+        skipped++;
+        this.logger.warn(
+          `Failed to index complaint ${complaint.id}`,
+          error,
+        );
+      }
+    }
+
+    const nextCursor =
+      complaints.length === limit
+        ? complaints[complaints.length - 1].id
+        : null;
+
+    this.logger.log(
+      `Embedding reindex complete: ${indexed} indexed, ${skipped} skipped, nextCursor: ${nextCursor ?? "null"}`,
+    );
+    return { indexed, skipped, nextCursor };
+  }
+
   async updateSeverity(
     id: string,
     severity: SeverityLevel,

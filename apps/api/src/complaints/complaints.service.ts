@@ -136,7 +136,10 @@ export class ComplaintsService {
         skip,
         take: batchSize,
         include: { citizen: { select: { village: true, district: true } } },
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { statementYear: "desc" },
+          { complaintNumber: "desc" },
+        ],
       });
       count = batch.length;
       for (const c of batch) {
@@ -241,9 +244,15 @@ export class ComplaintsService {
       "arrivalDate",
       "statementYear",
     ];
-    const orderBy = sortBy && validSortFields.includes(sortBy)
-      ? { [sortBy]: sortOrder }
-      : { createdAt: "desc" as const };
+    const orderBy =
+      sortBy === "complaintNumber"
+        ? [
+            { statementYear: sortOrder as Prisma.SortOrder },
+            { complaintNumber: sortOrder as Prisma.SortOrder },
+          ]
+        : sortBy && validSortFields.includes(sortBy)
+          ? { [sortBy]: sortOrder }
+          : { createdAt: "desc" as const };
 
     const [items, total] = await Promise.all([
       this.prisma.complaint.findMany({
