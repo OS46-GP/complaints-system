@@ -17,6 +17,7 @@ export const PATHS = {
     USER_DETAIL: (id: string) => `/admin/users/${id}`,
     COMPLAINT_TYPES: "/admin/complaint-types",
     RECEPTION_METHODS: "/admin/reception-methods",
+    DEPARTMENTS: "/admin/departments",
     SOCIAL_MONITORING: "/admin/social-monitoring",
     SETTINGS: "/admin/settings",
   },
