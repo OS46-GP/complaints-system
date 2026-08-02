@@ -104,7 +104,7 @@ export function ListPagination({
       </Pagination>
 
       {showGoto && (
-        <div className="flex items-center gap-2">
+        <div className="hidden xl:flex items-center gap-2">
           <span className="font-heading text-label-sm text-muted-foreground">
             الانتقال إلى صفحة:
           </span>

@@ -25,6 +25,40 @@ export function SearchForm({
   inputClassName,
   onSubmit,
 }: SearchFormProps) {
+  return (
+    <SearchFormInner
+      key={defaultValue}
+      defaultValue={defaultValue}
+      placeholder={placeholder}
+      name={name}
+      minLength={minLength}
+      required={required}
+      className={className}
+      inputClassName={inputClassName}
+      onSubmit={onSubmit}
+    />
+  );
+}
+
+function SearchFormInner({
+  defaultValue,
+  placeholder,
+  name,
+  minLength,
+  required,
+  className,
+  inputClassName,
+  onSubmit,
+}: {
+  defaultValue: string;
+  placeholder: string;
+  name: string;
+  minLength?: number;
+  required: boolean;
+  className?: string;
+  inputClassName?: string;
+  onSubmit: (value: string) => void;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [hasValue, setHasValue] = useState(!!defaultValue);
   const formRef = useRef<HTMLFormElement>(null);
@@ -76,7 +110,6 @@ export function SearchForm({
           <Input
             dir="rtl"
             name={name}
-            key={defaultValue}
             defaultValue={defaultValue}
             className={`${error ? "border-destructive focus-visible:ring-destructive/20" : ""} ${inputClassName ?? ""}`}
             placeholder={placeholder}

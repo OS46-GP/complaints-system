@@ -127,7 +127,7 @@ export function ComplaintTypesList({ types, onEdit }: ComplaintTypesListProps) {
       )}
 
       {!isEmpty && totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
           <ListPagination
             currentPage={currentPage}
             totalPages={totalPages}
