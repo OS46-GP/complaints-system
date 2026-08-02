@@ -7,6 +7,7 @@ import { ReportingModule } from "./reporting/reporting.module";
 import { UsersModule } from "./users/users.module";
 import { ComplaintTypesModule } from "./complaint-types/complaint-types.module";
 import { ReceptionMethodsModule } from "./reception-methods/reception-methods.module";
+import { DepartmentsModule } from "./departments/departments.module";
 import { AiTriageModule } from "./ai-triage/ai-triage.module";
 import { AiSummarizationModule } from "./ai-summarization/ai-summarization.module";
 import { SocialModule } from "./social/social.module";
@@ -22,6 +23,7 @@ import { IntakeModule } from "./intake/intake.module";
     UsersModule,
     ComplaintTypesModule,
     ReceptionMethodsModule,
+    DepartmentsModule,
     ComplaintsModule,
     ReportingModule,
     AiTriageModule,

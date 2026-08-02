@@ -12,11 +12,15 @@ const PAGE_SIZE = 10;
 
 export default function AdminComplaints() {
   const [searchParams] = useSearchParams();
-  const { data, isLoading, isError, refetch } =
-    useComplaintsFromSearchParams(searchParams, PAGE_SIZE);
+  const { data, isLoading, isError, refetch } = useComplaintsFromSearchParams(
+    searchParams,
+    PAGE_SIZE,
+  );
 
   const complaints = data?.complaints ?? [];
   const meta = data?.meta;
+
+  console.log(data);
 
   return (
     <div className="flex flex-col gap-8">
@@ -24,7 +28,10 @@ export default function AdminComplaints() {
         title="إدارة الشكاوى"
         description="متابعة ومعالجة جميع الشكاوى الواردة"
       >
-        <NewComplaintButton newComplaintPath={PATHS.ADMIN.NEW_COMPLAINT} ocrPath={PATHS.ADMIN.COMPLAINT_OCR} />
+        <NewComplaintButton
+          newComplaintPath={PATHS.ADMIN.NEW_COMPLAINT}
+          ocrPath={PATHS.ADMIN.COMPLAINT_OCR}
+        />
       </PageHeader>
 
       <AsyncLoader

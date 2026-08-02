@@ -21,7 +21,7 @@ import { PATHS } from "@/router/paths";
 const navItems = [
   { title: "لوحة التحكم", url: PATHS.ADMIN.DASHBOARD, icon: LayoutDashboard },
   { title: "الشكاوى", url: PATHS.ADMIN.COMPLAINTS, icon: ClipboardList },
-  { title: "الأقسام", url: "#", icon: Building2 },
+  { title: "الجهات المعنية", url: PATHS.ADMIN.DEPARTMENTS, icon: Building2 },
   { title: "الفئات", url: PATHS.ADMIN.COMPLAINT_TYPES, icon: Tags },
   { title: "طرق الاستلام", url: PATHS.ADMIN.RECEPTION_METHODS, icon: Inbox },
   { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },

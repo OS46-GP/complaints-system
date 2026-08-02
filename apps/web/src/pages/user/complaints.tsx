@@ -12,19 +12,21 @@ const PAGE_SIZE = 10;
 
 export default function UserComplaints() {
   const [searchParams] = useSearchParams();
-  const { data, isLoading, isError, refetch } =
-    useComplaintsFromSearchParams(searchParams, PAGE_SIZE);
+  const { data, isLoading, isError, refetch } = useComplaintsFromSearchParams(
+    searchParams,
+    PAGE_SIZE,
+  );
 
   const complaints = data?.complaints ?? [];
   const meta = data?.meta;
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="الشكاوى"
-        description="قائمة بجميع الشكاوى المقدمة"
-      >
-        <NewComplaintButton newComplaintPath={PATHS.USER.NEW_COMPLAINT} ocrPath={PATHS.USER.COMPLAINT_OCR} />
+      <PageHeader title="الشكاوى" description="قائمة بجميع الشكاوى المقدمة">
+        <NewComplaintButton
+          newComplaintPath={PATHS.USER.NEW_COMPLAINT}
+          ocrPath={PATHS.USER.COMPLAINT_OCR}
+        />
       </PageHeader>
 
       <AsyncLoader
