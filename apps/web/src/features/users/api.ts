@@ -1,11 +1,5 @@
 import { axiosClient } from "@/api/axios-client";
-import type { CreateUserPayload } from "@/features/user-create/types";
-import type { ApiUser } from "@/features/user-list/types";
-
-export interface UpdateUserPayload {
-  password?: string;
-  role?: "Official" | "Admin";
-}
+import type { CreateUserPayload, UpdateUserPayload, ApiUser } from "@/features/users/types";
 
 export const usersApi = {
   create: (payload: CreateUserPayload) =>

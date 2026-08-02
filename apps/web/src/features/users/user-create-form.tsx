@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,36 +7,27 @@ import { Save, X, Loader2 } from "lucide-react";
 
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
-import { AsyncLoader } from "@/components/shared/async-loader";
-import { FormSkeleton } from "@/components/shared/form-skeleton";
-import { BasicInfoSection } from "@/features/user-create/basic-info-section";
-import { PermissionsSection } from "@/features/user-create/permissions-section";
-import { useUser, useUpdateUser } from "@/features/users/hooks";
-import type { UserEditFormData } from "@/features/user-edit/types";
-
-interface UserEditFormProps {
-  userId: string;
-}
+import { BasicInfoSection } from "@/features/users/basic-info-section";
+import { PermissionsSection } from "@/features/users/permissions-section";
+import { useCreateUser } from "@/features/users/hooks";
+import type { UserFormData } from "@/features/users/types";
 
 const schema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
-  password: z.string().or(z.literal("")),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
   email: z.string(),
   role: z.enum(["Official", "Admin"]),
 });
 
-export function UserEditForm({ userId }: UserEditFormProps) {
+export function UserCreateForm() {
   const navigate = useNavigate();
-  const mutation = useUpdateUser(userId);
-
-  const { data: existingUser, isLoading, isError, refetch } = useUser(userId);
+  const mutation = useCreateUser();
 
   const {
     watch,
     setValue,
     handleSubmit,
-    reset,
-  } = useForm<UserEditFormData>({
+  } = useForm<UserFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       username: "",
@@ -47,55 +37,26 @@ export function UserEditForm({ userId }: UserEditFormProps) {
     },
   });
 
-  useEffect(() => {
-    if (existingUser) {
-      reset({
-        username: existingUser.username,
-        password: "",
-        email: "",
-        role: existingUser.role,
-      });
-    }
-  }, [existingUser, reset]);
-
   const data = watch();
 
-  const update = (partial: Partial<UserEditFormData>) => {
+  const update = (partial: Partial<UserFormData>) => {
     for (const [key, value] of Object.entries(partial)) {
-      setValue(key as keyof UserEditFormData, value as never);
+      setValue(key as keyof UserFormData, value as never);
     }
   };
 
-  const onSubmit = (formData: UserEditFormData) => {
+  const onSubmit = (formData: UserFormData) => {
     mutation.mutate(formData, {
       onSuccess: () => {
-        toast.success("تم تحديث المستخدم بنجاح");
+        toast.success("تم إنشاء المستخدم بنجاح");
         navigate(PATHS.ADMIN.USERS);
       },
     });
   };
 
-  if (isLoading) {
-    return <AsyncLoader loading skeleton={<FormSkeleton />} />;
-  }
-
-  if (isError) {
-    return (
-      <AsyncLoader
-        error
-        errorText="تعذر تحميل بيانات المستخدم"
-        onRetry={() => refetch()}
-      />
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-stack-lg pb-12 mx-auto">
-      <BasicInfoSection
-        data={data}
-        onChange={update}
-        isEdit
-      />
+      <BasicInfoSection data={data} onChange={update} />
       <PermissionsSection data={data} onChange={update} />
 
       <div className="flex items-center justify-end gap-stack-md pt-6">
@@ -114,7 +75,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
           ) : (
             <Save className="size-4" />
           )}
-          {mutation.isPending ? "جارٍ الحفظ..." : "تحديث المستخدم"}
+          {mutation.isPending ? "جارٍ الحفظ..." : "حفظ المستخدم"}
         </Button>
       </div>
     </form>

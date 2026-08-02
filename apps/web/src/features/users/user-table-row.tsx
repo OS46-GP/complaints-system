@@ -1,6 +1,6 @@
 import { ShieldBan } from "lucide-react";
-import type { User } from "@/features/user-list/types";
-import { UserActionsDropdown } from "@/features/user-list/user-actions-dropdown";
+import type { User } from "@/features/users/types";
+import { UserActionsDropdown } from "@/features/users/user-actions-dropdown";
 import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
 
 interface UserTableRowProps {

@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { usersApi } from "@/features/users/api";
-import { mapApiUser } from "@/features/user-list/types";
-import type { UserFormData } from "@/features/user-create/types";
-import type { UserEditFormData } from "@/features/user-edit/types";
+import { mapApiUser } from "@/features/users/types";
+import type { UserFormData } from "@/features/users/types";
+import type { UserEditFormData } from "@/features/users/types";
 import { QUERY_KEYS } from "@/features/complaint-list/hooks";
 
 export function useUsers(params?: { search?: string; role?: string }) {

@@ -1,17 +1,17 @@
 import { useSearchParams } from "react-router";
 import { ListPagination } from "@/components/shared/list-pagination";
 import { PaginationInfo } from "@/components/shared/pagination-info";
-import { UserCard } from "@/features/user-list/user-card";
-import { UserTableRow } from "@/features/user-list/user-table-row";
-import { UserListToolbar } from "@/features/user-list/user-list-toolbar";
-import { EmptyState } from "@/features/user-list/empty-state";
+import { UserCard } from "@/features/users/user-card";
+import { UserTableRow } from "@/features/users/user-table-row";
+import { UserListToolbar } from "@/features/users/user-list-toolbar";
+import { EmptyState } from "@/features/users/empty-state";
 import {
   DataTable,
   DataTableHeader,
   DataTableBody,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import type { User } from "@/features/user-list/types";
+import type { User } from "@/features/users/types";
 
 interface UserListProps {
   users: User[];
@@ -108,7 +108,7 @@ export function UserList({ users }: UserListProps) {
       )}
 
       {!isEmpty && totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 px-6 py-4 border border-border rounded-xl bg-surface-container-lowest">
           <ListPagination
             currentPage={currentPage}
             totalPages={totalPages}

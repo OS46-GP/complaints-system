@@ -6,12 +6,18 @@ import { NotificationBell } from "@/components/shared/notification-bell";
 import { SearchBar } from "@/components/shared/search-bar";
 import { SearchDialog } from "@/components/shared/search-dialog";
 import { UserNav, type UserNavItem } from "@/components/shared/user-nav";
+import { useAuthStore } from "@/features/auth/store";
 import { cn } from "@/lib/utils";
 
 const userMenuItems: UserNavItem[] = [
   { label: "الملف الشخصي", icon: User, path: "/profile" },
   { label: "الإعدادات", icon: Settings, path: "/settings" },
 ];
+
+const ROLE_LABELS: Record<string, string> = {
+  Admin: "مدير النظام",
+  Official: "موظف",
+};
 
 export function AppHeader({
   title,
@@ -20,6 +26,11 @@ export function AppHeader({
   title?: string;
   className?: string;
 }) {
+  const user = useAuthStore((state) => state.user);
+
+  const displayName = user?.username || "مستخدم";
+  const roleLabel = user?.role ? ROLE_LABELS[user.role] ?? user.role : "";
+
   return (
     <header
       className={cn(
@@ -44,10 +55,8 @@ export function AppHeader({
         <NotificationBell />
         <div className="mx-1 h-8 w-px bg-border md:mx-2" />
         <UserNav
-          name="أحمد الخالدي"
-          role="مدير النظام"
-          src="https://github.com/shadcn.png"
-          fallback="أخ"
+          name={displayName}
+          role={roleLabel}
           items={userMenuItems}
         />
       </div>
