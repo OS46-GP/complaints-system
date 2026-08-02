@@ -6,3 +6,4 @@ dist/
 .prisma/
 uploads/
 backup.sql
+*.md

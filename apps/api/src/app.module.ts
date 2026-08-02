@@ -11,6 +11,7 @@ import { SocialModule } from "./social/social.module";
 import { MastraModule } from "@mastra/nestjs";
 import { mastra } from "./ai-summarization/mastra.config";
 import { IntakeModule } from "./intake/intake.module";
+import { CitizenAuthModule } from "./citizen-auth/citizen-auth.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { IntakeModule } from "./intake/intake.module";
     IntakeModule,
     SocialModule,
     AiSummarizationModule,
+    CitizenAuthModule,
     MastraModule.register({ mastra }),
   ],
 })
