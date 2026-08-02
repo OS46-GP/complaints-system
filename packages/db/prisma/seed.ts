@@ -6,6 +6,21 @@ import * as bcrypt from "bcrypt";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
+const SEQUENCE_TABLES = [
+  "ReceptionMethod",
+  "ComplaintType",
+  "ExaminationStatus",
+  "PresentationStatus",
+] as const;
+
+async function syncSequences() {
+  for (const table of SEQUENCE_TABLES) {
+    await prisma.$executeRawUnsafe(
+      `SELECT setval(pg_get_serial_sequence('"${table}"','id'), (SELECT MAX(id) FROM "${table}"))`,
+    );
+  }
+}
+
 async function main() {
   await prisma.receptionMethod.createMany({
     skipDuplicates: true,
@@ -192,6 +207,8 @@ async function main() {
       },
     ],
   });
+
+  await syncSequences();
 }
 
 main()

@@ -33,6 +33,9 @@ const AdminComplaintArchivePage = lazy(
   () => import("@/pages/admin/complaint-archive"),
 );
 const AdminUsersPage = lazy(() => import("@/pages/admin/users"));
+const AdminComplaintTypesPage = lazy(
+  () => import("@/pages/admin/complaint-types"),
+);
 const AdminCreateUserPage = lazy(() => import("@/pages/admin/create-user"));
 const AdminUserDetailPage = lazy(() => import("@/pages/admin/user-detail"));
 const AdminSettingsPage = lazy(() => import("@/pages/admin/settings"));
@@ -174,6 +177,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminUsersPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.COMPLAINT_TYPES}
+              element={
+                <SuspenseBoundary>
+                  <AdminComplaintTypesPage />
                 </SuspenseBoundary>
               }
             />

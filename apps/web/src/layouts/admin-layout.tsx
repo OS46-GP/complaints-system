@@ -9,6 +9,7 @@ import {
   Settings,
   Shield,
   Radio,
+  Tags,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -20,6 +21,7 @@ const navItems = [
   { title: "لوحة التحكم", url: PATHS.ADMIN.DASHBOARD, icon: LayoutDashboard },
   { title: "الشكاوى", url: PATHS.ADMIN.COMPLAINTS, icon: ClipboardList },
   { title: "الأقسام", url: "#", icon: Building2 },
+  { title: "الفئات", url: PATHS.ADMIN.COMPLAINT_TYPES, icon: Tags },
   { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },
   { title: "مراقبة السوشيال ميديا", url: PATHS.ADMIN.SOCIAL_MONITORING, icon: Radio },
   { title: "التقارير", url: "#", icon: FileBarChart },
