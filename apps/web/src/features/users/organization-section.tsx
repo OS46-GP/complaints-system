@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import type { UserFormData } from "@/features/user-create/types";
+import type { UserFormData } from "@/features/users/types";
 
 interface OrganizationSectionProps {
   data: UserFormData;

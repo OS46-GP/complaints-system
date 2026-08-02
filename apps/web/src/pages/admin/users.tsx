@@ -5,8 +5,8 @@ import { PATHS } from "@/router/paths";
 import { PageHeader } from "@/components/shared/page-header";
 import { AsyncLoader } from "@/components/shared/async-loader";
 import { Button } from "@/components/ui/button";
-import { UserList } from "@/features/user-list/user-list";
-import { UserListSkeleton } from "@/features/user-list/user-list-skeleton";
+import { UserList } from "@/features/users/user-list";
+import { UserListSkeleton } from "@/features/users/user-list-skeleton";
 import { useUsers } from "@/features/users/hooks";
 
 export default function AdminUsers() {

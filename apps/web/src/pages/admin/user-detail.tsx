@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import { PageHeader } from "@/components/shared/page-header";
-import { UserEditForm } from "@/features/user-edit/user-edit-form";
+import { UserEditForm } from "@/features/users/user-edit-form";
 
 export default function AdminUserDetail() {
   const { id } = useParams();

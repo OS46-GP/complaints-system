@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/shared/page-header";
-import { UserCreateForm } from "@/features/user-create/user-create-form";
+import { UserCreateForm } from "@/features/users/user-create-form";
 
 export default function AdminCreateUser() {
   return (
