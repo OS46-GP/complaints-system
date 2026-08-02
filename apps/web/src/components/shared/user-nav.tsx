@@ -1,6 +1,5 @@
-import { type LucideIcon } from "lucide-react";
+import { type LucideIcon, User } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,8 +22,6 @@ export interface UserNavItem {
 export interface UserNavProps {
   name: string;
   role: string;
-  src?: string;
-  fallback?: string;
   className?: string;
   items?: UserNavItem[];
 }
@@ -32,8 +29,6 @@ export interface UserNavProps {
 export function UserNav({
   name,
   role,
-  src,
-  fallback,
   className,
   items,
 }: UserNavProps) {
@@ -47,10 +42,9 @@ export function UserNav({
             <p className="text-xs font-bold text-foreground">{name}</p>
             <p className="text-[10px] text-muted-foreground">{role}</p>
           </div>
-          <Avatar className="size-8 border-2 border-sidebar-primary md:size-10">
-            <AvatarImage src={src} />
-            <AvatarFallback>{fallback}</AvatarFallback>
-          </Avatar>
+          <div className="flex size-8 items-center justify-center rounded-full border-2 border-sidebar-primary bg-sidebar-accent md:size-10">
+            <User className="size-4 text-sidebar-primary md:size-5" />
+          </div>
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
