@@ -10,6 +10,7 @@ import {
   Shield,
   Radio,
   Tags,
+  Inbox,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -22,6 +23,7 @@ const navItems = [
   { title: "الشكاوى", url: PATHS.ADMIN.COMPLAINTS, icon: ClipboardList },
   { title: "الأقسام", url: "#", icon: Building2 },
   { title: "الفئات", url: PATHS.ADMIN.COMPLAINT_TYPES, icon: Tags },
+  { title: "طرق الاستلام", url: PATHS.ADMIN.RECEPTION_METHODS, icon: Inbox },
   { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },
   { title: "مراقبة السوشيال ميديا", url: PATHS.ADMIN.SOCIAL_MONITORING, icon: Radio },
   { title: "التقارير", url: "#", icon: FileBarChart },
