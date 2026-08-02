@@ -42,7 +42,21 @@ model Citizen {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  complaints Complaint[]
+  account      CitizenAccount?
+  complaints   Complaint[]
+}
+
+model CitizenAccount {
+  id         String   @id @default(cuid())
+  citizenId  String   @unique
+  citizen    Citizen  @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  email      String   @unique
+  password   String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([citizenId])
 }
 
 model Location {
