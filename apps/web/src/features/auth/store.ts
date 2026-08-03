@@ -30,9 +30,35 @@ export function getAuthToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
 }
 
+export function isTokenExpired(token: string | null): boolean {
+  if (!token) {
+    return true;
+  }
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (typeof payload.exp !== "number") {
+      return false;
+    }
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function clearStoredAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(USER_KEY);
+}
+
 function loadPersistedAuth(): { token: string | null; user: User | null } {
   try {
     const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+    if (isTokenExpired(token)) {
+      clearStoredAuth();
+      return { token: null, user: null };
+    }
     const stored = token
       ? sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY)
       : null;
@@ -55,10 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ token, user, isAuthenticated: true });
   },
   logout: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(USER_KEY);
+    clearStoredAuth();
     set({ token: null, user: null, isAuthenticated: false });
   },
 }));
