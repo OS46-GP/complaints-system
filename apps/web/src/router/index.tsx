@@ -46,6 +46,17 @@ const AdminSettingsPage = lazy(() => import("@/pages/admin/settings"));
 const AdminSocialMonitoringPage = lazy(
   () => import("@/pages/admin/social-monitoring"),
 );
+const AdminReportsDashboardPage = lazy(
+  () => import("@/pages/admin/reports-dashboard"),
+);
+const AdminCustomReportPage = lazy(() => import("@/pages/admin/custom-report"));
+const AdminScheduledReportsPage = lazy(
+  () => import("@/pages/admin/scheduled-reports"),
+);
+const AdminOnDemandReportPage = lazy(
+  () => import("@/pages/admin/on-demand-report"),
+);
+const AdminMemoPage = lazy(() => import("@/pages/admin/memo"));
 
 const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
 const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
@@ -67,6 +78,17 @@ const UserSocialMonitoringPage = lazy(
   () => import("@/pages/user/social-monitoring"),
 );
 const UserSettingsPage = lazy(() => import("@/pages/user/settings"));
+const UserReportsDashboardPage = lazy(
+  () => import("@/pages/user/reports-dashboard"),
+);
+const UserCustomReportPage = lazy(() => import("@/pages/user/custom-report"));
+const UserScheduledReportsPage = lazy(
+  () => import("@/pages/user/scheduled-reports"),
+);
+const UserOnDemandReportPage = lazy(
+  () => import("@/pages/user/on-demand-report"),
+);
+const UserMemoPage = lazy(() => import("@/pages/user/memo"));
 
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 const ForbiddenPage = lazy(() => import("@/pages/forbidden"));
@@ -240,6 +262,46 @@ const AppRouter = () => {
                 </SuspenseBoundary>
               }
             />
+            <Route
+              path={PATHS.ADMIN.REPORTS.DASHBOARD}
+              element={
+                <SuspenseBoundary>
+                  <AdminReportsDashboardPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.REPORTS.CUSTOM}
+              element={
+                <SuspenseBoundary>
+                  <AdminCustomReportPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.REPORTS.SCHEDULED}
+              element={
+                <SuspenseBoundary>
+                  <AdminScheduledReportsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.REPORTS.ON_DEMAND}
+              element={
+                <SuspenseBoundary>
+                  <AdminOnDemandReportPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.REPORTS.MEMO}
+              element={
+                <SuspenseBoundary>
+                  <AdminMemoPage />
+                </SuspenseBoundary>
+              }
+            />
           </Route>
         </Route>
 
@@ -322,6 +384,46 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserSettingsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.REPORTS.DASHBOARD}
+              element={
+                <SuspenseBoundary>
+                  <UserReportsDashboardPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.REPORTS.CUSTOM}
+              element={
+                <SuspenseBoundary>
+                  <UserCustomReportPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.REPORTS.SCHEDULED}
+              element={
+                <SuspenseBoundary>
+                  <UserScheduledReportsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.REPORTS.ON_DEMAND}
+              element={
+                <SuspenseBoundary>
+                  <UserOnDemandReportPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.REPORTS.MEMO}
+              element={
+                <SuspenseBoundary>
+                  <UserMemoPage />
                 </SuspenseBoundary>
               }
             />

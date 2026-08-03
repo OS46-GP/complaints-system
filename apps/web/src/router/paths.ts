@@ -20,6 +20,13 @@ export const PATHS = {
     DEPARTMENTS: "/admin/departments",
     SOCIAL_MONITORING: "/admin/social-monitoring",
     SETTINGS: "/admin/settings",
+    REPORTS: {
+      DASHBOARD: "/admin/reports",
+      CUSTOM: "/admin/reports/custom",
+      SCHEDULED: "/admin/reports/scheduled",
+      ON_DEMAND: "/admin/reports/on-demand",
+      MEMO: "/admin/reports/memo",
+    },
   },
 
   USER: {
@@ -33,6 +40,13 @@ export const PATHS = {
     COMPLAINT_ARCHIVE: (id: string) => `/user/complaints/${id}/archive`,
     SOCIAL_MONITORING: "/user/social-monitoring",
     SETTINGS: "/user/settings",
+    REPORTS: {
+      DASHBOARD: "/user/reports",
+      CUSTOM: "/user/reports/custom",
+      SCHEDULED: "/user/reports/scheduled",
+      ON_DEMAND: "/user/reports/on-demand",
+      MEMO: "/user/reports/memo",
+    },
   },
 
   UNAUTHORIZED: "/403",

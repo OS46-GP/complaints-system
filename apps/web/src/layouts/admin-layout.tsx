@@ -26,7 +26,7 @@ const navItems = [
   { title: "طرق الاستلام", url: PATHS.ADMIN.RECEPTION_METHODS, icon: Inbox },
   { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },
   { title: "مراقبة السوشيال ميديا", url: PATHS.ADMIN.SOCIAL_MONITORING, icon: Radio },
-  { title: "التقارير", url: "#", icon: FileBarChart },
+  { title: "التقارير", url: PATHS.ADMIN.REPORTS.DASHBOARD, icon: FileBarChart },
   { title: "التحليلات", url: "#", icon: BarChart3 },
   { title: "الإعدادات", url: PATHS.ADMIN.SETTINGS, icon: Settings },
 ];
