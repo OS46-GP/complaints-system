@@ -4,6 +4,7 @@ import {
   getComplaintDetails,
   getComplaintLinks,
   analyzeComplaint,
+  unlinkComplaints,
 } from "@/features/complaint-detail/api";
 import { QUERY_KEYS } from "@/features/complaint-list/hooks";
 
@@ -28,6 +29,17 @@ export function useAnalyzeComplaint(complaintId: string) {
     mutationFn: () => analyzeComplaint(complaintId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaintLinks(complaintId) });
+    },
+  });
+}
+
+export function useUnlinkComplaint(complaintId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (targetId: string) => unlinkComplaints(complaintId, targetId),
+    onSuccess: (_data, targetId) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaintLinks(complaintId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaintLinks(targetId) });
     },
   });
 }

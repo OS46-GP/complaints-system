@@ -24,7 +24,15 @@ const API_TO_PRISMA_SEVERITY: Record<SeverityLevel, Severity> = {
   HIGH: Severity.High,
 };
 
-const RECURRENCE_TIME_WINDOW_MS = 365 * 24 * 60 * 60 * 1000;
+const RECURRENCE_WINDOW_DAYS = Number(
+  process.env.RECURRENCE_WINDOW_DAYS ?? 365,
+);
+const RECURRENCE_TIME_WINDOW_MS =
+  RECURRENCE_WINDOW_DAYS > 0 ? RECURRENCE_WINDOW_DAYS * 24 * 60 * 60 * 1000 : 0;
+
+const MIN_CANDIDATES = 5;
+const STAGE1_FETCH_SIZE = 200;
+const STAGE1_RESULT_SIZE = 50;
 
 @Injectable()
 export class AiTriageService {
@@ -111,7 +119,11 @@ export class AiTriageService {
         },
       },
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: [
+        { statementYear: "desc" },
+        { complaintNumber: "desc" },
+        { id: "desc" },
+      ],
       take: limit,
     });
 
@@ -227,44 +239,98 @@ export class AiTriageService {
     return this.toRecurrenceMatches(confirmed);
   }
 
+  private normalizeLocationText(value: string): string {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/[\u064B-\u0652\u0640]/g, "")
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .replace(/[\s\u00A0]+/g, " ");
+  }
+
+  private fuzzyLocationMatch(a: string | null, b: string | null): boolean {
+    if (!a || !b) return false;
+    const na = this.normalizeLocationText(a);
+    const nb = this.normalizeLocationText(b);
+    return na === nb || na.includes(nb) || nb.includes(na);
+  }
+
+  private locationMatches(
+    candidate: { village: string | null; district: string | null },
+    citizen: { village: string | null; district: string | null },
+  ): boolean {
+    return (
+      this.fuzzyLocationMatch(candidate.village, citizen.village) ||
+      this.fuzzyLocationMatch(candidate.district, citizen.district) ||
+      this.fuzzyLocationMatch(candidate.village, citizen.district) ||
+      this.fuzzyLocationMatch(candidate.district, citizen.village)
+    );
+  }
+
   private async structuredNarrowing(
     complaint: RecurrenceInput,
   ): Promise<RecurrenceCandidate[]> {
     const { citizen, departmentId, id } = complaint;
-    const timeWindowStart = new Date(Date.now() - RECURRENCE_TIME_WINDOW_MS);
 
-    const where: Prisma.ComplaintWhereInput = {
-      ...(id ? { id: { not: id } } : {}),
-      createdAt: { gte: timeWindowStart },
+    const query = async (
+      windowMs: number,
+      withDepartment: boolean,
+    ): Promise<RecurrenceCandidate[]> => {
+      const where: Prisma.ComplaintWhereInput = {
+        ...(id ? { id: { not: id } } : {}),
+        ...(windowMs > 0 ? { createdAt: { gte: new Date(Date.now() - windowMs) } } : {}),
+        ...(withDepartment && departmentId ? { departmentId } : {}),
+      };
+
+      return this.prisma.complaint.findMany({
+        where,
+        include: {
+          citizen: {
+            select: { nationalId: true, village: true, district: true },
+          },
+          examinationStatus: { select: { name: true } },
+          actions: { orderBy: { actionDate: "desc" } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: STAGE1_FETCH_SIZE,
+      }) as Promise<RecurrenceCandidate[]>;
     };
 
-    if (departmentId) {
-      where.departmentId = departmentId;
+    const levels: Array<{
+      name: string;
+      windowMs: number;
+      withDepartment: boolean;
+      fuzzyLocation: boolean;
+    }> = [
+      { name: "strict (window + dept + fuzzy location)", windowMs: RECURRENCE_TIME_WINDOW_MS, withDepartment: true, fuzzyLocation: true },
+      { name: "window + dept", windowMs: RECURRENCE_TIME_WINDOW_MS, withDepartment: true, fuzzyLocation: false },
+      { name: "window only", windowMs: RECURRENCE_TIME_WINDOW_MS, withDepartment: false, fuzzyLocation: false },
+      { name: "all-time", windowMs: 0, withDepartment: false, fuzzyLocation: false },
+    ];
+
+    let fallback: RecurrenceCandidate[] | null = null;
+
+    for (const level of levels) {
+      let candidates = await query(level.windowMs, level.withDepartment);
+      if (level.fuzzyLocation) {
+        candidates = candidates.filter((c) =>
+          this.locationMatches(c.citizen ?? { village: null, district: null }, citizen ?? { village: null, district: null }),
+        );
+      }
+      if (level === levels[levels.length - 1]) {
+        fallback = candidates;
+      }
+      this.logger.debug(
+        `structuredNarrowing level "${level.name}" produced ${candidates.length} candidates`,
+      );
+      if (candidates.length >= MIN_CANDIDATES) {
+        return candidates.slice(0, STAGE1_RESULT_SIZE);
+      }
     }
 
-    if (citizen?.village || citizen?.district) {
-      const OR: Prisma.CitizenWhereInput[] = [];
-      if (citizen.village) {
-        OR.push({ village: citizen.village });
-      }
-      if (citizen.district) {
-        OR.push({ district: citizen.district });
-      }
-      where.citizen = { OR };
-    }
-
-    return this.prisma.complaint.findMany({
-      where,
-      include: {
-        citizen: {
-          select: { nationalId: true, village: true, district: true },
-        },
-        examinationStatus: { select: { name: true } },
-        actions: { orderBy: { actionDate: "desc" } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }) as Promise<RecurrenceCandidate[]>;
+    return (fallback ?? []).slice(0, STAGE1_RESULT_SIZE);
   }
 
   private filterExactNationalIdMatch(
@@ -376,6 +442,25 @@ No explanation.`;
     } catch (error) {
       this.logger.warn('Failed to persist recurrence link', error);
     }
+  }
+
+  async unlinkComplaints(
+    a: string,
+    b: string,
+  ): Promise<{ unlinked: boolean }> {
+    const ids = [a, b].sort();
+    const result = await this.prisma.complaintLink.deleteMany({
+      where: {
+        AND: [{ sourceId: ids[0] }, { targetId: ids[1] }],
+      },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException("Complaint link not found");
+    }
+
+    this.logger.log(`Unlinked complaints ${ids[0]} <-> ${ids[1]}`);
+    return { unlinked: true };
   }
 
   async getLinks(complaintId: string): Promise<AnalyzeResult> {

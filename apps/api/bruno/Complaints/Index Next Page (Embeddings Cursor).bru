@@ -1,7 +1,7 @@
 meta {
-  name: Index All (Embeddings)
+  name: Index Next Page (Embeddings Cursor)
   type: http
-  seq: 17
+  seq: 18
 }
 
 post {
@@ -17,7 +17,8 @@ headers {
 
 body:json {
   {
-    "limit": 100
+    "limit": 100,
+    "cursor": "{{reindexCursor}}"
   }
 }
 
