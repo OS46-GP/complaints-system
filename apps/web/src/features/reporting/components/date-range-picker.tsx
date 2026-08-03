@@ -23,6 +23,11 @@ function toInputDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export function lastYearRange(): DateRangeValue {
+  const year = new Date().getFullYear() - 1;
+  return { from: `${year}-01-01`, to: `${year}-12-31` };
+}
+
 function currentMonthRange(): DateRangeValue {
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth(), 1);

@@ -3,6 +3,8 @@ const CASE_STATUS_MAPPING: Record<string, "FINISHED" | "NOT_FINISHED"> = {
   "تم الفحص": "FINISHED",
   "مستوفي": "FINISHED",
   "غير مستوفي": "FINISHED",
+  "منتهي": "FINISHED",
+  "غير منتهي": "NOT_FINISHED",
 };
 
 export function computeCaseStatus(examinationStatusName: string | null | undefined): "FINISHED" | "NOT_FINISHED" {

@@ -9,31 +9,18 @@ import { ReportingSummaryCards } from "@/features/reporting/components/reporting
 import { AchievementSection } from "@/features/reporting/components/achievement-section";
 import { DelaySection } from "@/features/reporting/components/delay-section";
 import { ReportCardsSkeleton, ReportTableSkeleton } from "@/features/reporting/components/report-skeletons";
-import type { DateRangeValue } from "@/features/reporting/components/date-range-picker";
+import { lastYearRange, type DateRangeValue } from "@/features/reporting/components/date-range-picker";
 import { useAchievementReport, useDelayReport } from "@/features/reporting/hooks";
 import type { ReportFilters } from "@/features/reporting/types";
-
-function currentMonthRange(): DateRangeValue {
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  const fmt = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  };
-  return { from: fmt(from), to: fmt(now) };
-}
 
 interface ReportingDashboardProps {
   basePath: string;
 }
 
 export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
-  const initial = currentMonthRange();
-  const [draftRange, setDraftRange] = useState<DateRangeValue>(initial);
+  const [draftRange, setDraftRange] = useState<DateRangeValue>(lastYearRange());
   const [draftDepartment, setDraftDepartment] = useState("");
-  const [applied, setApplied] = useState<ReportFilters>(initial);
+  const [applied, setApplied] = useState<ReportFilters>(lastYearRange());
 
   const {
     data: achievement,
