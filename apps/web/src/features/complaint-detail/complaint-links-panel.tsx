@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { Link2, RefreshCw } from "lucide-react";
-import { useComplaintLinks, useAnalyzeComplaint } from "@/features/complaint-detail/hooks";
+import { useComplaintLinks, useAnalyzeComplaint, useUnlinkComplaint } from "@/features/complaint-detail/hooks";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ interface ComplaintLinksPanelProps {
 export function ComplaintLinksPanel({ complaintId }: ComplaintLinksPanelProps) {
   const { data: links, isLoading, isError, refetch } = useComplaintLinks(complaintId);
   const analyzeMutation = useAnalyzeComplaint(complaintId);
+  const unlinkMutation = useUnlinkComplaint(complaintId);
 
   const matches = links ?? [];
 
@@ -45,7 +46,15 @@ export function ComplaintLinksPanel({ complaintId }: ComplaintLinksPanelProps) {
           </Button>
         </div>
       ) : matches.length > 0 ? (
-        <RecurrenceMatchList matches={matches} emptyText="" />
+        <RecurrenceMatchList
+          matches={matches}
+          emptyText=""
+          onUnlink={(matchId) =>
+            unlinkMutation.mutate(matchId, {
+              onError: () => toast.error("تعذر إلغاء الربط"),
+            })
+          }
+        />
       ) : (
         <div className="space-y-3">
           <p className="font-body text-body-md text-muted-foreground">

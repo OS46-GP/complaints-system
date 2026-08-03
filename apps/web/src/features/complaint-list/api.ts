@@ -95,4 +95,8 @@ export const complaintsApi = {
     axiosClient
       .get<{ severity: string; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/links`)
       .then((res) => res.data),
+  unlinkComplaints: (id: string, targetId: string) =>
+    axiosClient
+      .delete<{ unlinked: boolean }>(`/api/complaints/${id}/links/${targetId}`)
+      .then((res) => res.data),
 };

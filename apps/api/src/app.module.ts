@@ -30,7 +30,7 @@ import { IntakeModule } from "./intake/intake.module";
     IntakeModule,
     SocialModule,
     AiSummarizationModule,
-    MastraModule.register({ mastra }),
+    MastraModule.register({ mastra, prefix: "mastra" }),
   ],
 })
 export class AppModule {}
