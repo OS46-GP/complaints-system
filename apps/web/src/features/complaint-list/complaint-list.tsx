@@ -27,7 +27,7 @@ interface ComplaintListProps {
 
 const columns: DataTableColumn[] = [
   { key: "id", label: "رقم الشكوى", className: "w-28" },
-  { key: "subject", label: "الموضوع", className: "w-[30%]" },
+  { key: "subject", label: "الموضوع", className: "w-64" },
   { key: "citizen", label: "المواطن", className: "w-40" },
   { key: "department", label: "القسم", className: "w-40" },
   { key: "severity", label: "الأولوية", className: "w-24" },
@@ -137,7 +137,10 @@ export function ComplaintList({
             ))}
           </div>
 
-          <DataTable className="hidden md:block w-full" tableClassName="table-fixed">
+          <DataTable
+            className="hidden md:block w-full overflow-x-auto"
+            tableClassName="table-fixed"
+          >
             <DataTableHeader columns={columns} />
             <DataTableBody>
               {complaints.map((complaint) => (
