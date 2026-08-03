@@ -19,7 +19,9 @@ export const socialApi = {
   removeGroup: (id: string) =>
     axiosClient.post(`/api/social/groups/${id}/remove`).then((res) => res.data),
   poll: () =>
-    axiosClient.post<PollResult>("/api/social/poll").then((res) => res.data),
+    axiosClient
+      .post<PollResult>("/api/social/poll", null, { timeout: 180000 })
+      .then((res) => res.data),
   listDrafts: (status?: SocialDraftStatus) =>
     axiosClient
       .get<SocialDraft[]>("/api/social/drafts", { params: { status } })

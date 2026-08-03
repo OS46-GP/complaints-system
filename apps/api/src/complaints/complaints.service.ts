@@ -125,33 +125,6 @@ export class ComplaintsService {
     return result;
   }
 
-  async indexAll(): Promise<{ indexed: number }> {
-    const batchSize = 100;
-    let indexed = 0;
-    let skip = 0;
-    let count: number;
-
-    do {
-      const batch = await this.prisma.complaint.findMany({
-        skip,
-        take: batchSize,
-        include: { citizen: { select: { village: true, district: true } } },
-        orderBy: [
-          { statementYear: "desc" },
-          { complaintNumber: "desc" },
-        ],
-      });
-      count = batch.length;
-      for (const c of batch) {
-        await this.indexComplaint(c);
-        indexed++;
-      }
-      skip += batchSize;
-    } while (count === batchSize);
-
-    return { indexed };
-  }
-
   async indexComplaint(complaint: {
     id: string;
     subject: string;
