@@ -1,19 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { computeCaseStatus } from '../complaints/case-status.config';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
 import * as path from 'path';
 import { renderHtmlToPdf } from './pdf-generator';
 
 const OVERDUE_THRESHOLD_DAYS = 30;
-
-const FINISHED_EXAMINATION_STATUSES = new Set([
-  'Completed',
-  'Resolved',
-  'Finished',
-  'منتهية',
-  'تم الحل',
-]);
 
 export interface AchievementRow {
   department: string;
@@ -56,8 +49,7 @@ export class ReportingService {
   constructor(private prisma: PrismaService) {}
 
   private isFinished(examinationStatusName: string | null): boolean {
-    if (!examinationStatusName) return false;
-    return FINISHED_EXAMINATION_STATUSES.has(examinationStatusName);
+    return computeCaseStatus(examinationStatusName) === 'FINISHED';
   }
 
   private parseDateRange(from?: string, to?: string) {

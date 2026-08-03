@@ -6,6 +6,7 @@ import {
   Settings,
   User,
   Radio,
+  FileBarChart,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -18,6 +19,7 @@ const navItems = [
   { title: "الشكاوى", url: PATHS.USER.COMPLAINTS, icon: ClipboardList },
   { title: "شكوى جديدة", url: PATHS.USER.NEW_COMPLAINT, icon: PlusCircle },
   { title: "مراقبة وسائل التواصل", url: PATHS.USER.SOCIAL_MONITORING, icon: Radio },
+  { title: "التقارير", url: PATHS.USER.REPORTS.DASHBOARD, icon: FileBarChart },
   { title: "الإعدادات", url: PATHS.USER.SETTINGS, icon: Settings },
 ];
 
