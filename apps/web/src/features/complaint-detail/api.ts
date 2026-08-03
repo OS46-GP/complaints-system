@@ -61,3 +61,10 @@ export async function analyzeComplaint(id: string): Promise<RecurrenceMatch[]> {
   const data = await complaintsApi.analyze(id);
   return data.recurrenceMatches;
 }
+
+export async function unlinkComplaints(
+  id: string,
+  targetId: string,
+): Promise<{ unlinked: boolean }> {
+  return complaintsApi.unlinkComplaints(id, targetId);
+}

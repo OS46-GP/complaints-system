@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router";
-import { FileText } from "lucide-react";
+import { FileText, Unlink } from "lucide-react";
 import type { RecurrenceMatch } from "@/features/complaint-list/types";
 
 function formatArrivalDate(value: string): string {
@@ -13,11 +13,13 @@ function formatArrivalDate(value: string): string {
 interface RecurrenceMatchListProps {
   matches: RecurrenceMatch[];
   emptyText?: string;
+  onUnlink?: (id: string) => void;
 }
 
 export function RecurrenceMatchList({
   matches,
   emptyText = "لا توجد شكاوى مشابهة.",
+  onUnlink,
 }: RecurrenceMatchListProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -44,11 +46,27 @@ export function RecurrenceMatchList({
                 <FileText className="size-4 text-muted-foreground" />
                 #{match.complaintNumber}-{match.statementYear}
               </span>
-              {match.examinationStatus && (
-                <span className="font-body text-label-xs text-muted-foreground">
-                  {match.examinationStatus}
-                </span>
-              )}
+              <span className="flex items-center gap-2">
+                {match.examinationStatus && (
+                  <span className="font-body text-label-xs text-muted-foreground">
+                    {match.examinationStatus}
+                  </span>
+                )}
+                {onUnlink && (
+                  <button
+                    type="button"
+                    aria-label="إلغاء الربط"
+                    title="إلغاء الربط"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUnlink(match.id);
+                    }}
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Unlink className="size-4" />
+                  </button>
+                )}
+              </span>
             </span>
             <span className="block mt-1 font-body text-body-md text-muted-foreground truncate">
               {match.subject}
