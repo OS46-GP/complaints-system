@@ -11,7 +11,7 @@ import {
 
 const COLUMNS: DataTableColumn[] = [
   { key: "id", label: "رقم الشكوى" },
-  { key: "subject", label: "الموضوع" },
+  { key: "subject", label: "الموضوع", className: "w-64" },
   { key: "citizen", label: "المواطن" },
   { key: "department", label: "القسم" },
   { key: "severity", label: "الأولوية" },
