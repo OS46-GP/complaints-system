@@ -49,6 +49,7 @@ const AdminSocialMonitoringPage = lazy(
 const AdminReportsDashboardPage = lazy(
   () => import("@/pages/admin/reports-dashboard"),
 );
+const AdminDelaysReportPage = lazy(() => import("@/pages/admin/delays-report"));
 const AdminCustomReportPage = lazy(() => import("@/pages/admin/custom-report"));
 const AdminScheduledReportsPage = lazy(
   () => import("@/pages/admin/scheduled-reports"),
@@ -81,6 +82,7 @@ const UserSettingsPage = lazy(() => import("@/pages/user/settings"));
 const UserReportsDashboardPage = lazy(
   () => import("@/pages/user/reports-dashboard"),
 );
+const UserDelaysReportPage = lazy(() => import("@/pages/user/delays-report"));
 const UserCustomReportPage = lazy(() => import("@/pages/user/custom-report"));
 const UserScheduledReportsPage = lazy(
   () => import("@/pages/user/scheduled-reports"),
@@ -271,6 +273,14 @@ const AppRouter = () => {
               }
             />
             <Route
+              path={PATHS.ADMIN.REPORTS.DELAYS}
+              element={
+                <SuspenseBoundary>
+                  <AdminDelaysReportPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
               path={PATHS.ADMIN.REPORTS.CUSTOM}
               element={
                 <SuspenseBoundary>
@@ -392,6 +402,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserReportsDashboardPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.REPORTS.DELAYS}
+              element={
+                <SuspenseBoundary>
+                  <UserDelaysReportPage />
                 </SuspenseBoundary>
               }
             />

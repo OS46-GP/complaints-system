@@ -1,5 +1,12 @@
 import { Link, useLocation } from "react-router";
-import { BarChart3, ListChecks, History, Zap, FileText } from "lucide-react";
+import {
+  AlarmClock,
+  BarChart3,
+  FileText,
+  History,
+  ListChecks,
+  Zap,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -21,6 +28,12 @@ function buildItems(basePath: string): ReportsNavItem[] {
       title: "لوحة التقارير",
       url: basePath,
       icon: BarChart3,
+    },
+    {
+      key: "delays",
+      title: "المتأخرات",
+      url: `${basePath}/delays`,
+      icon: AlarmClock,
     },
     {
       key: "custom",
