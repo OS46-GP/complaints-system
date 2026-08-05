@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
 import { ComplaintBasicInfoStep } from "@/features/complaint-create/complaint-basic-info-step";
-import { ComplaintDescriptionStep } from "@/features/complaint-create/complaint-description-step";
+import { ComplaintCitizenStep } from "@/features/complaint-create/complaint-citizen-step";
 import { ComplaintReviewStep } from "@/features/complaint-create/complaint-review-step";
 
 const TOTAL_STEPS = 3;
@@ -123,7 +123,7 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
               {step === 1 && <ComplaintBasicInfoStep />}
-              {step === 2 && <ComplaintDescriptionStep />}
+              {step === 2 && <ComplaintCitizenStep />}
               {step === 3 && <ComplaintReviewStep onGoToStep={setStep} />}
 
               <div className="mt-6 md:mt-10 flex flex-row-reverse justify-between items-center border-t border-border pt-4 md:pt-6">

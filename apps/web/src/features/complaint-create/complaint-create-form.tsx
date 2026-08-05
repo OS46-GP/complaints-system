@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ComplaintStepper } from "@/features/complaint-create/complaint-stepper";
 import { ComplaintBasicInfoStep } from "@/features/complaint-create/complaint-basic-info-step";
-import { ComplaintDescriptionStep } from "@/features/complaint-create/complaint-description-step";
+import { ComplaintCitizenStep } from "@/features/complaint-create/complaint-citizen-step";
 import { ComplaintAttachmentStep } from "@/features/complaint-create/complaint-attachment-step";
 import { ComplaintReviewStep } from "@/features/complaint-create/complaint-review-step";
 
@@ -196,7 +196,7 @@ export function ComplaintCreateForm() {
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
               {step === 1 && <ComplaintBasicInfoStep ocrFields={ocrFields} />}
-              {step === 2 && <ComplaintDescriptionStep ocrFields={ocrFields} />}
+              {step === 2 && <ComplaintCitizenStep ocrFields={ocrFields} />}
               {step === 3 && <ComplaintAttachmentStep />}
               {step === 4 && <ComplaintReviewStep ocrFields={ocrFields} onGoToStep={setStep} />}
 

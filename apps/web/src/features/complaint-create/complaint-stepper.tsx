@@ -2,8 +2,8 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  { label: "المعلومات الأساسية", shortLabel: "أساسية" },
-  { label: "وصف الشكوى", shortLabel: "وصف" },
+  { label: "بيانات الشكوى", shortLabel: "تفاصيل" },
+  { label: "بيانات المواطن", shortLabel: "مواطن" },
   { label: "المرفقات", shortLabel: "مرفقات" },
   { label: "المراجعة", shortLabel: "مراجعة" },
 ];

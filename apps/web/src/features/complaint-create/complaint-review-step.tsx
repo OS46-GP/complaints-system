@@ -104,25 +104,25 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           label="المواطن"
           value={data.citizen.fullName || "—"}
           isOcr={isOcr("citizen.fullName")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="الرقم القومي"
           value={data.citizen.nationalId || "—"}
           isOcr={isOcr("citizen.nationalId")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="رقم الجوال"
           value={data.citizen.mobileNumber || "—"}
           isOcr={isOcr("citizen.mobileNumber")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="وصف الشكوى"
           value={data.annotation || "لا يوجد وصف متاح"}
           isOcr={isOcr("annotation")}
-          onEdit={() => onGoToStep(2)}
+          onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="المرفقات"
