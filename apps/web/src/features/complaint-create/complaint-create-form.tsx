@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -130,6 +130,18 @@ export function ComplaintCreateForm() {
     mode: "onTouched",
   });
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.tagName === "TEXTAREA" || target.tagName === "BUTTON") return;
+      e.preventDefault();
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, []);
+
   const ocrFields = useMemo(() => {
     const fields = new Set<string>();
     if (!ocrOriginal) return fields;
@@ -147,6 +159,7 @@ export function ComplaintCreateForm() {
     const isValid = await form.trigger(STEP_FIELDS[step - 1]);
     if (!isValid) return;
     setStep((s) => s + 1);
+    (document.activeElement as HTMLElement | null)?.blur();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -158,6 +171,7 @@ export function ComplaintCreateForm() {
   };
 
   const handleSubmit = (values: ComplaintCreateFormValues) => {
+    if (step < TOTAL_STEPS) return;
     const payload: ComplaintCreateFormData = {
       ...values,
       files: values.files.map((item) => item.file),
@@ -202,12 +216,13 @@ export function ComplaintCreateForm() {
 
               <div className="mt-6 md:mt-10 flex flex-row-reverse justify-between items-center border-t border-border pt-4 md:pt-6">
                 {step < TOTAL_STEPS ? (
-                  <Button type="button" onClick={handleNext} className="gap-2">
+                  <Button key="next" type="button" onClick={handleNext} className="gap-2">
                     التالي
                     <ArrowLeft className="size-4" />
                   </Button>
                 ) : (
                   <Button
+                    key="submit"
                     type="submit"
                     disabled={createMutation.isPending}
                     className="gap-2"
