@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { Edit3, Info, AlertTriangle, CheckCircle2, SearchCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Edit3,
+  Info,
+  Loader2,
+  SearchCheck,
+  Sparkles,
+} from "lucide-react";
 import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
 import type { RecurrenceMatch } from "@/features/complaint-list/types";
 import { complaintsApi } from "@/features/complaint-list/api";
@@ -64,8 +72,9 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
     status: "idle" | "loading" | "done";
     matches: RecurrenceMatch[];
   }>({ status: "idle", matches: [] });
+  const autoChecked = useRef(false);
 
-  const handleCheck = async () => {
+  const runCheck = async () => {
     setCheckState({ status: "loading", matches: [] });
     try {
       const result = await complaintsApi.checkDuplicates({
@@ -80,10 +89,21 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
       });
       setCheckState({ status: "done", matches: result.recurrenceMatches });
     } catch {
-      toast.error("تعذر التحقق من الشكاوى المشابهة");
-      setCheckState({ status: "idle", matches: [] });
+      if (!autoChecked.current) {
+        setCheckState({ status: "idle", matches: [] });
+      } else {
+        toast.error("تعذر التحقق من الشكاوى المشابهة");
+        setCheckState({ status: "idle", matches: [] });
+      }
     }
   };
+
+  useEffect(() => {
+    if (autoChecked.current || !data.subject.trim()) return;
+    autoChecked.current = true;
+    void runCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -104,25 +124,25 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           label="المواطن"
           value={data.citizen.fullName || "—"}
           isOcr={isOcr("citizen.fullName")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="الرقم القومي"
           value={data.citizen.nationalId || "—"}
           isOcr={isOcr("citizen.nationalId")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="رقم الجوال"
           value={data.citizen.mobileNumber || "—"}
           isOcr={isOcr("citizen.mobileNumber")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="وصف الشكوى"
           value={data.annotation || "لا يوجد وصف متاح"}
           isOcr={isOcr("annotation")}
-          onEdit={() => onGoToStep(2)}
+          onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="المرفقات"
@@ -134,24 +154,38 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
       <div className="rounded-xl border border-border bg-surface-container-lowest p-4 md:p-6">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
           <div>
-            <h3 className="font-heading text-title-sm text-foreground">
-              التحقق من الشكاوى المشابهة
+            <h3 className="font-heading text-title-sm text-foreground flex items-center gap-1.5">
+              <Sparkles className="size-4 text-primary" />
+              التحقق الذكي من الشكاوى المشابهة
             </h3>
             <p className="font-body text-body-sm text-muted-foreground mt-1">
-              تحقق من وجود شكاوى مكررة أو مشابهة قبل الإرسال.
+              يفحص النظام قاعدة البيانات باستخدام الذكاء الاصطناعي لاكتشاف شكاوى مشابهة تلقائياً قبل الإرسال.
             </p>
           </div>
           <Button
             type="button"
             variant="outline"
-            onClick={handleCheck}
+            onClick={runCheck}
             disabled={checkState.status === "loading" || !data.subject.trim()}
             className="gap-2"
           >
             <SearchCheck className="size-4" />
-            {checkState.status === "loading" ? "جارٍ التحقق..." : "التحقق من التكرار"}
+            {checkState.status === "loading"
+              ? "جارٍ التحقق..."
+              : checkState.status === "done"
+                ? "إعادة التحقق"
+                : "التحقق من التكرار"}
           </Button>
         </div>
+
+        {checkState.status === "loading" && (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            <Loader2 className="size-5 shrink-0 animate-spin text-primary" />
+            <p className="font-body text-body-md text-muted-foreground">
+              جارٍ فحص الشكاوى المشابهة بالذكاء الاصطناعي...
+            </p>
+          </div>
+        )}
 
         {checkState.status === "done" &&
           (checkState.matches.length > 0 ? (
@@ -167,7 +201,9 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           ) : (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success">
               <CheckCircle2 className="size-5 shrink-0" />
-              <p className="font-body text-body-md">لا توجد شكاوى مشابهة.</p>
+              <p className="font-body text-body-md">
+                لا توجد شكاوى مشابهة في قاعدة البيانات.
+              </p>
             </div>
           ))}
       </div>
