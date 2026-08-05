@@ -35,5 +35,10 @@ const quickActions = [
 ];
 
 export default function AdminDashboard() {
-  return <DashboardPage quickActions={quickActions} />;
+  return (
+    <DashboardPage
+      quickActions={quickActions}
+      delaysUrl={PATHS.ADMIN.REPORTS.DELAYS}
+    />
+  );
 }

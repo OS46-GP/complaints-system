@@ -22,6 +22,7 @@ export const PATHS = {
     SETTINGS: "/admin/settings",
     REPORTS: {
       DASHBOARD: "/admin/reports",
+      DELAYS: "/admin/reports/delays",
       CUSTOM: "/admin/reports/custom",
       SCHEDULED: "/admin/reports/scheduled",
       ON_DEMAND: "/admin/reports/on-demand",
@@ -42,6 +43,7 @@ export const PATHS = {
     SETTINGS: "/user/settings",
     REPORTS: {
       DASHBOARD: "/user/reports",
+      DELAYS: "/user/reports/delays",
       CUSTOM: "/user/reports/custom",
       SCHEDULED: "/user/reports/scheduled",
       ON_DEMAND: "/user/reports/on-demand",

@@ -35,5 +35,10 @@ const quickActions = [
 ];
 
 export default function UserDashboard() {
-  return <DashboardPage quickActions={quickActions} />;
+  return (
+    <DashboardPage
+      quickActions={quickActions}
+      delaysUrl={PATHS.USER.REPORTS.DELAYS}
+    />
+  );
 }

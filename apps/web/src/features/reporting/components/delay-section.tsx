@@ -23,19 +23,10 @@ export function DelaySection({ report }: DelaySectionProps) {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div>
         <h2 className="font-heading text-title-sm md:text-title-md text-foreground">
           تقرير المتأخرات حسب الجهة
         </h2>
-        <div className="flex flex-wrap items-center gap-4 text-label-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <AlarmClock className="size-4 text-destructive" />
-            إجمالي المتأخر: {report.totalOverdue.toLocaleString("ar-SA")}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            عتبة التأخير: {report.overdueThresholdDays.toLocaleString("ar-SA")} يوم
-          </span>
-        </div>
       </div>
 
       <ReportResultTable columns={columns} emptyText="لا توجد شكاوى متأخرة">
@@ -62,6 +53,16 @@ export function DelaySection({ report }: DelaySectionProps) {
           </tr>
         ))}
       </ReportResultTable>
+
+      <div className="flex flex-wrap items-center gap-4 text-label-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <AlarmClock className="size-4 text-destructive" />
+          إجمالي المتأخر: {report.totalOverdue.toLocaleString("ar-SA")}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          عتبة التأخير: {report.overdueThresholdDays.toLocaleString("ar-SA")} يوم
+        </span>
+      </div>
 
       {report.complaints.length > 0 && (
         <div className="rounded-xl border border-border bg-surface-container-lowest">
