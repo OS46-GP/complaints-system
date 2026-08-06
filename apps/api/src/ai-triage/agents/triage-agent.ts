@@ -1,8 +1,7 @@
 import type { Agent } from "@mastra/core/agent";
 import { z } from "zod";
 
-const LLM_MODEL = process.env.LLM_MODEL || "";
-const ENABLE_AI = LLM_MODEL.length > 0;
+const ENABLE_AI = Boolean(process.env.LLM_MODEL);
 // When ENABLE_AI is false:
 // - Severity always returns "MEDIUM"
 // - Recurrence detection uses structured match only (National ID)
@@ -12,8 +11,8 @@ export const severitySchema = z.object({
   severity: z.enum(["LOW", "MEDIUM", "HIGH"]),
 });
 
-export const recurrenceIndicesSchema = z.object({
-  indices: z.array(z.number().int().min(0)),
+export const recurrenceMatchesSchema = z.object({
+  complaintIds: z.array(z.string()),
 });
 
 let triageAgent: Agent | null = null;
@@ -37,7 +36,7 @@ Given complaint details, classify severity as exactly one of: LOW, MEDIUM, HIGH.
 2. RECURRENCE REASONING
 You are given a new complaint and a list of existing candidate complaints that were pre-selected by structured narrowing and embedding similarity.
 Determine which candidate complaints, if any, describe the SAME underlying real-world issue as the new complaint.
-Return the indices of matching candidates.
+Return the complaint IDs of matching candidates.
 
 Rules:
 - Identical or near-identical description + same location and department → ALWAYS a recurrence (flag it)
@@ -45,7 +44,7 @@ Rules:
 - Different specific problems even at the same location → not recurrence
 - Vague thematic similarity without substance → not recurrence
 - When in doubt, err on the side of flagging — the system prefers false positives over false negatives`,
-      model: LLM_MODEL,
+      model: process.env.LLM_MODEL || "",
     });
   }
   return triageAgent;

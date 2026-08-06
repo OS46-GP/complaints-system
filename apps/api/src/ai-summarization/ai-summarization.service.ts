@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { generateDraft } from "./mastra.config";
+import { complaintsAgent } from "./mastra.config";
 
 @Injectable()
 export class AiSummarizationService {
+  private readonly logger = new Logger(AiSummarizationService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async summarizeComplaint(complaintId: string): Promise<{ draft: string }> {
@@ -34,7 +36,7 @@ export class AiSummarizationService {
 - تاريخ الورود: ${complaint.arrivalDate.toLocaleDateString("ar-EG")}
     `.trim();
 
-    const draft = await generateDraft(prompt);
+    const draft = await this.generateDraft(prompt);
     return { draft };
   }
 
@@ -90,7 +92,7 @@ ${achievementRows.map((r) => `- ${r.department}: ${r.finished} من ${r.total} (
 اكتب التقرير بأسلوب رسمي حكومي مناسب للمراجعة والاعتماد.
     `.trim();
 
-    const draft = await generateDraft(prompt);
+    const draft = await this.generateDraft(prompt);
     return { draft };
   }
 
@@ -125,7 +127,93 @@ ${achievementRows.map((r) => `- ${r.department}: ${r.finished} من ${r.total} (
 استخدم صيغة رسمية حكومية مع التحية والختام المناسبين.
     `.trim();
 
-    const draft = await generateDraft(prompt);
+    const draft = await this.generateDraft(prompt);
     return { draft };
+  }
+
+  /**
+   * Generate a draft with a rate-limit-aware retry loop and user-facing
+   * Arabic error mapping. The framework's own retries are disabled
+   * (maxRetries: 0) so only this loop retries — it honors Google's
+   * "Please retry in Xs" backoff, which the framework's blind retry cannot.
+   */
+  private async generateDraft(
+    prompt: string,
+    retries = 3,
+    delayMs = 5000,
+  ): Promise<string> {
+    let attempt = 0;
+
+    while (attempt < retries) {
+      try {
+        const response = await complaintsAgent.generate(prompt, {
+          modelSettings: { maxRetries: 0 },
+        });
+        return response.text;
+      } catch (error: any) {
+        this.logger.error(
+          `AI Generation Error (Attempt ${attempt + 1}/${retries}):`,
+          error.message,
+        );
+
+        const isRateLimit =
+          error.status === 429 ||
+          error.message?.includes("429") ||
+          error.message?.includes("Quota exceeded");
+
+        if (isRateLimit && attempt < retries - 1) {
+          attempt++;
+
+          let waitTimeMs = delayMs;
+          // Parse Google's exact requested wait time (e.g. "Please retry in 22.3s")
+          const match = error.message?.match(/Please retry in (\d+(?:\.\d+)?)s/i);
+          if (match && match[1]) {
+            waitTimeMs = Math.ceil(parseFloat(match[1])) * 1000 + 1000;
+          }
+
+          this.logger.log(`Waiting ${waitTimeMs / 1000}s before retrying...`);
+          await this.sleep(waitTimeMs);
+          delayMs *= 2;
+          continue;
+        }
+
+        if (isRateLimit) {
+          throw new ServiceUnavailableException(
+            "خدمة الذكاء الاصطناعي غير متاحة حالياً بسبب استنفاد رصيد الحساب أو كثرة الطلبات. يرجى الانتظار لبضع ثوانٍ والمحاولة لاحقاً.",
+          );
+        }
+        if (error.status === 403 || error.message?.includes("403")) {
+          throw new ServiceUnavailableException(
+            "تم رفض الوصول لخدمة الذكاء الاصطناعي. تأكد من تفعيل واجهة برمجة التطبيقات (API) وصلاحيات المفتاح.",
+          );
+        }
+
+        const isNetworkError =
+          error.message?.includes("fetch failed") ||
+          error.message?.includes("Connect Timeout") ||
+          error.message?.includes("Cannot connect to API") ||
+          error.message?.includes("ECONNREFUSED") ||
+          error.message?.includes("ETIMEDOUT") ||
+          error.cause?.code === "UND_ERR_CONNECT_TIMEOUT";
+
+        if (isNetworkError) {
+          throw new ServiceUnavailableException(
+            "فشل الاتصال بخدمة الذكاء الاصطناعي بسبب مشكلة في الشبكة أو انتهاء مهلة الاتصال. تأكد من الاتصال بالإنترنت ومن أن الوصول إلى خدمات Google غير محجوب.",
+          );
+        }
+
+        throw new ServiceUnavailableException(
+          "عذراً، حدث خطأ غير متوقع أثناء الاتصال بخدمة الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.",
+        );
+      }
+    }
+
+    throw new ServiceUnavailableException(
+      "استنفد النظام جميع محاولات الاتصال بخدمة الذكاء الاصطناعي.",
+    );
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

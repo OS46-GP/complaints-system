@@ -1,8 +1,6 @@
 import type { Agent } from "@mastra/core/agent";
 import { z } from "zod";
 
-const LLM_MODEL = process.env.LLM_MODEL || "";
-
 export const ocrFieldsSchema = z.object({
   fields: z.record(
     z.object({
@@ -55,7 +53,7 @@ Confidence must be a number between 0 and 1:
 - 0.70-0.89: Field present but with some uncertainty (handwriting, partial match)
 - 0.50-0.69: Field inferred from context / weak signal
 - 0.00-0.49: Best guess — very low confidence, likely needs human review`,
-      model: LLM_MODEL,
+      model: process.env.LLM_MODEL || "",
     });
   }
   return ocrAgent;
