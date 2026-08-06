@@ -1,12 +1,20 @@
+import type { Agent } from "@mastra/core/agent";
+import { z } from "zod";
+
 const LLM_MODEL = process.env.LLM_MODEL || "";
 
-let ocrAgent: {
-  generate(prompt: string, options?: Record<string, unknown>): Promise<{ text: string }>;
-} | null = null;
+export const ocrFieldsSchema = z.object({
+  fields: z.record(
+    z.object({
+      value: z.string(),
+      confidence: z.number().min(0).max(1),
+    }),
+  ),
+});
 
-export async function getOrCreateOcrAgent(): Promise<{
-  generate(prompt: string, options?: Record<string, unknown>): Promise<{ text: string }>;
-}> {
+let ocrAgent: Agent | null = null;
+
+export async function getOrCreateOcrAgent(): Promise<Agent> {
   if (!ocrAgent) {
     const { Agent } = await import("@mastra/core/agent");
     ocrAgent = new Agent({
@@ -41,13 +49,6 @@ RULES:
 - Arabic dates like "١٥ مارس ٢٠٢٦" or "15/3/2026" must be normalized to YYYY-MM-DD
 - Egyptian National IDs are always 14 digits — validate and flag if not exactly 14 digits
 - Egyptian mobile numbers start with 01 and are 11 digits — validate
-
-Return ONLY a valid JSON object with this exact structure — no explanation, no markdown formatting:
-{
-  "fields": {
-    "fieldName": { "value": "extracted value", "confidence": 0.95 }
-  }
-}
 
 Confidence must be a number between 0 and 1:
 - 0.90-1.00: Field clearly present and unambiguous in the OCR text

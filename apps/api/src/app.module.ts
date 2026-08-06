@@ -11,8 +11,6 @@ import { DepartmentsModule } from "./departments/departments.module";
 import { AiTriageModule } from "./ai-triage/ai-triage.module";
 import { AiSummarizationModule } from "./ai-summarization/ai-summarization.module";
 import { SocialModule } from "./social/social.module";
-import { MastraModule } from "@mastra/nestjs";
-import { mastra } from "./ai-summarization/mastra.config";
 import { IntakeModule } from "./intake/intake.module";
 
 @Module({
@@ -30,7 +28,6 @@ import { IntakeModule } from "./intake/intake.module";
     IntakeModule,
     SocialModule,
     AiSummarizationModule,
-    MastraModule.register({ mastra, prefix: "mastra" }),
   ],
 })
 export class AppModule {}

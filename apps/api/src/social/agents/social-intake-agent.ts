@@ -1,3 +1,4 @@
+import type { Agent } from "@mastra/core/agent";
 import { z } from "zod";
 
 const LLM_MODEL = process.env.LLM_MODEL || "";
@@ -42,19 +43,9 @@ const FALLBACK_FIELDS: SocialIntakeResult["fields"] = {
   severity: "Medium",
 };
 
-let socialIntakeAgent: {
-  generate(
-    prompt: string,
-    options?: Record<string, unknown>,
-  ): Promise<{ object?: unknown }>;
-} | null = null;
+let socialIntakeAgent: Agent | null = null;
 
-async function getOrCreateAgent(): Promise<{
-  generate(
-    prompt: string,
-    options?: Record<string, unknown>,
-  ): Promise<{ object?: unknown }>;
-}> {
+async function getOrCreateAgent(): Promise<Agent> {
   if (!socialIntakeAgent) {
     const { Agent } = await import("@mastra/core/agent");
     socialIntakeAgent = new Agent({

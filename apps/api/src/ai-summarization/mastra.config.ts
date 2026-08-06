@@ -1,8 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { createTool } from "@mastra/core/tools";
-import { Mastra } from "@mastra/core/mastra";
 import { ServiceUnavailableException } from "@nestjs/common";
-import { z } from "zod";
 
 const LLM_MODEL = process.env.LLM_MODEL || "google/gemini-3.6-flash";
 
@@ -19,59 +16,12 @@ const AGENT_INSTRUCTIONS = `أنت مساعد ذكاء اصطناعي متخصص
 - كن دقيقاً ومختصراً، وتجنب الحشو أو التكرار
 - احترم الخصوصية: لا تذكر أرقام الهوية الوطنية في الملخصات العامة`;
 
-// ─── Tool: Echo complaint data (pre-fetched by AgentService, passed in prompt) ──
-// Note: The AgentService fetches DB data itself using PrismaService (NestJS DI).
-// Tools here are lightweight pass-through wrappers for Mastra's structured tool API.
-
-export const summarizeComplaintTool = createTool({
-  id: "summarize-complaint",
-  description: "يلخص بيانات شكوى مواطن بلغة عربية رسمية موجزة.",
-  inputSchema: z.object({
-    complaintData: z.string().describe("بيانات الشكوى بصيغة نصية"),
-  }),
-  execute: async (input) => {
-    return input.complaintData;
-  },
-});
-
-export const draftReportTool = createTool({
-  id: "draft-report",
-  description: "يصيغ تقريراً دورياً رسمياً بناءً على إحصاءات الشكاوى لفترة زمنية.",
-  inputSchema: z.object({
-    reportData: z.string().describe("إحصاءات الشكاوى بصيغة نصية"),
-  }),
-  execute: async (input) => {
-    return input.reportData;
-  },
-});
-
-export const draftMemoTool = createTool({
-  id: "draft-memo",
-  description: "يصيغ خطاباً رسمياً (مذكرة) متعلقاً بشكوى محددة.",
-  inputSchema: z.object({
-    memoData: z.string().describe("بيانات الشكوى لصياغة المذكرة"),
-  }),
-  execute: async (input) => {
-    return input.memoData;
-  },
-});
-
 // ─── Mastra Agent ─────────────────────────────────────────────────────────
 export const complaintsAgent = new Agent({
   id: "complaints-agent",
   name: "ComplaintsAgent",
   instructions: AGENT_INSTRUCTIONS,
   model: LLM_MODEL,
-  tools: {
-    summarizeComplaintTool,
-    draftReportTool,
-    draftMemoTool,
-  },
-});
-
-// ─── Mastra Instance (registered in AppModule via MastraModule) ───────────
-export const mastra = new Mastra({
-  agents: { complaintsAgent },
 });
 
 // ─── Retry helper ─────────────────────────────────────────────────────────
