@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { PrismaService, Prisma } from "../prisma/prisma.service";
 import { EmbeddingService } from "./embedding.service";
 import { Severity } from "@prisma/client";
-import { getOrCreateAgent, ENABLE_AI, severitySchema, recurrenceIndicesSchema } from "./agents/triage-agent";
+import { getOrCreateAgent, ENABLE_AI, severitySchema, recurrenceMatchesSchema } from "./agents/triage-agent";
 import { CheckDuplicatesDto } from "../complaints/dto/check-duplicates.dto";
 import type {
   AnalyzeResult,
@@ -360,12 +360,12 @@ export class AiTriageService {
       const candidateText = candidates
         .map(
           (c, i) =>
-            `[${i}] #${c.complaintNumber}/${c.statementYear}: "${c.subject}" (Status: ${c.examinationStatus?.name || "N/A"}, Date: ${new Date(c.arrivalDate).toISOString().split("T")[0]})`,
+            `[${c.id}] #${c.complaintNumber}/${c.statementYear}: "${c.subject}" (Status: ${c.examinationStatus?.name || "N/A"}, Date: ${new Date(c.arrivalDate).toISOString().split("T")[0]})`,
         )
         .join("\n");
 
       const agent = await getOrCreateAgent();
-      const recurrencePrompt = `You are comparing a new complaint against existing ones. Return the indices of ALL existing complaints that describe the SAME real-world problem — same issue, same location — not just those filed by the same person.
+      const recurrencePrompt = `You are comparing a new complaint against existing ones. Return the IDs of ALL existing complaints that describe the SAME real-world problem — same issue, same location — not just those filed by the same person.
 
 New complaint: ${newComplaintText}
 
@@ -373,24 +373,23 @@ Existing complaints:
 ${candidateText}
 
 If ANY existing complaint has an identical or very similar description about the same issue at the same location, it is a recurrence. Flag it.
-If ALL describe the same issue, return ALL indices.
+If ALL describe the same issue, return ALL their IDs.
 
-Return ONLY a JSON array of indices. Example: [0, 1, 2] or [0, 3] or [].
+Return ONLY the complaint IDs (exactly as shown in square brackets). Example: ["id-1", "id-2"] or [].
 
 No explanation.`;
 
       this.logger.debug(`Recurrence prompt:\n${recurrencePrompt}`);
       const result = await agent.generate(recurrencePrompt, {
         structuredOutput: {
-          schema: recurrenceIndicesSchema,
+          schema: recurrenceMatchesSchema,
           jsonPromptInjection: "auto",
         },
       });
-      this.logger.log(`Recurrence response indices: "${JSON.stringify(result.object.indices)}"`);
+      this.logger.log(`Recurrence response IDs: "${JSON.stringify(result.object.complaintIds)}"`);
 
-      return result.object.indices
-        .map((i: number) => candidates[i])
-        .filter(Boolean);
+      const idSet = new Set(result.object.complaintIds);
+      return candidates.filter((c) => idSet.has(c.id));
     } catch (error) {
       this.logger.error("Agent recurrence reasoning failed", error);
       return [];

@@ -1,8 +1,7 @@
 import type { Agent } from "@mastra/core/agent";
 import { z } from "zod";
 
-const LLM_MODEL = process.env.LLM_MODEL || "";
-export const ENABLE_AI = LLM_MODEL.length > 0;
+export const ENABLE_AI = Boolean(process.env.LLM_MODEL);
 
 // When ENABLE_AI is false, posts pass the regex pre-filter unchanged and no
 // extraction is performed (draft is created with postText only).
@@ -76,7 +75,7 @@ RULES:
 - Only fill fields that are actually present or clearly inferable from the post text; leave others as empty strings
 - Do not invent names, IDs, or phone numbers
 - When in doubt about relevance, err on the side of isRelevant=true — the system prefers false positives over false negatives (a human reviews every draft)`,
-      model: LLM_MODEL,
+      model: process.env.LLM_MODEL || "",
     });
   }
   return socialIntakeAgent;
