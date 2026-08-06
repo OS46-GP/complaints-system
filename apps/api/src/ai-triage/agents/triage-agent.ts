@@ -1,19 +1,26 @@
-const LLM_MODEL = process.env.LLM_MODEL || '';
+import type { Agent } from "@mastra/core/agent";
+import { z } from "zod";
+
+const LLM_MODEL = process.env.LLM_MODEL || "";
 const ENABLE_AI = LLM_MODEL.length > 0;
 // When ENABLE_AI is false:
 // - Severity always returns "MEDIUM"
 // - Recurrence detection uses structured match only (National ID)
 // - Embedding similarity + agent reasoning are skipped
 
-let triageAgent: {
-  generate(prompt: string, options?: Record<string, unknown>): Promise<{ text: string }>;
-} | null = null;
+export const severitySchema = z.object({
+  severity: z.enum(["LOW", "MEDIUM", "HIGH"]),
+});
 
-async function getOrCreateAgent(): Promise<{
-  generate(prompt: string, options?: Record<string, unknown>): Promise<{ text: string }>;
-}> {
+export const recurrenceIndicesSchema = z.object({
+  indices: z.array(z.number().int().min(0)),
+});
+
+let triageAgent: Agent | null = null;
+
+async function getOrCreateAgent(): Promise<Agent> {
   if (!triageAgent) {
-    const { Agent } = await import('@mastra/core/agent');
+    const { Agent } = await import("@mastra/core/agent");
     triageAgent = new Agent({
       id: 'complaint-triage-agent',
       name: 'Complaint Triage Agent',
@@ -30,7 +37,7 @@ Given complaint details, classify severity as exactly one of: LOW, MEDIUM, HIGH.
 2. RECURRENCE REASONING
 You are given a new complaint and a list of existing candidate complaints that were pre-selected by structured narrowing and embedding similarity.
 Determine which candidate complaints, if any, describe the SAME underlying real-world issue as the new complaint.
-Return ONLY a JSON array of indices matching genuine recurrences, e.g. [0, 3] or [].
+Return the indices of matching candidates.
 
 Rules:
 - Identical or near-identical description + same location and department → ALWAYS a recurrence (flag it)

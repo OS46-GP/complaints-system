@@ -1,6 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException, OnModuleInit } from "@nestjs/common";
 import { OcrService } from "./ocr/ocr.service";
-import { getOrCreateOcrAgent } from "./agents/ocr-agent";
+import { getOrCreateOcrAgent, ocrFieldsSchema } from "./agents/ocr-agent";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -65,49 +65,20 @@ export class IntakeService implements OnModuleInit {
 
       const result = await agent.generate(
         `Extract structured fields from this OCR text extracted from a government complaint form:\n\n${rawText}`,
+        {
+          structuredOutput: {
+            schema: ocrFieldsSchema,
+            jsonPromptInjection: "auto",
+          },
+        },
       );
 
-      const parsed = this.parseAgentResponse(result.text);
-
-      return parsed;
+      return result.object.fields;
     } catch (error) {
       this.logger.error("Mastra agent field extraction failed", error);
       throw new ServiceUnavailableException(
         "فشلت معالجة الاستخراج الذكي. يرجى المحاولة مرة أخرى.",
       );
-    }
-  }
-
-  private parseAgentResponse(text: string): Record<string, FieldResult> {
-    try {
-      const cleaned = text
-        .trim()
-        .replace(/^```(?:json)?\s*/, "")
-        .replace(/\s*```$/, "")
-        .trim();
-
-      const parsed = JSON.parse(cleaned);
-
-      if (!parsed || typeof parsed !== "object" || !parsed.fields) {
-        throw new Error("Agent response missing fields");
-      }
-
-      const fields: Record<string, FieldResult> = {};
-      for (const [key, val] of Object.entries(parsed.fields)) {
-        const v = val as { value?: unknown; confidence?: unknown };
-        if (
-          typeof v.value === "string" &&
-          typeof v.confidence === "number" &&
-          v.value.length > 0
-        ) {
-          fields[key] = { value: v.value, confidence: v.confidence };
-        }
-      }
-
-      return fields;
-    } catch {
-      this.logger.warn("Agent returned unparseable response");
-      return {};
     }
   }
 }

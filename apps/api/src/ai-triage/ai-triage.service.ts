@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { PrismaService, Prisma } from "../prisma/prisma.service";
 import { EmbeddingService } from "./embedding.service";
 import { Severity } from "@prisma/client";
-import { getOrCreateAgent, ENABLE_AI } from "./agents/triage-agent";
+import { getOrCreateAgent, ENABLE_AI, severitySchema, recurrenceIndicesSchema } from "./agents/triage-agent";
 import { CheckDuplicatesDto } from "../complaints/dto/check-duplicates.dto";
 import type {
   AnalyzeResult,
@@ -380,52 +380,20 @@ Return ONLY a JSON array of indices. Example: [0, 1, 2] or [0, 3] or [].
 No explanation.`;
 
       this.logger.debug(`Recurrence prompt:\n${recurrencePrompt}`);
-      const result = await agent.generate(recurrencePrompt);
-      this.logger.log(`Recurrence response indices: "${result.text}"`);
+      const result = await agent.generate(recurrencePrompt, {
+        structuredOutput: {
+          schema: recurrenceIndicesSchema,
+          jsonPromptInjection: "auto",
+        },
+      });
+      this.logger.log(`Recurrence response indices: "${JSON.stringify(result.object.indices)}"`);
 
-      const matchIndices = this.parseSimilarityResult(
-        result.text,
-        candidates.length,
-      );
-      if (!matchIndices) return [];
-
-      return matchIndices.map((i: number) => candidates[i]).filter(Boolean);
+      return result.object.indices
+        .map((i: number) => candidates[i])
+        .filter(Boolean);
     } catch (error) {
       this.logger.error("Agent recurrence reasoning failed", error);
       return [];
-    }
-  }
-
-  private parseSimilarityResult(
-    text: string,
-    maxIndex: number,
-  ): number[] | null {
-    try {
-      const cleaned = text
-        .trim()
-        .replace(/```json\s*|\s*```/g, "")
-        .replace(/```/g, "")
-        .trim();
-      if (cleaned.length === 0) return null;
-      const parsed = JSON.parse(cleaned);
-      if (Array.isArray(parsed)) {
-        return parsed.filter(
-          (i: unknown) => typeof i === "number" && i >= 0 && i < maxIndex,
-        );
-      }
-      return null;
-    } catch {
-      const matches = text.match(/\[([\d,\s]*)\]/);
-      if (matches) {
-        const raw = matches[1].trim();
-        if (raw.length === 0) return [];
-        const indices = raw
-          .split(",")
-          .map((s) => parseInt(s.trim(), 10))
-          .filter((n) => !isNaN(n) && n >= 0 && n < maxIndex);
-        return indices;
-      }
-      return null;
     }
   }
 
@@ -597,25 +565,22 @@ Complaint Category: ${departmentName}
 Description: "${complaint.subject}"
 Additional Context: "${impactInfo}"
 
-Respond with exactly one word: LOW, MEDIUM, or HIGH.`;
+Respond with exactly one of: LOW, MEDIUM, or HIGH.`;
 
       this.logger.debug(`Severity prompt for complaint (dept=${departmentName}): ${sanitizeForLog(complaint.subject)}`);
-      const result = await agent.generate(severityPrompt);
-      this.logger.log(`Severity response: "${result.text}"`);
+      const result = await agent.generate(severityPrompt, {
+        structuredOutput: {
+          schema: severitySchema,
+          jsonPromptInjection: "auto",
+        },
+      });
+      this.logger.log(`Severity response: "${result.object.severity}"`);
 
-      return this.parseSeverityResult(result.text);
+      return result.object.severity;
     } catch (error) {
       this.logger.error("Severity scoring failed", error);
       return "MEDIUM";
     }
-  }
-
-  private parseSeverityResult(text: string): SeverityLevel {
-    const cleaned = text.trim().toUpperCase();
-    if (cleaned.includes("HIGH")) return "HIGH";
-    if (cleaned.includes("MEDIUM")) return "MEDIUM";
-    if (cleaned.includes("LOW")) return "LOW";
-    return "MEDIUM";
   }
 
   private toRecurrenceMatches(
