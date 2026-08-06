@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  currentMonthRange,
   lastYearRange,
   type DateRangeValue,
 } from "@/features/reporting/components/date-range-picker";
@@ -13,6 +14,7 @@ import { ReportCardsSkeleton } from "@/features/reporting/components/report-skel
 import { ReportingFilterBar } from "@/features/reporting/components/reporting-filter-bar";
 import { useAchievementReport, useDelayReport } from "@/features/reporting/hooks";
 import type { ReportFilters } from "@/features/reporting/types";
+import { usePreferences } from "@/features/settings/preferences/store";
 
 import { useDashboardStatus } from "./dashboard-hooks";import { DashboardKpiCards } from "./kpi-cards";
 import { DelaysChartCard } from "./delays-chart-card";
@@ -40,9 +42,14 @@ export function DashboardPage({
   quickActions,
   delaysUrl,
 }: DashboardPageProps) {
-  const [draftRange, setDraftRange] = useState<DateRangeValue>(lastYearRange());
+  const { preferences } = usePreferences();
+  const defaultRange = (): DateRangeValue =>
+    preferences.dashboard.dateRange === "currentMonth"
+      ? currentMonthRange()
+      : lastYearRange();
+  const [draftRange, setDraftRange] = useState<DateRangeValue>(defaultRange);
   const [draftDepartment, setDraftDepartment] = useState("");
-  const [applied, setApplied] = useState<ReportFilters>(lastYearRange());
+  const [applied, setApplied] = useState<ReportFilters>(defaultRange);
 
   const achievement = useAchievementReport(applied);
   const delays = useDelayReport(applied);
