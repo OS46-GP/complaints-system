@@ -2,24 +2,9 @@ import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
 import { Mastra } from "@mastra/core/mastra";
 import { ServiceUnavailableException } from "@nestjs/common";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 
-// ─── IPv4-only fetch ────────────────────────────────────────────────────────
-// undici (Node.js's built-in fetch) uses Happy Eyeballs: it tries all IPv4 +
-// IPv6 addresses simultaneously. When IPv6 is unreachable (no IPv6 routing),
-// the combined 10s timeout fires before any IPv4 attempt succeeds.
-// Forcing family: 4 fixes this by telling undici to only dial IPv4 addresses.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { Agent: UndiciAgent, fetch: undiciFetch } = require("undici");
-const ipv4Agent = new UndiciAgent({ connect: { family: 4 } });
-const ipv4Fetch = (url: string | URL | Request, init?: RequestInit) =>
-  undiciFetch(url, { ...(init as object), dispatcher: ipv4Agent }) as Promise<Response>;
-
-const googleAI = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY ?? "",
-  fetch: ipv4Fetch,
-});
+const LLM_MODEL = process.env.LLM_MODEL || "google/gemini-3.6-flash";
 
 // ─── Agent System Prompt ───────────────────────────────────────────────────
 const AGENT_INSTRUCTIONS = `أنت مساعد ذكاء اصطناعي متخصص في نظام إدارة الشكاوى الحكومية في محافظة المنوفية، مصر.
@@ -76,7 +61,7 @@ export const complaintsAgent = new Agent({
   id: "complaints-agent",
   name: "ComplaintsAgent",
   instructions: AGENT_INSTRUCTIONS,
-  model: googleAI("gemini-2.5-flash"),
+  model: LLM_MODEL,
   tools: {
     summarizeComplaintTool,
     draftReportTool,
