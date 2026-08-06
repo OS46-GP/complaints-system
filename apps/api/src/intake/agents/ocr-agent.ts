@@ -1,14 +1,38 @@
 import type { Agent } from "@mastra/core/agent";
 import { z } from "zod";
 
-export const ocrFieldsSchema = z.object({
-  fields: z.record(
-    z.object({
-      value: z.string(),
-      confidence: z.number().min(0).max(1),
-    }),
-  ),
+const ocrField = z.object({
+  value: z.string(),
+  confidence: z.number().min(0).max(1),
 });
+
+export const ocrFieldsSchema = z.object({
+  fields: z.object({
+    citizen_fullName: ocrField.optional(),
+    citizen_nationalId: ocrField.optional(),
+    citizen_mobileNumber: ocrField.optional(),
+    citizen_address: ocrField.optional(),
+    citizen_village: ocrField.optional(),
+    citizen_district: ocrField.optional(),
+    complaint_subject: ocrField.optional(),
+    complaint_complaintNumber: ocrField.optional(),
+    complaint_statementYear: ocrField.optional(),
+    complaint_arrivalDate: ocrField.optional(),
+    complaint_department: ocrField.optional(),
+    complaint_receptionMethod: ocrField.optional(),
+    complaint_respondentName: ocrField.optional(),
+  }),
+});
+
+export type OcrFields = z.infer<typeof ocrFieldsSchema>["fields"];
+
+export function toFieldMap(fields: OcrFields): Record<string, { value: string; confidence: number }> {
+  const out: Record<string, { value: string; confidence: number }> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value && value.value.length > 0) out[key] = value;
+  }
+  return out;
+}
 
 let ocrAgent: Agent | null = null;
 
