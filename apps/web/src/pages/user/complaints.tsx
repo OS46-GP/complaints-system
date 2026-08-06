@@ -7,14 +7,15 @@ import { NewComplaintButton } from "@/features/complaint-list/new-complaint-butt
 import { ComplaintList } from "@/features/complaint-list/complaint-list";
 import { ComplaintListSkeleton } from "@/features/complaint-list/complaint-list-skeleton";
 import { useComplaintsFromSearchParams } from "@/features/complaint-list/hooks";
-
-const PAGE_SIZE = 10;
+import { usePreferences } from "@/features/settings/preferences/store";
 
 export default function UserComplaints() {
   const [searchParams] = useSearchParams();
+  const { preferences } = usePreferences();
+  const pageSize = preferences.complaints.pageSize;
   const { data, isLoading, isError, refetch } = useComplaintsFromSearchParams(
     searchParams,
-    PAGE_SIZE,
+    pageSize,
   );
 
   const complaints = data?.complaints ?? [];
@@ -40,7 +41,7 @@ export default function UserComplaints() {
           complaints={complaints}
           totalPages={meta?.totalPages ?? 1}
           totalCount={meta?.total ?? 0}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
         />
       </AsyncLoader>
     </div>

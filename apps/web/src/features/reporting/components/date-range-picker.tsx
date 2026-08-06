@@ -28,7 +28,7 @@ export function lastYearRange(): DateRangeValue {
   return { from: `${year}-01-01`, to: `${year}-12-31` };
 }
 
-function currentMonthRange(): DateRangeValue {
+export function currentMonthRange(): DateRangeValue {
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth(), 1);
   return { from: toInputDate(from), to: toInputDate(now) };

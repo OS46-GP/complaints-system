@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { complaintsApi, type ListComplaintsParams } from "@/features/complaint-list/api";
+import { usePreferences } from "@/features/settings/preferences/store";
 import { mapApiComplaint } from "@/features/complaint-list/types";
 
 export const QUERY_KEYS = {
@@ -32,6 +33,7 @@ export function useComplaintsFromSearchParams(
   searchParams: URLSearchParams,
   pageSize: number,
 ) {
+  const { preferences } = usePreferences();
   const search = searchParams.get("search") ?? "";
   const page = parseInt(searchParams.get("page") ?? "1", 10);
   const departmentId = searchParams.get("departmentId") ?? "";
@@ -42,8 +44,10 @@ export function useComplaintsFromSearchParams(
   const presentationStatusId = searchParams.get("presentationStatusId") ?? "";
   const complaintNumber = searchParams.get("complaintNumber") ?? "";
   const statementYear = searchParams.get("statementYear") ?? "";
-  const sortBy = searchParams.get("sortBy");
-  const sortOrder = searchParams.get("sortOrder") as "asc" | "desc" | null;
+  const sortBy = searchParams.get("sortBy") ?? preferences.complaints.sortBy;
+  const sortOrder =
+    (searchParams.get("sortOrder") as "asc" | "desc" | null) ??
+    preferences.complaints.sortOrder;
 
   return useComplaints({
     name: search || undefined,

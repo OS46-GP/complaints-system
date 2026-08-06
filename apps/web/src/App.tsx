@@ -7,6 +7,7 @@ import { queryClient } from "./lib/query-client";
 
 import { TooltipProvider } from "./components/ui/tooltip";
 import { ThemeProvider, useTheme } from "./components/shared/theme-provider";
+import { PreferencesProvider } from "./features/settings/preferences/store";
 
 function ThemedToaster() {
   const { theme } = useTheme();
@@ -17,13 +18,15 @@ function ThemedToaster() {
 export default function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <TooltipProvider delayDuration={0}>
-        <QueryClientProvider client={queryClient}>
-          <AppRouter />
-          <ThemedToaster />
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </TooltipProvider>
+      <PreferencesProvider>
+        <TooltipProvider delayDuration={0}>
+          <QueryClientProvider client={queryClient}>
+            <AppRouter />
+            <ThemedToaster />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </QueryClientProvider>
+        </TooltipProvider>
+      </PreferencesProvider>
     </ThemeProvider>
   );
 }

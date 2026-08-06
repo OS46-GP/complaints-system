@@ -11,6 +11,7 @@ import {
   DataTableBody,
   type DataTableColumn,
 } from "@/components/shared/data-table";
+import { usePreferences } from "@/features/settings/preferences/store";
 import type { ComplaintItem } from "@/features/complaint-list/types";
 
 export interface SortState {
@@ -49,9 +50,9 @@ function filtersFromParams(params: URLSearchParams): FilterValues {
   };
 }
 
-function sortFromParams(params: URLSearchParams): SortState {
-  const sortBy = params.get("sortBy") || "createdAt";
-  const sortOrder = (params.get("sortOrder") as "asc" | "desc") || "desc";
+function sortFromParams(params: URLSearchParams, fallback: SortState): SortState {
+  const sortBy = params.get("sortBy") || fallback.sortBy;
+  const sortOrder = (params.get("sortOrder") as "asc" | "desc") || fallback.sortOrder;
   return { sortBy, sortOrder };
 }
 
@@ -62,10 +63,14 @@ export function ComplaintList({
   pageSize,
 }: ComplaintListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { preferences } = usePreferences();
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
   const search = searchParams.get("search") ?? "";
   const filters = filtersFromParams(searchParams);
-  const sort = sortFromParams(searchParams);
+  const sort = sortFromParams(searchParams, {
+    sortBy: preferences.complaints.sortBy,
+    sortOrder: preferences.complaints.sortOrder,
+  });
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => {
