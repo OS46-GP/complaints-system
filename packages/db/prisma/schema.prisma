@@ -21,6 +21,8 @@ enum UserRole {
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
+  fullName  String?
+  email     String?
   password  String
   role      UserRole @default(Official)
   createdAt DateTime @default(now())
