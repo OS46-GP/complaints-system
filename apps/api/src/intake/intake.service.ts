@@ -1,6 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException, OnModuleInit } from "@nestjs/common";
 import { OcrService } from "./ocr/ocr.service";
-import { getOrCreateOcrAgent, ocrFieldsSchema } from "./agents/ocr-agent";
+import { getOrCreateOcrAgent, ocrFieldsSchema, toFieldMap } from "./agents/ocr-agent";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -73,7 +73,7 @@ export class IntakeService implements OnModuleInit {
         },
       );
 
-      return result.object.fields;
+      return toFieldMap(result.object.fields);
     } catch (error) {
       this.logger.error("Mastra agent field extraction failed", error);
       throw new ServiceUnavailableException(
