@@ -7,12 +7,8 @@ import { SearchBar } from "@/components/shared/search-bar";
 import { SearchDialog } from "@/components/shared/search-dialog";
 import { UserNav, type UserNavItem } from "@/components/shared/user-nav";
 import { useAuthStore } from "@/features/auth/store";
+import { PATHS } from "@/router/paths";
 import { cn } from "@/lib/utils";
-
-const userMenuItems: UserNavItem[] = [
-  { label: "الملف الشخصي", icon: User, path: "/profile" },
-  { label: "الإعدادات", icon: Settings, path: "/settings" },
-];
 
 const ROLE_LABELS: Record<string, string> = {
   Admin: "مدير النظام",
@@ -28,8 +24,22 @@ export function AppHeader({
 }) {
   const user = useAuthStore((state) => state.user);
 
-  const displayName = user?.username || "مستخدم";
+  const displayName = user?.fullName || user?.username || "مستخدم";
   const roleLabel = user?.role ? ROLE_LABELS[user.role] ?? user.role : "";
+  const isAdmin = user?.role === "Admin";
+
+  const userMenuItems: UserNavItem[] = [
+    {
+      label: "الملف الشخصي",
+      icon: User,
+      path: isAdmin ? PATHS.ADMIN.PROFILE : PATHS.USER.PROFILE,
+    },
+    {
+      label: "الإعدادات",
+      icon: Settings,
+      path: isAdmin ? PATHS.ADMIN.SETTINGS : PATHS.USER.SETTINGS,
+    },
+  ];
 
   return (
     <header

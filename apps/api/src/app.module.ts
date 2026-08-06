@@ -5,6 +5,7 @@ import { AuthModule } from "./auth/auth.module";
 import { ComplaintsModule } from "./complaints/complaints.module";
 import { ReportingModule } from "./reporting/reporting.module";
 import { UsersModule } from "./users/users.module";
+import { ProfileModule } from "./profile/profile.module";
 import { ComplaintTypesModule } from "./complaint-types/complaint-types.module";
 import { ReceptionMethodsModule } from "./reception-methods/reception-methods.module";
 import { DepartmentsModule } from "./departments/departments.module";
@@ -20,6 +21,7 @@ import { RequestLoggingMiddleware } from "./common/request-logging.middleware";
     PrismaModule,
     AuthModule,
     UsersModule,
+    ProfileModule,
     ComplaintTypesModule,
     ReceptionMethodsModule,
     DepartmentsModule,

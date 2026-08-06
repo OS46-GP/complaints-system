@@ -1,0 +1,22 @@
+meta {
+  name: Get Profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/profile
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(200)
+  res.body.id: $notNull
+  res.body.username: $notNull
+  res.body.role: $notNull
+  res.body.fullName: $exists
+  res.body.email: $exists
+}

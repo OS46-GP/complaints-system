@@ -25,6 +25,8 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        fullName: true,
+        email: true,
         role: true,
         createdAt: true,
       },
@@ -44,6 +46,8 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        fullName: true,
+        email: true,
         role: true,
         createdAt: true,
       },
@@ -62,6 +66,8 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        fullName: true,
+        email: true,
         role: true,
         createdAt: true,
       },
@@ -89,6 +95,8 @@ export class UsersService {
       select: {
         id: true,
         username: true,
+        fullName: true,
+        email: true,
         role: true,
         createdAt: true,
       },

@@ -25,6 +25,16 @@
       "name": "complaintId",
       "value": "",
       "type": "default"
+    },
+    {
+      "name": "password",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "name": "newPassword",
+      "value": "",
+      "type": "default"
     }
   ]
 }
