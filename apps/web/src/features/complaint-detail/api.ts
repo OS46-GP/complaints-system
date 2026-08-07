@@ -2,6 +2,13 @@ import { complaintsApi } from "@/features/complaint-list/api";
 import type { ApiComplaint, RecurrenceMatch } from "@/features/complaint-list/types";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
+export type SeverityLevel = "LOW" | "MEDIUM" | "HIGH";
+
+export interface AnalyzeResponse {
+  severity: SeverityLevel;
+  recurrenceMatches: RecurrenceMatch[];
+}
+
 function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
   return {
     id: api.id,
@@ -57,9 +64,15 @@ export async function getComplaintLinks(id: string): Promise<RecurrenceMatch[]> 
   return data.recurrenceMatches;
 }
 
-export async function analyzeComplaint(id: string): Promise<RecurrenceMatch[]> {
-  const data = await complaintsApi.analyze(id);
-  return data.recurrenceMatches;
+export async function analyzeComplaint(id: string): Promise<AnalyzeResponse> {
+  return complaintsApi.analyze(id);
+}
+
+export async function updateComplaintSeverity(
+  id: string,
+  severity: SeverityLevel,
+): Promise<{ severity: SeverityLevel }> {
+  return complaintsApi.updateSeverity(id, severity);
 }
 
 export async function unlinkComplaints(

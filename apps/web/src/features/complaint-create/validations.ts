@@ -26,7 +26,7 @@ const complaintFields = {
     .min(5, "موضوع الشكوى يجب ألا يقل عن 5 أحرف")
     .max(200, "موضوع الشكوى يجب ألا يزيد عن 200 حرف"),
   complaintTypeId: z.string().min(1, "يرجى اختيار الفئة"),
-  severity: z.enum(["Low", "Medium", "High"]),
+  severity: z.enum(["Low", "Medium", "High"]).optional(),
   receptionMethodId: z.string(),
   respondentName: z.string().max(100, "اسم المقدم يجب ألا يزيد عن 100 حرف"),
   departmentId: z.string(),
@@ -54,7 +54,6 @@ export type ComplaintCreateFormValues = z.infer<typeof complaintCreateSchema>;
 export const emptyFormValues: ComplaintCreateFormValues = {
   subject: "",
   complaintTypeId: "",
-  severity: "Medium",
   receptionMethodId: "",
   respondentName: "",
   departmentId: "",
@@ -74,7 +73,6 @@ export const emptyFormValues: ComplaintCreateFormValues = {
 export const STEP_FIELDS: FieldPath<ComplaintCreateFormValues>[][] = [
   [
     "subject",
-    "severity",
     "complaintTypeId",
     "receptionMethodId",
     "departmentId",

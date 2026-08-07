@@ -25,12 +25,6 @@ import {
   useReceptionMethods,
 } from "@/features/complaint-list/hooks";
 
-const SEVERITY_OPTIONS: { value: ComplaintCreateFormValues["severity"]; label: string }[] = [
-  { value: "High", label: "عاجل" },
-  { value: "Medium", label: "متوسط" },
-  { value: "Low", label: "عادي" },
-];
-
 interface ComplaintBasicInfoStepProps {
   ocrFields?: Set<string>;
 }
@@ -66,42 +60,6 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
                 )}
               </div>
             </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="severity"
-        render={({ field, fieldState }) => (
-          <FormItem>
-            <FormLabel>الأولوية</FormLabel>
-            <div className="flex gap-2">
-              {SEVERITY_OPTIONS.map((option) => (
-                <label key={option.value} className="flex-1">
-                  <Input
-                    type="radio"
-                    name="severity"
-                    value={option.value}
-                    checked={field.value === option.value}
-                    onChange={() => field.onChange(option.value)}
-                    className="hidden peer"
-                  />
-                  <div
-                    className={cn(
-                      "h-11 border border-input rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all font-heading text-label-sm px-1 hover:bg-surface-container-low peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary hover:peer-checked:bg-primary hover:peer-checked:text-primary-foreground",
-                      fieldState.invalid && "border-destructive",
-                    )}
-                  >
-                    {field.value === option.value && isOcr("severity") && (
-                      <OcrFieldIcon className="peer-checked:text-primary-foreground [&_svg]:size-3.5" />
-                    )}
-                    {option.label}
-                  </div>
-                </label>
-              ))}
-            </div>
             <FormMessage />
           </FormItem>
         )}

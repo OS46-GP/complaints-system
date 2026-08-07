@@ -101,7 +101,7 @@ export class AiTriageService {
 
   async checkDuplicates(
     dto: CheckDuplicatesDto,
-  ): Promise<{ recurrenceMatches: RecurrenceMatch[] }> {
+  ): Promise<{ severity: SeverityLevel; recurrenceMatches: RecurrenceMatch[] }> {
     const candidate: RecurrenceInput = {
       subject: dto.subject,
       annotation: dto.annotation ?? null,
@@ -117,10 +117,13 @@ export class AiTriageService {
 
     const triage = await this.runTriage(candidate, {
       persist: false,
-      needSeverity: false,
+      needSeverity: true,
     });
 
-    return { recurrenceMatches: triage.recurrenceMatches };
+    return {
+      severity: triage.severity,
+      recurrenceMatches: triage.recurrenceMatches,
+    };
   }
 
   async reindexEmbeddings(

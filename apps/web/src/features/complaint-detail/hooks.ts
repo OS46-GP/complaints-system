@@ -4,7 +4,9 @@ import {
   getComplaintDetails,
   getComplaintLinks,
   analyzeComplaint,
+  updateComplaintSeverity,
   unlinkComplaints,
+  type SeverityLevel,
 } from "@/features/complaint-detail/api";
 import { QUERY_KEYS } from "@/features/complaint-list/hooks";
 
@@ -29,6 +31,18 @@ export function useAnalyzeComplaint(complaintId: string) {
     mutationFn: () => analyzeComplaint(complaintId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaintLinks(complaintId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaint(complaintId) });
+    },
+  });
+}
+
+export function useUpdateSeverity(complaintId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (severity: SeverityLevel) => updateComplaintSeverity(complaintId, severity),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaint(complaintId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaints });
     },
   });
 }

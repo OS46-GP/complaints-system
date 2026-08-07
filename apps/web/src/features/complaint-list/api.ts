@@ -81,11 +81,15 @@ export const complaintsApi = {
       .then((res) => res.data),
   checkDuplicates: (payload: CheckDuplicatesPayload) =>
     axiosClient
-      .post<{ recurrenceMatches: RecurrenceMatch[] }>("/api/complaints/check-duplicates", payload)
+      .post<{ severity: "LOW" | "MEDIUM" | "HIGH"; recurrenceMatches: RecurrenceMatch[] }>("/api/complaints/check-duplicates", payload)
       .then((res) => res.data),
   analyze: (id: string) =>
     axiosClient
-      .post<{ severity: string; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/analyze`)
+      .post<{ severity: "LOW" | "MEDIUM" | "HIGH"; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/analyze`)
+      .then((res) => res.data),
+  updateSeverity: (id: string, severity: "LOW" | "MEDIUM" | "HIGH") =>
+    axiosClient
+      .patch<{ severity: "LOW" | "MEDIUM" | "HIGH" }>(`/api/complaints/${id}/severity`, { severity })
       .then((res) => res.data),
   summarize: (id: string) =>
     axiosClient

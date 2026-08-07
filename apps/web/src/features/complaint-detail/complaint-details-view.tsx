@@ -6,6 +6,7 @@ import { ComplaintTimeline } from "@/features/complaint-detail/complaint-timelin
 import { ComplaintMetaPanel } from "@/features/complaint-detail/complaint-meta-panel";
 import { ComplaintQuickActions } from "@/features/complaint-detail/complaint-quick-actions";
 import { ComplaintLinksPanel } from "@/features/complaint-detail/complaint-links-panel";
+import { useAnalyzeComplaint, useUpdateSeverity } from "@/features/complaint-detail/hooks";
 import { Button } from "@/components/ui/button";
 
 interface ComplaintDetailsViewProps {
@@ -13,6 +14,9 @@ interface ComplaintDetailsViewProps {
 }
 
 export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
+  const analyzeMutation = useAnalyzeComplaint(complaint.id);
+  const severityMutation = useUpdateSeverity(complaint.id);
+
   return (
     <>
       <div className="mb-6 md:mb-10 flex items-center justify-between">
@@ -71,8 +75,18 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
         </div>
 
         <div className="col-span-12 lg:col-span-3 space-y-4 md:space-y-6">
-          <ComplaintMetaPanel complaint={complaint} />
-          <ComplaintLinksPanel complaintId={complaint.id} />
+          <ComplaintMetaPanel
+            complaint={complaint}
+            aiSeverity={analyzeMutation.data?.severity ?? null}
+            isSeverityUpdating={severityMutation.isPending}
+            onSeverityChange={(severity) => severityMutation.mutate(severity)}
+          />
+          <ComplaintLinksPanel
+            complaintId={complaint.id}
+            analyzeResult={analyzeMutation.data ?? null}
+            isAnalyzing={analyzeMutation.isPending}
+            onAnalyze={() => analyzeMutation.mutate()}
+          />
           <ComplaintQuickActions complaintId={complaint.id} complaintLabel={complaint.displayId} />
         </div>
       </div>

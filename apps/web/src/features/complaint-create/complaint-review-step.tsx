@@ -15,6 +15,7 @@ import type { RecurrenceMatch } from "@/features/complaint-list/types";
 import { complaintsApi } from "@/features/complaint-list/api";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ComplaintReviewStepProps {
   ocrFields?: Set<string>;
@@ -26,6 +27,18 @@ const SEVERITY_LABELS: Record<string, string> = {
   Medium: "متوسط",
   Low: "عادي",
 };
+
+const SEVERITY_LEVEL_TO_FORM: Record<string, "High" | "Medium" | "Low"> = {
+  HIGH: "High",
+  MEDIUM: "Medium",
+  LOW: "Low",
+};
+
+const SEVERITY_OPTIONS: { value: "High" | "Medium" | "Low"; label: string }[] = [
+  { value: "High", label: "عاجل" },
+  { value: "Medium", label: "متوسط" },
+  { value: "Low", label: "عادي" },
+];
 
 function ReviewRow({
   label,
@@ -77,12 +90,13 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
   const [checkState, setCheckState] = useState<{
     status: "idle" | "loading" | "done";
     matches: RecurrenceMatch[];
-  }>({ status: "idle", matches: [] });
+    aiSeverity: "LOW" | "MEDIUM" | "HIGH" | null;
+  }>({ status: "idle", matches: [], aiSeverity: null });
   const autoChecked = useRef(false);
 
   const runCheck = async () => {
     const values = form.getValues();
-    setCheckState({ status: "loading", matches: [] });
+    setCheckState({ status: "loading", matches: [], aiSeverity: null });
     try {
       const result = await complaintsApi.checkDuplicates({
         subject: values.subject,
@@ -95,13 +109,17 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           district: values.citizen.district || undefined,
         },
       });
-      setCheckState({ status: "done", matches: result.recurrenceMatches });
+      const aiSeverity = result.severity;
+      setCheckState({ status: "done", matches: result.recurrenceMatches, aiSeverity });
+      form.setValue("severity", SEVERITY_LEVEL_TO_FORM[aiSeverity] ?? "Medium", {
+        shouldValidate: true,
+      });
     } catch {
       if (!autoChecked.current) {
-        setCheckState({ status: "idle", matches: [] });
+        setCheckState({ status: "idle", matches: [], aiSeverity: null });
       } else {
         toast.error("تعذر التحقق من الشكاوى المشابهة");
-        setCheckState({ status: "idle", matches: [] });
+        setCheckState({ status: "idle", matches: [], aiSeverity: null });
       }
     }
   };
@@ -123,15 +141,8 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
-          label="الأولوية"
-          value={SEVERITY_LABELS[severity] || "—"}
-          isOcr={isOcr("severity")}
-          onEdit={() => onGoToStep(1)}
-        />
-        <ReviewRow
           label="المواطن"
-          value={citizenFullName || "—"}
-          isOcr={isOcr("citizen.fullName")}
+          value={citizenFullName || "—"}          isOcr={isOcr("citizen.fullName")}
           onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
@@ -167,7 +178,7 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
               التحقق الذكي من الشكاوى المشابهة
             </h3>
             <p className="font-body text-body-sm text-muted-foreground mt-1">
-              يفحص النظام قاعدة البيانات باستخدام الذكاء الاصطناعي لاكتشاف شكاوى مشابهة تلقائياً قبل الإرسال.
+              يفحص النظام قاعدة البيانات باستخدام الذكاء الاصطناعي لاكتشاف شكاوى مشابهة وتقييم درجة الخطورة تلقائياً قبل الإرسال.
             </p>
           </div>
           <Button
@@ -195,25 +206,69 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           </div>
         )}
 
-        {checkState.status === "done" &&
-          (checkState.matches.length > 0 ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 text-warning">
-                <AlertTriangle className="size-5 shrink-0" />
+        <div className="mt-4 border-t border-border pt-4">
+          <h3 className="font-heading text-label-sm text-foreground flex items-center gap-1.5 mb-2">
+            <Sparkles className="size-4 text-primary" />
+            درجة الخطورة
+          </h3>
+          <div className="flex gap-2">
+            {SEVERITY_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() =>
+                  form.setValue("severity", option.value, { shouldValidate: true })
+                }
+                className={cn(
+                  "flex-1 h-11 border rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all font-heading text-label-sm px-1",
+                  severity === option.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-input bg-surface-container-low hover:bg-surface-container-high",
+                )}
+              >
+                {SEVERITY_LABELS[option.value]}
+              </button>
+            ))}
+          </div>
+          {checkState.aiSeverity && (
+            <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
+              <Sparkles className="size-3.5 mt-0.5 shrink-0 text-primary" />
+              التوصية التلقائية:{" "}
+              <span className="font-semibold">
+                {SEVERITY_LABELS[SEVERITY_LEVEL_TO_FORM[checkState.aiSeverity]]}
+              </span>
+              {" "}— يمكنك تعديلها أعلاه قبل الإرسال.
+            </p>
+          )}
+          {!checkState.aiSeverity && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              حدد درجة الخطورة أو انتظر توصية الذكاء الاصطناعي عند التحقق.
+            </p>
+          )}
+        </div>
+
+        {checkState.status === "done" && (
+          <div className="mt-4">
+            {checkState.matches.length > 0 ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 text-warning">
+                  <AlertTriangle className="size-5 shrink-0" />
+                  <p className="font-body text-body-md">
+                    تم العثور على {checkState.matches.length} شكوى مشابهة. راجعها قبل الإرسال.
+                  </p>
+                </div>
+                <RecurrenceMatchList matches={checkState.matches} />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success">
+                <CheckCircle2 className="size-5 shrink-0" />
                 <p className="font-body text-body-md">
-                  تم العثور على {checkState.matches.length} شكوى مشابهة. راجعها قبل الإرسال.
+                  لا توجد شكاوى مشابهة في قاعدة البيانات.
                 </p>
               </div>
-              <RecurrenceMatchList matches={checkState.matches} />
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success">
-              <CheckCircle2 className="size-5 shrink-0" />
-              <p className="font-body text-body-md">
-                لا توجد شكاوى مشابهة في قاعدة البيانات.
-              </p>
-            </div>
-          ))}
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 p-4 bg-primary-container/10 rounded-lg">
