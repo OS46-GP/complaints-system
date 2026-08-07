@@ -44,6 +44,26 @@ function readTemplate(name: string): string {
   return fs.readFileSync(path.join(__dirname, 'templates', name), 'utf-8');
 }
 
+const SEVERITY_LABELS: Record<string, string> = {
+  LOW: 'منخفضة',
+  MEDIUM: 'متوسطة',
+  HIGH: 'عالية',
+};
+
+const CASE_STATUS_LABELS: Record<string, string> = {
+  FINISHED: 'منتهي',
+  NOT_FINISHED: 'غير منتهي',
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 @Injectable()
 export class ReportingService {
   constructor(private prisma: PrismaService) {}
@@ -507,6 +527,88 @@ export class ReportingService {
       downloadUrl: `/uploads/${storageKey}`,
       mime: 'application/pdf',
       filename: `memo-${complaint.complaintNumber}.pdf`,
+    };
+  }
+
+  async generateComplaintPdf(complaintId: string) {
+    const complaint = await this.prisma.complaint.findUnique({
+      where: { id: complaintId },
+      include: {
+        citizen: true,
+        department: true,
+        receptionMethod: true,
+        complaintType: true,
+        examinationStatus: true,
+        presentationStatus: true,
+        createdBy: { select: { id: true, username: true, role: true } },
+      },
+    });
+
+    if (!complaint) throw new NotFoundException('Complaint not found');
+
+    const formatDate = (date: Date | null | undefined) =>
+      date ? new Date(date).toLocaleDateString('ar-EG') : '—';
+
+    const responseSection = complaint.authorityResponseText
+      ? `
+  <div class="section-title">رد الجهة المختصة</div>
+  <div class="content-box">${escapeHtml(complaint.authorityResponseText)}</div>
+  <table class="ref">
+    <tr><td>رقم الرد الوارد:</td><td>${escapeHtml(complaint.incomingResponseNumber || '—')}</td></tr>
+    <tr><td>تاريخ الرد:</td><td>${formatDate(complaint.authorityResponseDate)}</td></tr>
+  </table>`
+      : '';
+
+    const archiveSection = complaint.archiveNumber
+      ? `
+  <div class="section-title">بيانات الأرشفة</div>
+  <table class="ref">
+    <tr><td>رقم الأرشيف:</td><td>${escapeHtml(complaint.archiveNumber)}</td></tr>
+    <tr><td>تاريخ الأرشفة:</td><td>${formatDate(complaint.archiveDate)}</td></tr>
+    <tr><td>موقع الأرشيف:</td><td>${escapeHtml(complaint.archiveLocation || '—')}</td></tr>
+  </table>`
+      : '';
+
+    const caseStatus = computeCaseStatus(complaint.examinationStatus?.name ?? null);
+
+    const html = replacePlaceholders(readTemplate('complaint.html'), {
+      complaintNumber: String(complaint.complaintNumber),
+      statementYear: String(complaint.statementYear),
+      arrivalDate: formatDate(complaint.arrivalDate),
+      severity: SEVERITY_LABELS[complaint.severity] ?? '—',
+      department: complaint.department?.name ?? '—',
+      complaintType: complaint.complaintType?.name ?? '—',
+      receptionMethod: complaint.receptionMethod?.name ?? '—',
+      examinationStatus: complaint.examinationStatus?.name ?? '—',
+      presentationStatus: complaint.presentationStatus?.name ?? '—',
+      caseStatus: CASE_STATUS_LABELS[caseStatus] ?? caseStatus,
+      citizenName: escapeHtml(complaint.citizen.fullName),
+      citizenNationalId: escapeHtml(complaint.citizen.nationalId || '—'),
+      citizenMobile: escapeHtml(complaint.citizen.mobileNumber || '—'),
+      citizenAddress: escapeHtml(complaint.citizen.address || '—'),
+      citizenVillage: escapeHtml(complaint.citizen.village || '—'),
+      citizenDistrict: escapeHtml(complaint.citizen.district || '—'),
+      subject: escapeHtml(complaint.subject),
+      annotation: escapeHtml(complaint.annotation || 'لا يوجد'),
+      responseSection,
+      archiveSection,
+      respondentName: escapeHtml(complaint.respondentName || '—'),
+      createdBy: escapeHtml(complaint.createdBy?.username ?? '—'),
+      createdAt: formatDate(complaint.createdAt),
+    });
+
+    const buffer = await renderHtmlToPdf(html);
+
+    const dir = path.resolve('uploads', 'complaint-pdfs');
+    fs.mkdirSync(dir, { recursive: true });
+
+    const storageKey = `complaint-pdfs/${complaint.id}_${complaint.complaintNumber}_${complaint.statementYear}.pdf`;
+    fs.writeFileSync(path.resolve('uploads', storageKey), buffer);
+
+    return {
+      downloadUrl: `/uploads/${storageKey}`,
+      mime: 'application/pdf',
+      filename: `complaint-${complaint.complaintNumber}-${complaint.statementYear}.pdf`,
     };
   }
 }

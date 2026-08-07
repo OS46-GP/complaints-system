@@ -14,8 +14,7 @@ const COLUMNS: DataTableColumn[] = [
   { key: "subject", label: "الموضوع", className: "w-64" },
   { key: "citizen", label: "المواطن" },
   { key: "department", label: "القسم" },
-  { key: "severity", label: "الأولوية" },
-  { key: "status", label: "الحالة" },
+  { key: "severityStatus", label: "الأولوية / الحالة" },
   { key: "createdAt", label: "تاريخ الإنشاء" },
   { key: "actions", label: "الإجراءات", className: "text-center" },
 ];
@@ -73,11 +72,11 @@ export function ComplaintListSkeleton() {
           <DataTableBody>
             {Array.from({ length: 8 }).map((_, rowIndex) => (
               <DataTableRow key={rowIndex} className="hover:bg-transparent">
-                {Array.from({ length: 8 }).map((_, colIndex) => (
+                {Array.from({ length: 7 }).map((_, colIndex) => (
                   <DataTableCell key={colIndex} className="p-0 px-6 py-4">
                     <Skeleton
                       className={
-                        colIndex === 7
+                        colIndex === 6
                           ? "size-9 rounded-md mx-auto"
                           : "h-4 w-full max-w-28"
                       }

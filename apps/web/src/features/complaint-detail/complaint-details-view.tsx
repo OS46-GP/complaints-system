@@ -1,4 +1,4 @@
-import { Printer, MessageSquareReply, FileText } from "lucide-react";
+import { MessageSquareReply, FileText } from "lucide-react";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 import { ComplaintDescriptionCard } from "@/features/complaint-detail/complaint-description-card";
 import { ComplaintEvidenceGallery } from "@/features/complaint-detail/complaint-evidence-gallery";
@@ -7,7 +7,7 @@ import { ComplaintMetaPanel } from "@/features/complaint-detail/complaint-meta-p
 import { ComplaintQuickActions } from "@/features/complaint-detail/complaint-quick-actions";
 import { ComplaintLinksPanel } from "@/features/complaint-detail/complaint-links-panel";
 import { useAnalyzeComplaint, useUpdateSeverity } from "@/features/complaint-detail/hooks";
-import { Button } from "@/components/ui/button";
+import { ComplaintPdfButton } from "@/components/shared/complaint-pdf-button";
 
 interface ComplaintDetailsViewProps {
   complaint: ComplaintDetailsData;
@@ -28,15 +28,7 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
             {complaint.displayId}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.print()}
-          className="gap-2"
-        >
-          <Printer className="size-4" />
-          طباعة
-        </Button>
+        <ComplaintPdfButton complaintId={complaint.id} label="طباعة" />
       </div>
 
       <div className="grid grid-cols-12 gap-4 md:gap-6 w-full">
