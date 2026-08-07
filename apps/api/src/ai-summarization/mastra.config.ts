@@ -1,4 +1,5 @@
 import { Agent } from "@mastra/core/agent";
+import { resolveChatModel } from "../common/llm/model-provider";
 
 const AGENT_INSTRUCTIONS = `أنت مساعد ذكاء اصطناعي متخصص في نظام إدارة الشكاوى الحكومية في محافظة المنوفية، مصر.
 مهمتك هي مساعدة المسؤولين الحكوميين في:
@@ -16,5 +17,5 @@ export const complaintsAgent = new Agent({
   id: "complaints-agent",
   name: "ComplaintsAgent",
   instructions: AGENT_INSTRUCTIONS,
-  model: process.env.LLM_MODEL || "google/gemini-3.6-flash",
+  model: resolveChatModel(process.env.LLM_MODEL) || "google/gemini-3.6-flash",
 });

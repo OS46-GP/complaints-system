@@ -1,5 +1,6 @@
 import type { Agent } from "@mastra/core/agent";
 import { z } from "zod";
+import { resolveChatModel } from "../../common/llm/model-provider";
 
 export const ENABLE_AI = Boolean(process.env.LLM_MODEL);
 
@@ -75,7 +76,7 @@ RULES:
 - Only fill fields that are actually present or clearly inferable from the post text; leave others as empty strings
 - Do not invent names, IDs, or phone numbers
 - When in doubt about relevance, err on the side of isRelevant=true — the system prefers false positives over false negatives (a human reviews every draft)`,
-      model: process.env.LLM_MODEL || "",
+      model: resolveChatModel(process.env.LLM_MODEL),
     });
   }
   return socialIntakeAgent;

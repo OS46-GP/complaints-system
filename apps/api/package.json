@@ -9,7 +9,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.26",
     "@complaints/db": "*",
     "@complaints/types": "*",
     "@google/generative-ai": "^0.24.1",

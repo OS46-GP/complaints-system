@@ -1,5 +1,6 @@
 import type { Agent } from "@mastra/core/agent";
 import { z } from "zod";
+import { resolveChatModel } from "../../common/llm/model-provider";
 
 const ocrField = z.object({
   value: z.string(),
@@ -77,7 +78,7 @@ Confidence must be a number between 0 and 1:
 - 0.70-0.89: Field present but with some uncertainty (handwriting, partial match)
 - 0.50-0.69: Field inferred from context / weak signal
 - 0.00-0.49: Best guess — very low confidence, likely needs human review`,
-      model: process.env.LLM_MODEL || "",
+      model: resolveChatModel(process.env.LLM_MODEL),
     });
   }
   return ocrAgent;
