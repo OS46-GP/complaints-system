@@ -28,6 +28,10 @@ export class CheckDuplicatesDto {
 
   @IsOptional()
   @IsString()
+  annotation?: string;
+
+  @IsOptional()
+  @IsString()
   departmentId?: string;
 
   @IsOptional()

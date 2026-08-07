@@ -1,4 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { resolveEmbeddingModel } from '../common/llm/model-provider';
+
+export function buildEmbeddingText(
+  subject: string,
+  annotation?: string | null,
+): string {
+  return [subject, annotation].filter(Boolean).join(' ');
+}
 
 @Injectable()
 export class EmbeddingService {
@@ -11,7 +19,6 @@ export class EmbeddingService {
     if (this.initialized) return;
 
     const { PgVector } = await import('@mastra/pg');
-    const { ModelRouterEmbeddingModel } = await import('@mastra/core/llm');
     const { embed } = await import('ai');
 
     this.pgVector = new PgVector({
@@ -19,15 +26,32 @@ export class EmbeddingService {
       connectionString: process.env.DATABASE_URL!,
     });
 
-    this.embeddingModel = new ModelRouterEmbeddingModel(
-      process.env.EMBEDDING_MODEL || 'google/gemini-embedding-2',
-    );
+    this.embeddingModel = resolveEmbeddingModel(process.env.EMBEDDING_MODEL);
 
     const test = await embed({
       model: this.embeddingModel,
       value: 'x',
     });
     const dimension = test.embedding.length;
+
+    // If an embedding table exists with a different dimension (e.g. switching
+    // from a 3072-dim Gemini model to a 1024-dim Bedrock model), drop it so the
+    // index is recreated with the correct dimension. Embeddings are derived
+    // data — they can always be regenerated via the reindex endpoint.
+    try {
+      const existing = await this.pgVector.describeIndex({
+        indexName: 'complaint_embeddings',
+      });
+      if (existing && existing.dimension !== dimension) {
+        this.logger.warn(
+          `Embedding dimension changed (${existing.dimension} -> ${dimension}). ` +
+            `Dropping complaint_embeddings; embeddings must be re-indexed.`,
+        );
+        await this.pgVector.deleteIndex({ indexName: 'complaint_embeddings' });
+      }
+    } catch {
+      // Table does not exist yet — first run.
+    }
 
     try {
       await this.pgVector.createIndex({

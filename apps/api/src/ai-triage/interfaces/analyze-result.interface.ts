@@ -24,6 +24,8 @@ export interface AnalyzeResult {
 export interface RecurrenceInput {
   id?: string;
   subject: string;
+  annotation?: string | null;
+  departmentName?: string | null;
   complaintNumber?: number;
   statementYear: number;
   arrivalDate: Date;

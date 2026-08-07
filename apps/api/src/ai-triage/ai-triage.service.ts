@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { PrismaService, Prisma } from "../prisma/prisma.service";
-import { EmbeddingService } from "./embedding.service";
+import { EmbeddingService, buildEmbeddingText } from "./embedding.service";
 import { Severity } from "@prisma/client";
-import { getOrCreateAgent, ENABLE_AI, severitySchema, recurrenceMatchesSchema } from "./agents/triage-agent";
+import { getOrCreateAgent, ENABLE_AI, triageResultSchema } from "./agents/triage-agent";
 import { CheckDuplicatesDto } from "../complaints/dto/check-duplicates.dto";
 import type {
   AnalyzeResult,
@@ -11,12 +16,6 @@ import type {
   RecurrenceCandidate,
   RecurrenceInput,
 } from "./interfaces/analyze-result.interface";
-
-function sanitizeForLog(value: string): string {
-  const maxLen = 80;
-  if (value.length <= maxLen) return value;
-  return value.slice(0, maxLen) + "...";
-}
 
 const API_TO_PRISMA_SEVERITY: Record<SeverityLevel, Severity> = {
   LOW: Severity.Low,
@@ -69,18 +68,35 @@ export class AiTriageService {
       throw new NotFoundException("Complaint not found");
     }
 
-    const recurrenceMatches = await this.detectRecurrence(complaint);
-
-    const severity = await this.scoreSeverity(complaint);
+    const triage = await this.runTriage(
+      {
+        id: complaint.id,
+        subject: complaint.subject,
+        annotation: complaint.annotation,
+        departmentName: complaint.department?.name ?? null,
+        complaintNumber: complaint.complaintNumber,
+        statementYear: complaint.statementYear,
+        arrivalDate: complaint.arrivalDate,
+        departmentId: complaint.departmentId,
+        citizen: {
+          nationalId: complaint.citizen?.nationalId ?? null,
+          village: complaint.citizen?.village ?? null,
+          district: complaint.citizen?.district ?? null,
+        },
+      },
+      {
+        needSeverity: true,
+      },
+    );
 
     if (complaint.severity === Severity.Low) {
       await this.prisma.complaint.update({
         where: { id },
-        data: { severity: API_TO_PRISMA_SEVERITY[severity] },
+        data: { severity: API_TO_PRISMA_SEVERITY[triage.severity] },
       });
     }
 
-    return { severity, recurrenceMatches };
+    return { severity: triage.severity, recurrenceMatches: triage.recurrenceMatches };
   }
 
   async checkDuplicates(
@@ -88,6 +104,7 @@ export class AiTriageService {
   ): Promise<{ recurrenceMatches: RecurrenceMatch[] }> {
     const candidate: RecurrenceInput = {
       subject: dto.subject,
+      annotation: dto.annotation ?? null,
       statementYear: new Date().getFullYear(),
       arrivalDate: dto.arrivalDate ? new Date(dto.arrivalDate) : new Date(),
       departmentId: dto.departmentId ?? null,
@@ -98,11 +115,12 @@ export class AiTriageService {
       },
     };
 
-    const recurrenceMatches = await this.detectRecurrence(candidate, {
+    const triage = await this.runTriage(candidate, {
       persist: false,
+      needSeverity: false,
     });
 
-    return { recurrenceMatches };
+    return { recurrenceMatches: triage.recurrenceMatches };
   }
 
   async reindexEmbeddings(
@@ -113,6 +131,7 @@ export class AiTriageService {
       select: {
         id: true,
         subject: true,
+        annotation: true,
         departmentId: true,
         citizen: {
           select: { village: true, district: true },
@@ -136,7 +155,7 @@ export class AiTriageService {
           complaint.citizen?.village || complaint.citizen?.district || null;
         await this.embeddingService.upsertEmbedding(
           complaint.id,
-          complaint.subject,
+          buildEmbeddingText(complaint.subject, complaint.annotation),
           complaint.departmentId,
           location,
         );
@@ -178,17 +197,22 @@ export class AiTriageService {
     return { severity };
   }
 
-  private async detectRecurrence(
+  private async runTriage(
     complaint: RecurrenceInput,
-    options?: { persist?: boolean },
-  ): Promise<RecurrenceMatch[]> {
+    options?: { persist?: boolean; needSeverity?: boolean },
+  ): Promise<{ severity: SeverityLevel; recurrenceMatches: RecurrenceMatch[] }> {
     const persist = options?.persist ?? true;
+    const needSeverity = options?.needSeverity ?? true;
 
     // Stage 1: Structured narrowing
     const stage1Candidates = await this.structuredNarrowing(complaint);
     if (stage1Candidates.length === 0) {
       if (persist) await this.upsertCurrentEmbedding(complaint);
-      return [];
+      const severity =
+        ENABLE_AI && needSeverity
+          ? (await this.triageWithAgent(complaint, [], new Set<string>())).severity
+          : "MEDIUM";
+      return { severity, recurrenceMatches: [] };
     }
 
     // Exact national ID match → confirmed recurrence
@@ -196,47 +220,81 @@ export class AiTriageService {
       stage1Candidates,
       complaint,
     );
-    if (exactMatches.length > 0) {
+    const exactIds = new Set(exactMatches.map((c) => c.id));
+
+    if (!ENABLE_AI) {
       if (persist) {
         await this.upsertCurrentEmbedding(complaint);
         if (complaint.id) {
           await this.linkRecurrences(complaint.id, exactMatches);
         }
       }
-      return this.toRecurrenceMatches(exactMatches);
+      return {
+        severity: "MEDIUM",
+        recurrenceMatches: this.toRecurrenceMatches(exactMatches),
+      };
     }
 
-    if (!ENABLE_AI) {
-      if (persist) await this.upsertCurrentEmbedding(complaint);
-      return [];
+    // checkDuplicates: preserve current cost behavior — exact matches short-circuit
+    if (exactMatches.length > 0 && !needSeverity) {
+      if (persist) {
+        await this.upsertCurrentEmbedding(complaint);
+        if (complaint.id) {
+          await this.linkRecurrences(complaint.id, exactMatches);
+        }
+      }
+      return {
+        severity: "MEDIUM",
+        recurrenceMatches: this.toRecurrenceMatches(exactMatches),
+      };
     }
 
     // Stage 2: Embedding similarity search
-    const candidateIds = stage1Candidates.map((c) => c.id);
     const similar = await this.embeddingService.searchSimilar(
-      complaint.subject,
-      candidateIds,
+      buildEmbeddingText(complaint.subject, complaint.annotation),
+      stage1Candidates.map((c) => c.id),
       5,
     );
 
-    if (similar.length === 0) {
-      if (persist) await this.upsertCurrentEmbedding(complaint);
-      return [];
-    }
-
-    const candidatesForAgent = similar
+    const similarCandidates = similar
       .map((s) => stage1Candidates.find((c) => c.id === s.id))
       .filter(Boolean) as RecurrenceCandidate[];
 
-    // Stage 3: Agent reasoning
-    const confirmed = await this.agentRecurrenceReasoning(complaint, candidatesForAgent);
-    if (persist) await this.upsertCurrentEmbedding(complaint);
+    // Reasoning candidates: embedding-similar + exact-NID matches (deduped)
+    const reasoningMap = new Map<string, RecurrenceCandidate>();
+    for (const c of [...similarCandidates, ...exactMatches]) {
+      reasoningMap.set(c.id, c);
+    }
+    const reasoningCandidates = [...reasoningMap.values()];
 
-    if (persist && complaint.id) {
-      await this.linkRecurrences(complaint.id, confirmed);
+    // Stage 3: Single combined agent call — severity + recurrence together
+    let severity: SeverityLevel = "MEDIUM";
+    let confirmed: RecurrenceCandidate[] = [];
+
+    if (reasoningCandidates.length > 0 || needSeverity) {
+      const triage = await this.triageWithAgent(
+        complaint,
+        reasoningCandidates,
+        exactIds,
+      );
+      severity = triage.severity;
+      const aiIds = new Set(triage.recurrenceIds);
+      confirmed = reasoningCandidates.filter(
+        (c) => aiIds.has(c.id) || exactIds.has(c.id),
+      );
     }
 
-    return this.toRecurrenceMatches(confirmed);
+    if (persist) {
+      await this.upsertCurrentEmbedding(complaint);
+      if (complaint.id) {
+        await this.linkRecurrences(complaint.id, confirmed);
+      }
+    }
+
+    return {
+      severity,
+      recurrenceMatches: this.toRecurrenceMatches(confirmed),
+    };
   }
 
   private normalizeLocationText(value: string): string {
@@ -343,56 +401,59 @@ export class AiTriageService {
     );
   }
 
-  private async agentRecurrenceReasoning(
-    complaint: {
-      complaintNumber?: number;
-      statementYear: number;
-      subject: string;
-    },
+  private async triageWithAgent(
+    complaint: RecurrenceInput,
     candidates: RecurrenceCandidate[],
-  ): Promise<RecurrenceCandidate[]> {
+    exactIds: Set<string>,
+  ): Promise<{ severity: SeverityLevel; recurrenceIds: string[] }> {
     try {
-      const newComplaintText =
+      const complaintText = [
         complaint.complaintNumber != null
-          ? `#${complaint.complaintNumber}/${complaint.statementYear}: "${complaint.subject}"`
-          : `"${complaint.subject}"`;
+          ? `#${complaint.complaintNumber}/${complaint.statementYear}`
+          : `New complaint (${complaint.statementYear})`,
+        `Subject: ${complaint.subject}`,
+        complaint.annotation ? `Description: ${complaint.annotation}` : null,
+        complaint.departmentName ? `Category: ${complaint.departmentName}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
 
       const candidateText = candidates
         .map(
-          (c, i) =>
-            `[${c.id}] #${c.complaintNumber}/${c.statementYear}: "${c.subject}" (Status: ${c.examinationStatus?.name || "N/A"}, Date: ${new Date(c.arrivalDate).toISOString().split("T")[0]})`,
+          (c) =>
+            `[${c.id}] #${c.complaintNumber}/${c.statementYear}: "${c.subject}" (Status: ${c.examinationStatus?.name || "N/A"}, Date: ${new Date(c.arrivalDate).toISOString().split("T")[0]}, Resolved: ${c.endDate ? "yes" : "no"}${exactIds.has(c.id) ? ", Same citizen: confirmed" : ""})`,
         )
         .join("\n");
 
+      const triagePrompt = `New complaint:
+${complaintText}
+
+${candidates.length > 0 ? `Existing complaints:
+${candidateText}` : "No existing candidates found."}
+
+Return JSON with "severity" (one of LOW, MEDIUM, HIGH) and "recurrenceIds" (the [ids] of ALL existing complaints that describe the same real-world problem; [] if none). No explanation.`;
+
+      this.logger.debug(`Triage prompt:\n${triagePrompt}`);
       const agent = await getOrCreateAgent();
-      const recurrencePrompt = `You are comparing a new complaint against existing ones. Return the IDs of ALL existing complaints that describe the SAME real-world problem — same issue, same location — not just those filed by the same person.
-
-New complaint: ${newComplaintText}
-
-Existing complaints:
-${candidateText}
-
-If ANY existing complaint has an identical or very similar description about the same issue at the same location, it is a recurrence. Flag it.
-If ALL describe the same issue, return ALL their IDs.
-
-Return ONLY the complaint IDs (exactly as shown in square brackets). Example: ["id-1", "id-2"] or [].
-
-No explanation.`;
-
-      this.logger.debug(`Recurrence prompt:\n${recurrencePrompt}`);
-      const result = await agent.generate(recurrencePrompt, {
+      const result = await agent.generate(triagePrompt, {
         structuredOutput: {
-          schema: recurrenceMatchesSchema,
+          schema: triageResultSchema,
           jsonPromptInjection: "auto",
         },
       });
-      this.logger.log(`Recurrence response IDs: "${JSON.stringify(result.object.complaintIds)}"`);
+      this.logger.log(
+        `Triage result severity="${result.object.severity}" ids="${JSON.stringify(result.object.recurrenceIds)}"`,
+      );
 
-      const idSet = new Set(result.object.complaintIds);
-      return candidates.filter((c) => idSet.has(c.id));
+      return {
+        severity: result.object.severity,
+        recurrenceIds: result.object.recurrenceIds,
+      };
     } catch (error) {
-      this.logger.error("Agent recurrence reasoning failed", error);
-      return [];
+      this.logger.error("Agent triage failed", error);
+      throw new ServiceUnavailableException(
+        "AI triage unavailable — LLM provider failed",
+      );
     }
   }
 
@@ -520,6 +581,7 @@ No explanation.`;
   private async upsertCurrentEmbedding(complaint: {
     id?: string;
     subject: string;
+    annotation?: string | null;
     departmentId: string | null;
     citizen: { village: string | null; district: string | null };
   }): Promise<void> {
@@ -529,56 +591,12 @@ No explanation.`;
         complaint.citizen?.village || complaint.citizen?.district || null;
       await this.embeddingService.ensureEmbedding(
         complaint.id,
-        complaint.subject,
+        buildEmbeddingText(complaint.subject, complaint.annotation),
         complaint.departmentId,
         location,
       );
     } catch (error) {
       this.logger.warn("Failed to upsert embedding", error);
-    }
-  }
-
-  private async scoreSeverity(complaint: {
-    subject: string;
-    department?: { name: string } | null;
-    annotation?: string | null;
-    examinationResult?: string | null;
-    authorityResponseText?: string | null;
-  }): Promise<SeverityLevel> {
-    if (!ENABLE_AI) {
-      return "MEDIUM";
-    }
-
-    try {
-      const departmentName = complaint.department?.name || "General";
-      const impactInfo =
-        complaint.annotation ||
-        complaint.examinationResult ||
-        complaint.authorityResponseText ||
-        "Not specified";
-
-      const agent = await getOrCreateAgent();
-      const severityPrompt = `Assess the severity of this government complaint.
-
-Complaint Category: ${departmentName}
-Description: "${complaint.subject}"
-Additional Context: "${impactInfo}"
-
-Respond with exactly one of: LOW, MEDIUM, or HIGH.`;
-
-      this.logger.debug(`Severity prompt for complaint (dept=${departmentName}): ${sanitizeForLog(complaint.subject)}`);
-      const result = await agent.generate(severityPrompt, {
-        structuredOutput: {
-          schema: severitySchema,
-          jsonPromptInjection: "auto",
-        },
-      });
-      this.logger.log(`Severity response: "${result.object.severity}"`);
-
-      return result.object.severity;
-    } catch (error) {
-      this.logger.error("Severity scoring failed", error);
-      return "MEDIUM";
     }
   }
 

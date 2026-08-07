@@ -5,7 +5,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { PrismaService, Prisma } from "../prisma/prisma.service";
-import { EmbeddingService } from "../ai-triage/embedding.service";
+import { EmbeddingService, buildEmbeddingText } from "../ai-triage/embedding.service";
 import { CreateComplaintDto } from "./dto/create-complaint.dto";
 import { UpdateComplaintDto } from "./dto/update-complaint.dto";
 import { QueryComplaintsDto } from "./dto/query-complaints.dto";
@@ -128,6 +128,7 @@ export class ComplaintsService {
   async indexComplaint(complaint: {
     id: string;
     subject: string;
+    annotation?: string | null;
     departmentId: string | null;
     citizen: { village: string | null; district: string | null };
   }): Promise<void> {
@@ -135,7 +136,7 @@ export class ComplaintsService {
       const location = complaint.citizen?.village || complaint.citizen?.district || null;
       await this.embeddingService.ensureEmbedding(
         complaint.id,
-        complaint.subject,
+        buildEmbeddingText(complaint.subject, complaint.annotation),
         complaint.departmentId,
         location,
       );
