@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -65,9 +65,15 @@ function ReviewRow({
 
 export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewStepProps) {
   const form = useFormContext<ComplaintCreateFormValues>();
-  const data = form.watch();
+  const subject = useWatch({ control: form.control, name: "subject" });
+  const severity = useWatch({ control: form.control, name: "severity" });
+  const citizenFullName = useWatch({ control: form.control, name: "citizen.fullName" });
+  const citizenNationalId = useWatch({ control: form.control, name: "citizen.nationalId" });
+  const citizenMobileNumber = useWatch({ control: form.control, name: "citizen.mobileNumber" });
+  const annotation = useWatch({ control: form.control, name: "annotation" });
+  const fileItems = useWatch({ control: form.control, name: "files" }) ?? [];
   const isOcr = (field: string) => ocrFields?.has(field) ?? false;
-  const fileNames = data.files.map((f) => f.file.name);
+  const fileNames = fileItems.map((f) => f.file.name);
   const [checkState, setCheckState] = useState<{
     status: "idle" | "loading" | "done";
     matches: RecurrenceMatch[];
@@ -75,16 +81,18 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
   const autoChecked = useRef(false);
 
   const runCheck = async () => {
+    const values = form.getValues();
     setCheckState({ status: "loading", matches: [] });
     try {
       const result = await complaintsApi.checkDuplicates({
-        subject: data.subject,
-        departmentId: data.departmentId || undefined,
+        subject: values.subject,
+        annotation: values.annotation || undefined,
+        departmentId: values.departmentId || undefined,
         arrivalDate: new Date().toISOString(),
         citizen: {
-          nationalId: data.citizen.nationalId || undefined,
-          village: data.citizen.village || undefined,
-          district: data.citizen.district || undefined,
+          nationalId: values.citizen.nationalId || undefined,
+          village: values.citizen.village || undefined,
+          district: values.citizen.district || undefined,
         },
       });
       setCheckState({ status: "done", matches: result.recurrenceMatches });
@@ -99,48 +107,48 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
   };
 
   useEffect(() => {
-    if (autoChecked.current || !data.subject.trim()) return;
+    if (autoChecked.current || !subject.trim()) return;
     autoChecked.current = true;
     void runCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [subject]);
 
   return (
     <div className="space-y-6">
       <div className="bg-surface-container-low rounded-lg p-6 space-y-4">
         <ReviewRow
           label="الموضوع"
-          value={data.subject || "لم يتم إدخال عنوان"}
+          value={subject || "لم يتم إدخال عنوان"}
           isOcr={isOcr("subject")}
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="الأولوية"
-          value={SEVERITY_LABELS[data.severity] || "—"}
+          value={SEVERITY_LABELS[severity] || "—"}
           isOcr={isOcr("severity")}
           onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="المواطن"
-          value={data.citizen.fullName || "—"}
+          value={citizenFullName || "—"}
           isOcr={isOcr("citizen.fullName")}
           onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="الرقم القومي"
-          value={data.citizen.nationalId || "—"}
+          value={citizenNationalId || "—"}
           isOcr={isOcr("citizen.nationalId")}
           onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="رقم الجوال"
-          value={data.citizen.mobileNumber || "—"}
+          value={citizenMobileNumber || "—"}
           isOcr={isOcr("citizen.mobileNumber")}
           onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="وصف الشكوى"
-          value={data.annotation || "لا يوجد وصف متاح"}
+          value={annotation || "لا يوجد وصف متاح"}
           isOcr={isOcr("annotation")}
           onEdit={() => onGoToStep(1)}
         />
@@ -166,7 +174,7 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
             type="button"
             variant="outline"
             onClick={runCheck}
-            disabled={checkState.status === "loading" || !data.subject.trim()}
+            disabled={checkState.status === "loading" || !subject.trim()}
             className="gap-2"
           >
             <SearchCheck className="size-4" />

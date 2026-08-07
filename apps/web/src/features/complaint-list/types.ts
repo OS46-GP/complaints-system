@@ -148,6 +148,7 @@ export interface RecurrenceMatch {
 
 export interface CheckDuplicatesPayload {
   subject: string;
+  annotation?: string;
   departmentId?: string;
   arrivalDate?: string;
   citizen?: {

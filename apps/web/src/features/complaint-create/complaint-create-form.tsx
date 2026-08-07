@@ -1,14 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Send, Loader2, Trash2 } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { FieldResult } from "@/features/complaint-list/types";
 import type { SocialDraft } from "@/features/social/types";
 import { socialApi } from "@/features/social/api";
+import {
+  clearDraft,
+  getDraft,
+  setDraft,
+  type ComplaintDraft,
+} from "@/features/complaint-create/draft-store";
 import {
   complaintCreateSchema,
   emptyFormValues,
@@ -101,34 +107,92 @@ const getNestedValue = (obj: Record<string, unknown>, path: string): string => {
 
 const TOTAL_STEPS = STEP_FIELDS.length;
 
+function draftHasContent(draft: ComplaintDraft): boolean {
+  if (draft.step !== 1) return true;
+  const v = draft.values;
+  return (
+    v.subject !== "" ||
+    v.complaintTypeId !== "" ||
+    v.receptionMethodId !== "" ||
+    v.respondentName !== "" ||
+    v.departmentId !== "" ||
+    v.presentationStatusId !== "" ||
+    v.annotation !== "" ||
+    v.files.length > 0 ||
+    Object.values(v.citizen).some((value) => value !== "")
+  );
+}
+
 export function ComplaintCreateForm() {
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
   const createMutation = useCreateComplaint();
-  const [step, setStep] = useState(1);
 
   const ocrData = (state as { ocrData?: Record<string, FieldResult> } | null)?.ocrData;
+  const socialDraft = (state as { socialDraft?: SocialDraft } | null)?.socialDraft;
+
+  const seedTag = ocrData
+    ? `ocr:${JSON.stringify(ocrData)}`
+    : socialDraft
+      ? `social:${JSON.stringify(socialDraft)}`
+      : "manual";
+
+  const restoredDraft = useMemo(() => {
+    const draft = getDraft();
+    return draft && draft.seedTag === seedTag ? draft : null;
+  }, [seedTag]);
+
   const ocrOriginal = useMemo(
     () => (ocrData ? (ocrFieldsToFormData(ocrData) as Partial<ComplaintCreateFormValues>) : null),
     [ocrData],
   );
 
-  const socialDraft = (state as { socialDraft?: SocialDraft } | null)?.socialDraft;
   const socialOriginal = useMemo(
     () => (socialDraft ? socialDraftToFormData(socialDraft) : null),
     [socialDraft],
   );
 
+  const [step, setStep] = useState(restoredDraft ? restoredDraft.step : 1);
+  const [activeDraft, setActiveDraft] = useState<ComplaintDraft | null>(() => getDraft());
+  const stepRef = useRef(step);
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
   const form = useForm<ComplaintCreateFormValues>({
     resolver: zodResolver(complaintCreateSchema),
-    defaultValues: ocrOriginal
-      ? { ...DEFAULT_DATA, ...ocrOriginal }
-      : socialOriginal
-        ? { ...DEFAULT_DATA, ...socialOriginal }
-        : DEFAULT_DATA,
+    defaultValues: restoredDraft
+      ? restoredDraft.values
+      : ocrOriginal
+        ? { ...DEFAULT_DATA, ...ocrOriginal }
+        : socialOriginal
+          ? { ...DEFAULT_DATA, ...socialOriginal }
+          : DEFAULT_DATA,
     mode: "onTouched",
   });
+
+  useEffect(() => {
+    const draft = {
+      seedTag,
+      values: form.getValues(),
+      step: stepRef.current,
+      updatedAt: Date.now(),
+    };
+    setDraft(draft);
+    setActiveDraft(draft);
+    const subscription = form.watch((values) => {
+      const nextDraft = {
+        seedTag,
+        values: values as ComplaintCreateFormValues,
+        step: stepRef.current,
+        updatedAt: Date.now(),
+      };
+      setDraft(nextDraft);
+      setActiveDraft(nextDraft);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, seedTag]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -155,6 +219,8 @@ export function ComplaintCreateForm() {
     return fields;
   }, [ocrOriginal]);
 
+    const showClearDraft = !!activeDraft && draftHasContent(activeDraft);
+
   const handleNext = async () => {
     const isValid = await form.trigger(STEP_FIELDS[step - 1]);
     if (!isValid) return;
@@ -170,6 +236,13 @@ export function ComplaintCreateForm() {
     }
   };
 
+  const handleClearDraft = () => {
+    form.reset(DEFAULT_DATA);
+    clearDraft();
+    setActiveDraft(null);
+    setStep(1);
+  };
+
   const handleSubmit = (values: ComplaintCreateFormValues) => {
     if (step < TOTAL_STEPS) return;
     const payload: ComplaintCreateFormData = {
@@ -178,6 +251,7 @@ export function ComplaintCreateForm() {
     };
     createMutation.mutate(payload, {
       onSuccess: (created) => {
+        clearDraft();
         if (socialDraft?.id && created?.id) {
           socialApi.linkDraft(socialDraft.id, created.id).catch(() => {});
         }
@@ -193,13 +267,27 @@ export function ComplaintCreateForm() {
   return (
     <div className="w-full px-4 md:px-0">
       <div className="max-w-[800px] w-full mx-auto">
-        <div className="mb-6 md:mb-10 text-right">
-          <h1 className="font-heading text-display-lg md:text-display-xl text-foreground mb-2">
-            تقديم شكوى جديدة
-          </h1>
-          <p className="font-body text-body-md md:text-body-lg text-muted-foreground">
-            يرجى تعبئة التفاصيل أدناه لمساعدتنا في معالجة شكواك بفعالية.
-          </p>
+        <div className="mb-6 md:mb-10 flex items-start justify-between gap-4">
+          <div className="text-right">
+            <h1 className="font-heading text-display-lg md:text-display-xl text-foreground mb-2">
+              تقديم شكوى جديدة
+            </h1>
+            <p className="font-body text-body-md md:text-body-lg text-muted-foreground">
+              يرجى تعبئة التفاصيل أدناه لمساعدتنا في معالجة شكواك بفعالية.
+            </p>
+          </div>
+          {showClearDraft && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleClearDraft}
+              className="gap-2 shrink-0"
+              title="مسح البيانات المحفوظة والبدء من جديد"
+            >
+              <Trash2 className="size-4" />
+              مسح المسودة
+            </Button>
+          )}
         </div>
 
         <div className="mb-6 md:mb-8">
