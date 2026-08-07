@@ -8,7 +8,7 @@ interface ComplaintStatusBadgeProps {
 
 export function ComplaintStatusBadge({ label, variant }: ComplaintStatusBadgeProps) {
   return (
-    <Badge variant={variant} className="h-auto px-3 py-1 font-bold">
+    <Badge variant={variant} className="h-auto px-2 py-0.5 text-[10px] font-semibold">
       {label}
     </Badge>
   );

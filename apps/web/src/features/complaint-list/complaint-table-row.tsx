@@ -52,10 +52,10 @@ export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
         {complaint.departmentName}
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4">
-        <ComplaintPriority severity={complaint.severity} />
-      </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4">
-        <ComplaintStatusBadge status={complaint.caseStatus} label={complaint.statusLabel} variant={complaint.statusVariant} />
+        <div className="flex flex-col items-start gap-1.5">
+          <ComplaintPriority severity={complaint.severity} />
+          <ComplaintStatusBadge status={complaint.caseStatus} label={complaint.statusLabel} variant={complaint.statusVariant} />
+        </div>
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data text-muted-foreground">
         {complaint.createdAt}
