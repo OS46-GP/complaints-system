@@ -59,6 +59,10 @@ export const complaintsApi = {
     axiosClient.get<ApiComplaint>(`/api/complaints/${id}`).then((res) => res.data),
   remove: (id: string) =>
     axiosClient.delete(`/api/complaints/${id}`).then((res) => res.data),
+  generatePdf: (id: string) =>
+    axiosClient
+      .post<{ downloadUrl: string; filename: string; mime: string }>(`/api/complaints/${id}/pdf`)
+      .then((res) => res.data),
   create: (payload: CreateComplaintPayload) =>
     axiosClient.post("/api/complaints", payload).then((res) => res.data),
   update: (id: string, payload: UpdateComplaintPayload) =>
