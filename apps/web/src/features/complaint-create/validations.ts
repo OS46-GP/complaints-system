@@ -23,8 +23,7 @@ const complaintFields = {
   subject: z
     .string()
     .trim()
-    .min(5, "موضوع الشكوى يجب ألا يقل عن 5 أحرف")
-    .max(200, "موضوع الشكوى يجب ألا يزيد عن 200 حرف"),
+    .min(5, "موضوع الشكوى يجب ألا يقل عن 5 أحرف"),
   complaintTypeId: z.string().min(1, "يرجى اختيار الفئة"),
   severity: z.enum(["Low", "Medium", "High"]).optional(),
   receptionMethodId: z.string(),

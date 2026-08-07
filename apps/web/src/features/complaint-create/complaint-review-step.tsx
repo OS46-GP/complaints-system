@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   Edit3,
-  Info,
   Loader2,
   SearchCheck,
   Sparkles,
@@ -269,13 +268,6 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
             )}
           </div>
         )}
-      </div>
-
-      <div className="flex items-center gap-2 p-4 bg-primary-container/10 rounded-lg">
-        <Info className="size-5 text-primary shrink-0" />
-        <p className="font-body text-body-md text-muted-foreground">
-          بمجرد الضغط على "إرسال الشكوى"، سيتم تعيين رقم مرجعي لطلبك وإرسال تأكيد إلى بريدك الإلكتروني.
-        </p>
       </div>
     </div>
   );
