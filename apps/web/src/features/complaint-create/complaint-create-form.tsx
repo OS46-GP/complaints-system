@@ -38,8 +38,9 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
   return {
     subject: get("complaint_subject") || undefined,
     severity: (get("severity") as "Low" | "Medium" | "High") || undefined,
-    respondentName: get("complaint_respondentName") || undefined,
-    annotation: get("annotation") || undefined,
+    complaintTypeId: get("complaint_typeId") || undefined,
+    departmentId: get("complaint_departmentId") || undefined,
+    annotation: get("complaint_annotation") || undefined,
     citizen: {
       fullName: get("citizen_fullName") || "",
       nationalId: get("citizen_nationalId") || "",
@@ -86,8 +87,9 @@ function socialDraftToFormData(draft: SocialDraft): Partial<ComplaintCreateFormV
 const OCR_KEY_TO_FIELD: Record<string, string> = {
   complaint_subject: "subject",
   severity: "severity",
-  complaint_respondentName: "respondentName",
-  annotation: "annotation",
+  complaint_typeId: "complaintTypeId",
+  complaint_departmentId: "departmentId",
+  complaint_annotation: "annotation",
   citizen_fullName: "citizen.fullName",
   citizen_nationalId: "citizen.nationalId",
   citizen_mobileNumber: "citizen.mobileNumber",
@@ -114,9 +116,7 @@ function draftHasContent(draft: ComplaintDraft): boolean {
     v.subject !== "" ||
     v.complaintTypeId !== "" ||
     v.receptionMethodId !== "" ||
-    v.respondentName !== "" ||
     v.departmentId !== "" ||
-    v.presentationStatusId !== "" ||
     v.annotation !== "" ||
     v.files.length > 0 ||
     Object.values(v.citizen).some((value) => value !== "")

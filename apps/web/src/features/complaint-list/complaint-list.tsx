@@ -44,7 +44,6 @@ function filtersFromParams(params: URLSearchParams): FilterValues {
     complaintTypeId: params.get("complaintTypeId") ?? "",
     examinationStatusId: params.get("examinationStatusId") ?? "",
     receptionMethodId: params.get("receptionMethodId") ?? "",
-    presentationStatusId: params.get("presentationStatusId") ?? "",
     complaintNumber: params.get("complaintNumber") ?? "",
     statementYear: params.get("statementYear") ?? "",
   };

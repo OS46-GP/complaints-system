@@ -1,6 +1,13 @@
 import { Injectable, Logger, ServiceUnavailableException, OnModuleInit } from "@nestjs/common";
 import { OcrService } from "./ocr/ocr.service";
-import { getOrCreateOcrAgent, ocrFieldsSchema, toFieldMap } from "./agents/ocr-agent";
+import {
+  getOrCreateOcrAgent,
+  ocrFieldsSchema,
+  toFieldMap,
+  sanitizeFields,
+  MAX_OCR_TEXT_LENGTH,
+} from "./agents/ocr-agent";
+import { PrismaService } from "../prisma/prisma.service";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -19,7 +26,10 @@ export class IntakeService implements OnModuleInit {
   private readonly logger = new Logger(IntakeService.name);
   private readonly uploadDir: string;
 
-  constructor(private readonly ocrService: OcrService) {
+  constructor(
+    private readonly ocrService: OcrService,
+    private readonly prisma: PrismaService,
+  ) {
     this.uploadDir = path.resolve(process.env.UPLOAD_DIR || "uploads");
   }
 
@@ -60,20 +70,32 @@ export class IntakeService implements OnModuleInit {
   }
 
   private async extractFields(rawText: string): Promise<Record<string, FieldResult>> {
+    const text = rawText.trim().slice(0, MAX_OCR_TEXT_LENGTH);
+
     try {
       const agent = await getOrCreateOcrAgent();
+      const departments = await this.prisma.department.findMany({
+        select: { id: true, name: true, subAuthority: true },
+        orderBy: { name: "asc" },
+      });
+      const complaintTypes = await this.prisma.complaintType.findMany({
+        select: { id: true, name: true },
+        orderBy: { id: "asc" },
+      });
 
       const result = await agent.generate(
-        `Extract structured fields from this OCR text extracted from a government complaint form:\n\n${rawText}`,
+        `Extract structured fields from this OCR text extracted from a government complaint form:\n\n${text}\n\nDepartments list (use only these to resolve departmentId):\n${JSON.stringify(departments)}\n\nComplaint types list (use only these to resolve typeId):\n${JSON.stringify(complaintTypes)}`,
         {
           structuredOutput: {
             schema: ocrFieldsSchema,
             jsonPromptInjection: "auto",
+            errorStrategy: "fallback",
+            fallbackValue: { fields: {} },
           },
         },
       );
 
-      return toFieldMap(result.object.fields);
+      return toFieldMap(sanitizeFields(result.object.fields));
     } catch (error) {
       this.logger.error("Mastra agent field extraction failed", error);
       throw new ServiceUnavailableException(

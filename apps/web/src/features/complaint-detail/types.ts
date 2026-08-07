@@ -28,8 +28,6 @@ export interface ComplaintDetailsData {
   receptionMethodId: number | null;
   examinationStatusName: string | null;
   examinationStatusId: number | null;
-  presentationStatusName: string | null;
-  presentationStatusId: number | null;
   respondentName: string | null;
   createdBy: string | null;
   createdAt: string;

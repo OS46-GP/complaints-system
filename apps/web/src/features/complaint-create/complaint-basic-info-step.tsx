@@ -21,7 +21,6 @@ import {
 import {
   useComplaintTypes,
   useDepartments,
-  usePresentationStatuses,
   useReceptionMethods,
 } from "@/features/complaint-list/hooks";
 
@@ -35,7 +34,6 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
   const { data: departments } = useDepartments();
   const { data: complaintTypes } = useComplaintTypes();
   const { data: receptionMethods } = useReceptionMethods();
-  const { data: presentationStatuses } = usePresentationStatuses();
 
   return (
     <div className="space-y-6">
@@ -141,30 +139,6 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="respondentName"
-          render={({ field, fieldState }) => (
-            <FormItem>
-              <FormLabel>اسم المقدم</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    placeholder="الاسم (اختياري)"
-                    className={cn("h-11", isOcr("respondentName") && "pe-10")}
-                  />
-                  {isOcr("respondentName") && (
-                    <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
-                  )}
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </div>
 
       <div className="border-t border-border pt-6">
@@ -193,29 +167,6 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
               <p className="text-label-sm text-muted-foreground text-left mt-1">
                 اشرح الموقف، التواريخ، والأشخاص المعنيين إن وجدوا.
               </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="presentationStatusId"
-          render={({ field }) => (
-            <FormItem className="mt-4">
-              <FormLabel>حالة التقديم</FormLabel>
-              <Select dir="rtl" value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="w-full data-[size=default]:h-11">
-                    <SelectValue placeholder="اختر حالة التقديم" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {presentationStatuses?.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <FormMessage />
             </FormItem>
           )}

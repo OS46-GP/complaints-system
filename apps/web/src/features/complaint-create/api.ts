@@ -9,9 +9,7 @@ export async function createComplaint(data: ComplaintCreateFormData) {
     severity: data.severity,
     receptionMethodId: data.receptionMethodId ? Number(data.receptionMethodId) : undefined,
     complaintTypeId: data.complaintTypeId ? Number(data.complaintTypeId) : undefined,
-    respondentName: data.respondentName || undefined,
     departmentId: data.departmentId || undefined,
-    presentationStatusId: data.presentationStatusId ? Number(data.presentationStatusId) : undefined,
     annotation: data.annotation || undefined,
     citizen: {
       fullName: data.citizen.fullName,

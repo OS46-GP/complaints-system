@@ -12,7 +12,6 @@ export const QUERY_KEYS = {
   complaintTypes: ["complaint-types"] as const,
   examinationStatuses: ["examination-statuses"] as const,
   receptionMethods: ["reception-methods"] as const,
-  presentationStatuses: ["presentation-statuses"] as const,
   locations: ["locations"] as const,
   users: ["users"] as const,
   user: (id: string) => ["user", id] as const,
@@ -41,7 +40,6 @@ export function useComplaintsFromSearchParams(
   const complaintTypeId = searchParams.get("complaintTypeId") ?? "";
   const examinationStatusId = searchParams.get("examinationStatusId") ?? "";
   const receptionMethodId = searchParams.get("receptionMethodId") ?? "";
-  const presentationStatusId = searchParams.get("presentationStatusId") ?? "";
   const complaintNumber = searchParams.get("complaintNumber") ?? "";
   const statementYear = searchParams.get("statementYear") ?? "";
   const sortBy = searchParams.get("sortBy") ?? preferences.complaints.sortBy;
@@ -58,7 +56,6 @@ export function useComplaintsFromSearchParams(
     complaintTypeId: complaintTypeId ? Number(complaintTypeId) : undefined,
     examinationStatusId: examinationStatusId ? Number(examinationStatusId) : undefined,
     receptionMethodId: receptionMethodId ? Number(receptionMethodId) : undefined,
-    presentationStatusId: presentationStatusId ? Number(presentationStatusId) : undefined,
     complaintNumber: complaintNumber ? Number(complaintNumber) : undefined,
     statementYear: statementYear ? Number(statementYear) : undefined,
     sortBy: sortBy ?? undefined,
@@ -91,13 +88,6 @@ export function useReceptionMethods() {
   return useQuery({
     queryKey: QUERY_KEYS.receptionMethods,
     queryFn: complaintsApi.getReceptionMethods,
-  });
-}
-
-export function usePresentationStatuses() {
-  return useQuery({
-    queryKey: QUERY_KEYS.presentationStatuses,
-    queryFn: complaintsApi.getPresentationStatuses,
   });
 }
 

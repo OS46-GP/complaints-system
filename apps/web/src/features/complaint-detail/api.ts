@@ -40,8 +40,6 @@ function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
     receptionMethodId: api.receptionMethod?.id ?? null,
     examinationStatusName: api.examinationStatus?.name ?? null,
     examinationStatusId: api.examinationStatus?.id ?? null,
-    presentationStatusName: api.presentationStatus?.name ?? null,
-    presentationStatusId: api.presentationStatus?.id ?? null,
     respondentName: api.respondentName ?? null,
     createdBy: api.createdBy?.username ?? null,
     createdAt: api.createdAt,

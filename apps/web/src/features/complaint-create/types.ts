@@ -8,10 +8,8 @@ export interface ComplaintCreateFormData {
   complaintTypeId: string;
   severity?: "Low" | "Medium" | "High";
   receptionMethodId: string;
-  respondentName: string;
   departmentId: string;
   annotation: string;
-  presentationStatusId: string;
   citizen: {
     fullName: string;
     nationalId: string;
