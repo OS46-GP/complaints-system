@@ -1,0 +1,26 @@
+meta {
+  name: Summarize Batch
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/ai/summarize-batch
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "complaintIds": ["__COMPLAINT_ID_1__", "__COMPLAINT_ID_2__"]
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.draft: $notNull
+}

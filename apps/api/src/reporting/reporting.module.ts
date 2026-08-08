@@ -9,5 +9,6 @@ import { ReportingSchedulerService } from './reporting-scheduler.service';
   imports: [PrismaModule],
   controllers: [ReportingController, MemoController],
   providers: [ReportingService, ReportingSchedulerService],
+  exports: [ReportingService],
 })
 export class ReportingModule {}

@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Markdown } from "@/components/shared/markdown";
 import { useSummarizeComplaint } from "@/features/complaint-list/hooks";
 
 interface ComplaintSummaryDialogProps {
@@ -28,8 +29,7 @@ export function ComplaintSummaryDialog({
   const summarizeMutation = useSummarizeComplaint(complaintId);
 
   useEffect(() => {
-    if (open) {
-      summarizeMutation.reset();
+    if (open && !summarizeMutation.data && !summarizeMutation.isPending) {
       summarizeMutation.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,7 +47,7 @@ export function ComplaintSummaryDialog({
             ملخص موجز للشكوى تم إنشاؤه بواسطة الذكاء الاصطناعي
           </DialogDescription>
         </DialogHeader>
-        <div className="max-h-96 overflow-y-auto rounded-lg bg-muted/50 p-4 font-body text-body-md leading-7 text-foreground whitespace-pre-wrap text-justify">
+        <div className="max-h-96 overflow-y-auto rounded-lg bg-muted/50 p-4 font-body text-body-md leading-7 text-foreground text-justify">
           {summarizeMutation.isPending ? (
             <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
               <Loader2 className="size-5 animate-spin" />
@@ -66,10 +66,21 @@ export function ComplaintSummaryDialog({
               </Button>
             </div>
           ) : (
-            summarizeMutation.data?.draft
+            summarizeMutation.data ? (
+              <Markdown>{summarizeMutation.data.draft}</Markdown>
+            ) : null
           )}
         </div>
         <DialogFooter>
+          {summarizeMutation.data && !summarizeMutation.isPending && (
+            <Button
+              variant="outline"
+              onClick={() => summarizeMutation.mutate()}
+            >
+              <RotateCcw className="size-4" />
+              إعادة الإنشاء
+            </Button>
+          )}
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             إغلاق
           </Button>

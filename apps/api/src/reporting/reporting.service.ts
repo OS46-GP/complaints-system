@@ -77,6 +77,31 @@ export class ReportingService {
       include: { department: true, examinationStatus: true },
     });
 
+    return this.buildAchievementData(complaints, start, end);
+  }
+
+  /**
+   * Achievement aggregation over an explicit set of complaint ids. Used by
+   * the AI summarization agent so it never re-implements the department
+   * grouping / finished logic itself.
+   */
+  async getAchievementForIds(complaintIds: string[]) {
+    if (complaintIds.length === 0) return null;
+
+    const complaints = await this.prisma.complaint.findMany({
+      where: { id: { in: complaintIds } },
+      include: { department: true, examinationStatus: true },
+    });
+
+    const now = new Date();
+    return this.buildAchievementData(complaints, now, now);
+  }
+
+  private buildAchievementData(
+    complaints: Array<{ department: { name: string } | null; examinationStatus: { name: string } | null }>,
+    start: Date,
+    end: Date,
+  ) {
     const grouped = new Map<string, AchievementRow>();
     let govTotal = 0;
     let govFinished = 0;

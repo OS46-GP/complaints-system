@@ -113,3 +113,15 @@ export function useSummarizeComplaint(complaintId: string) {
     mutationFn: () => complaintsApi.summarize(complaintId),
   });
 }
+
+export function useSummarizeBatch(complaintIds: string[]) {
+  return useMutation({
+    mutationFn: () => complaintsApi.summarizeBatch(complaintIds),
+  });
+}
+
+export function useDraftSelectionReport(complaintIds: string[]) {
+  return useMutation({
+    mutationFn: () => complaintsApi.draftSelectionReport(complaintIds),
+  });
+}

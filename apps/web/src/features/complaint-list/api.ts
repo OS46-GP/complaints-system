@@ -91,6 +91,14 @@ export const complaintsApi = {
     axiosClient
       .post<{ draft: string }>(`/api/ai/summarize/${id}`)
       .then((res) => res.data),
+  summarizeBatch: (complaintIds: string[]) =>
+    axiosClient
+      .post<{ draft: string }>("/api/ai/summarize-batch", { complaintIds })
+      .then((res) => res.data),
+  draftSelectionReport: (complaintIds: string[]) =>
+    axiosClient
+      .post<{ draft: string }>("/api/ai/draft-selection-report", { complaintIds })
+      .then((res) => res.data),
   getLinks: (id: string) =>
     axiosClient
       .get<{ severity: string; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/links`)
