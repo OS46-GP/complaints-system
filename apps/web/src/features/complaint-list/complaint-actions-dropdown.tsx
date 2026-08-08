@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
+import { ComplaintPdfButton } from "@/components/shared/complaint-pdf-button";
 import { useDeleteComplaint } from "@/features/complaint-list/hooks";
 import { PATHS } from "@/router/paths";
 
@@ -76,6 +77,11 @@ export function ComplaintActionsDropdown({
             <Sparkles className="size-4 text-primary" />
             الملخص الذكي
           </DropdownMenuItem>
+          <ComplaintPdfButton
+            complaintId={complaintId}
+            variant="menu-item"
+            label="طباعة PDF"
+          />
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleEdit} className="w-full gap-2">
             <Pencil className="size-4" />

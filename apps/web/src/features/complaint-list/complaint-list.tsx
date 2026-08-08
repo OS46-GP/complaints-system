@@ -36,8 +36,7 @@ const BASE_COLUMNS: DataTableColumn[] = [
   { key: "subject", label: "الموضوع", className: "w-64" },
   { key: "citizen", label: "المواطن", className: "w-40" },
   { key: "department", label: "القسم", className: "w-40" },
-  { key: "severity", label: "الأولوية", className: "w-24" },
-  { key: "status", label: "الحالة", className: "w-32" },
+  { key: "severityStatus", label: "الأولوية / الحالة", className: "w-36" },
   { key: "createdAt", label: "تاريخ الإنشاء", className: "w-36" },
   { key: "actions", label: "الإجراءات", className: "w-20 text-center" },
 ];

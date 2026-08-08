@@ -16,4 +16,14 @@ export class MemoController {
       mime: result.mime,
     };
   }
+
+  @Post(':id/pdf')
+  async generateComplaintPdf(@Param('id') id: string) {
+    const result = await this.reportingService.generateComplaintPdf(id);
+    return {
+      downloadUrl: result.downloadUrl,
+      filename: result.filename,
+      mime: result.mime,
+    };
+  }
 }

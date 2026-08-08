@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { complaintsApi, type ListComplaintsParams } from "@/features/complaint-list/api";
 import { usePreferences } from "@/features/settings/preferences/store";
 import { mapApiComplaint } from "@/features/complaint-list/types";
+import { openDownload } from "@/features/reporting/download";
 
 export const QUERY_KEYS = {
   complaints: ["complaints"] as const,
@@ -123,5 +125,13 @@ export function useSummarizeBatch(complaintIds: string[]) {
 export function useDraftSelectionReport(complaintIds: string[]) {
   return useMutation({
     mutationFn: () => complaintsApi.draftSelectionReport(complaintIds),
+  });
+}
+
+export function useGenerateComplaintPdf() {
+  return useMutation({
+    mutationFn: (complaintId: string) => complaintsApi.generatePdf(complaintId),
+    onSuccess: (result) => openDownload(result),
+    onError: () => toast.error("تعذر إنشاء ملف PDF للشكوى. حاول مرة أخرى."),
   });
 }

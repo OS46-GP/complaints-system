@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head><meta charset="utf-8"><style>
+  body { font-family: "Noto Sans Arabic", sans-serif; padding: 40px; font-size: 12px; line-height: 1.8; }
+  .letterhead { text-align: center; border-bottom: 2px solid #1a365d; padding-bottom: 16px; margin-bottom: 24px; }
+  .letterhead h1 { font-size: 20px; color: #1a365d; margin: 0 0 4px 0; }
+  .letterhead h2 { font-size: 15px; color: #2d3748; margin: 0; }
+  .letterhead .sub { font-size: 11px; color: #718096; margin-top: 4px; }
+  .doc-title { text-align: center; font-size: 16px; font-weight: bold; color: #1a365d; margin-bottom: 20px; }
+  table.ref { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  table.ref td { border: 1px solid #e2e8f0; padding: 8px 12px; vertical-align: top; }
+  table.ref td:first-child { font-weight: bold; width: 180px; background: #f7fafc; }
+  .section-title { font-size: 13px; font-weight: bold; color: #2d3748; margin: 20px 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+  .content-box { background: #f7fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 16px; }
+  .footer { text-align: center; font-size: 10px; color: #a0aec0; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+</style></head>
+<body>
+  <div class="letterhead">
+    <h1>محافظة المنوفية</h1>
+    <h2>ديوان عام المحافظة</h2>
+    <div class="sub">إدارة شئون المواطنين - مكتب تلقي الشكاوى</div>
+  </div>
+
+  <div class="doc-title">بيانات الشكوى رقم {{complaintNumber}} - سنة {{statementYear}}</div>
+
+  <div class="section-title">بيانات أساسية</div>
+  <table class="ref">
+    <tr><td>رقم الشكوى:</td><td>{{complaintNumber}}</td></tr>
+    <tr><td>سنة البيان:</td><td>{{statementYear}}</td></tr>
+    <tr><td>تاريخ الوصول:</td><td>{{arrivalDate}}</td></tr>
+    <tr><td>درجة الأولوية:</td><td>{{severity}}</td></tr>
+    <tr><td>الجهة المختصة:</td><td>{{department}}</td></tr>
+    <tr><td>نوع الشكوى:</td><td>{{complaintType}}</td></tr>
+    <tr><td>طريقة الاستقبال:</td><td>{{receptionMethod}}</td></tr>
+    <tr><td>حالة الفحص:</td><td>{{examinationStatus}}</td></tr>
+    <tr><td>حالة العرض:</td><td>{{presentationStatus}}</td></tr>
+    <tr><td>حالة القضية:</td><td>{{caseStatus}}</td></tr>
+  </table>
+
+  <div class="section-title">بيانات المواطن</div>
+  <table class="ref">
+    <tr><td>الاسم:</td><td>{{citizenName}}</td></tr>
+    <tr><td>الرقم القومي:</td><td>{{citizenNationalId}}</td></tr>
+    <tr><td>رقم الهاتف:</td><td>{{citizenMobile}}</td></tr>
+    <tr><td>العنوان:</td><td>{{citizenAddress}}</td></tr>
+    <tr><td>القرية:</td><td>{{citizenVillage}}</td></tr>
+    <tr><td>المركز:</td><td>{{citizenDistrict}}</td></tr>
+  </table>
+
+  <div class="section-title">موضوع الشكوى</div>
+  <div class="content-box">{{subject}}</div>
+
+  <div class="section-title">وصف تفصيلي</div>
+  <div class="content-box">{{annotation}}</div>
+
+  {{responseSection}}
+
+  {{archiveSection}}
+
+  <div class="section-title">بيانات القيد</div>
+  <table class="ref">
+    <tr><td>المسؤول عن الرد:</td><td>{{respondentName}}</td></tr>
+    <tr><td>قام بالتسجيل:</td><td>{{createdBy}}</td></tr>
+    <tr><td>تاريخ التسجيل:</td><td>{{createdAt}}</td></tr>
+  </table>
+
+  <div class="footer">محافظة المنوفية - جميع الحقوق محفوظة</div>
+</body>
+</html>

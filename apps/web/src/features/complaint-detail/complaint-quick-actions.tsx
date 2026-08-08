@@ -13,6 +13,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
+import { useGenerateComplaintPdf } from "@/features/complaint-list/hooks";
 
 interface ActionItem {
   icon: React.ReactNode;
@@ -33,6 +34,7 @@ export function ComplaintQuickActions({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const pdfMutation = useGenerateComplaintPdf();
   const isAdmin = pathname.startsWith("/admin");
   const editPath = isAdmin
     ? `/admin/complaints/${complaintId}/edit`
@@ -52,7 +54,7 @@ export function ComplaintQuickActions({
     { icon: <ArrowUp className="size-5" />, label: "تصعيد الشكوى", onClick: () => console.log("Escalate", complaintId) },
     { icon: <UserSearch className="size-5" />, label: "إعادة تعيين وكيل", onClick: () => console.log("Reassign", complaintId) },
     { icon: <ListTree className="size-5" />, label: "تغيير التصنيف", onClick: () => console.log("Reclassify", complaintId) },
-    { icon: <Printer className="size-5" />, label: "طباعة", onClick: () => window.print() },
+    { icon: <Printer className="size-5" />, label: "طباعة", onClick: () => pdfMutation.mutate(complaintId) },
     { icon: <XCircle className="size-5" />, label: "إغلاق الشكوى", onClick: () => console.log("Close", complaintId), variant: "destructive" },
   ];
 
