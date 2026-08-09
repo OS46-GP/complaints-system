@@ -1,9 +1,11 @@
+import { useNavigate, useLocation } from "react-router";
 import type { ComplaintItem } from "@/features/complaint-list/types";
 import { ComplaintActionsDropdown } from "@/features/complaint-list/complaint-actions-dropdown";
 import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { ComplaintPriority } from "@/features/complaint-list/complaint-priority";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { PATHS } from "@/router/paths";
 
 interface ComplaintCardProps {
   complaint: ComplaintItem;
@@ -16,12 +18,20 @@ export function ComplaintCard({
   selected,
   onToggle,
 }: ComplaintCardProps) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
+  const detailPath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_DETAIL(complaint.id)
+    : PATHS.USER.COMPLAINT_DETAIL(complaint.id);
+
   return (
     <div
       className={cn(
-        "bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow",
+        "bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer",
         selected && "border-primary/50 bg-primary/5",
       )}
+      onClick={() => navigate(detailPath)}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-col gap-1">
@@ -32,7 +42,10 @@ export function ComplaintCard({
             {complaint.subject}
           </h3>
         </div>
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Checkbox
             checked={selected}
             onCheckedChange={onToggle}

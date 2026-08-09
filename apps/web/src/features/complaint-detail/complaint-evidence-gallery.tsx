@@ -1,5 +1,6 @@
 import { Upload, FileText, Image, Download, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resolveUploadUrl } from "@/features/complaint-detail/api";
 import type { ComplaintFileItem } from "@/features/complaint-detail/types";
 
 interface ComplaintEvidenceGalleryProps {
@@ -14,6 +15,26 @@ function isImageFile(file: ComplaintFileItem) {
 function getFileIcon(file: ComplaintFileItem) {
   if (isImageFile(file)) return <Image className="size-12 text-muted-foreground" />;
   return <FileText className="size-12 text-muted-foreground" />;
+}
+
+function fileNameFromKey(storageKey: string): string {
+  const parts = storageKey.split("/");
+  return parts[parts.length - 1] || storageKey;
+}
+
+function viewFile(file: ComplaintFileItem) {
+  window.open(resolveUploadUrl(file.storageKey), "_blank", "noopener,noreferrer");
+}
+
+function downloadFile(file: ComplaintFileItem) {
+  const anchor = document.createElement("a");
+  anchor.href = resolveUploadUrl(file.storageKey);
+  anchor.download = fileNameFromKey(file.storageKey);
+  anchor.target = "_blank";
+  anchor.rel = "noopener,noreferrer";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }
 
 export function ComplaintEvidenceGallery({
@@ -65,6 +86,7 @@ export function ComplaintEvidenceGallery({
                       type="button"
                       className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
                       title="عرض"
+                      onClick={() => viewFile(file)}
                     >
                       <Eye className="size-4 text-white" />
                     </button>
@@ -72,6 +94,7 @@ export function ComplaintEvidenceGallery({
                       type="button"
                       className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
                       title="تحميل"
+                      onClick={() => downloadFile(file)}
                     >
                       <Download className="size-4 text-white" />
                     </button>
@@ -104,6 +127,7 @@ export function ComplaintEvidenceGallery({
                       type="button"
                       className="p-2 rounded-lg hover:bg-surface-container-highest transition-colors"
                       title="عرض"
+                      onClick={() => viewFile(file)}
                     >
                       <Eye className="size-4 text-muted-foreground" />
                     </button>
@@ -111,6 +135,7 @@ export function ComplaintEvidenceGallery({
                       type="button"
                       className="p-2 rounded-lg hover:bg-surface-container-highest transition-colors"
                       title="تحميل"
+                      onClick={() => downloadFile(file)}
                     >
                       <Download className="size-4 text-muted-foreground" />
                     </button>

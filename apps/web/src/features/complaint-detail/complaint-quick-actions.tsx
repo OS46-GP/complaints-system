@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import {
-  ArrowUp,
-  UserSearch,
-  ListTree,
   Pencil,
   MessageSquareReply,
   Archive,
   Sparkles,
-  XCircle,
   Printer,
   ChevronLeft,
 } from "lucide-react";
@@ -51,11 +47,7 @@ export function ComplaintQuickActions({
     { icon: <Pencil className="size-5" />, label: "تعديل الشكوى", onClick: () => navigate(editPath) },
     { icon: <MessageSquareReply className="size-5" />, label: "إضافة رد", onClick: () => navigate(responsePath) },
     { icon: <Archive className="size-5" />, label: "أرشفة", onClick: () => navigate(archivePath) },
-    { icon: <ArrowUp className="size-5" />, label: "تصعيد الشكوى", onClick: () => console.log("Escalate", complaintId) },
-    { icon: <UserSearch className="size-5" />, label: "إعادة تعيين وكيل", onClick: () => console.log("Reassign", complaintId) },
-    { icon: <ListTree className="size-5" />, label: "تغيير التصنيف", onClick: () => console.log("Reclassify", complaintId) },
     { icon: <Printer className="size-5" />, label: "طباعة", onClick: () => pdfMutation.mutate(complaintId) },
-    { icon: <XCircle className="size-5" />, label: "إغلاق الشكوى", onClick: () => console.log("Close", complaintId), variant: "destructive" },
   ];
 
   return (

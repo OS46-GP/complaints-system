@@ -41,7 +41,6 @@ export function SearchBar({
       {value && (
         <div className="absolute end-2 top-1/2 -translate-y-1/2 flex items-center flex-row-reverse gap-1">
           <Button type="submit" size="xs">
-            {/* <Search className="size-3.5" /> */}
             <span>بحث</span>
           </Button>
           <Button

@@ -5,7 +5,6 @@ import {
   Users,
   Building2,
   FileBarChart,
-  BarChart3,
   Settings,
   Shield,
   Radio,
@@ -27,7 +26,6 @@ const navItems = [
   { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },
   { title: "مراقبة السوشيال ميديا", url: PATHS.ADMIN.SOCIAL_MONITORING, icon: Radio },
   { title: "التقارير", url: PATHS.ADMIN.REPORTS.DASHBOARD, icon: FileBarChart },
-  { title: "التحليلات", url: "#", icon: BarChart3 },
   { title: "الإعدادات", url: PATHS.ADMIN.SETTINGS, icon: Settings },
 ];
 
@@ -36,7 +34,7 @@ export default function AdminLayout() {
 
   const items = navItems.map((item) => ({
     ...item,
-    isActive: item.url !== "#" && location.pathname.startsWith(item.url),
+    isActive: location.pathname.startsWith(item.url),
   }));
 
   const currentTitle = items.find((i) => i.isActive)?.title ?? "لوحة الإدارة";
