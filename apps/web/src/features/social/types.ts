@@ -24,8 +24,11 @@ export interface SocialDraftExtractedFields {
   citizenFullName: string;
   citizenNationalId: string;
   citizenMobileNumber: string;
+  citizenAddress: string;
   citizenVillage: string;
   citizenDistrict: string;
+  complaintType: string;
+  receptionMethod: string;
   severity: "Low" | "Medium" | "High";
 }
 

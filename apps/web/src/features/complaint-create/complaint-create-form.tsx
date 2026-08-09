@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Send, Loader2, Trash2 } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
-import type { FieldResult } from "@/features/complaint-list/types";
+import type { FieldResult, LocationItem, ReferenceItem } from "@/features/complaint-list/types";
 import type { SocialDraft } from "@/features/social/types";
-import { socialApi } from "@/features/social/api";
+import { useLinkDraft } from "@/features/social/hooks";
 import {
   clearDraft,
   getDraft,
@@ -22,6 +22,11 @@ import {
   type ComplaintCreateFormValues,
 } from "@/features/complaint-create/validations";
 import { useCreateComplaint } from "@/features/complaint-create/hooks";
+import {
+  useComplaintTypes,
+  useLocations,
+  useReceptionMethods,
+} from "@/features/complaint-list/hooks";
 import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -55,16 +60,16 @@ function socialDraftToFormData(draft: SocialDraft): Partial<ComplaintCreateFormV
   const extracted = draft.extractedFields;
   if (extracted) {
     return {
-      subject: extracted.subject.trim() || "شكوى من منشور على فيسبوك",
-      annotation: extracted.annotation.trim() || draft.postText.trim(),
+      subject: (extracted.subject || "").trim() || "شكوى من منشور على فيسبوك",
+      annotation: (extracted.annotation || "").trim() || draft.postText.trim(),
       severity: extracted.severity,
       citizen: {
-        fullName: extracted.citizenFullName.trim() || draft.authorName || "",
-        nationalId: extracted.citizenNationalId.trim() || "",
-        mobileNumber: extracted.citizenMobileNumber.trim() || "",
-        address: "",
-        village: extracted.citizenVillage.trim() || "",
-        district: extracted.citizenDistrict.trim() || "",
+        fullName: (extracted.citizenFullName || "").trim() || draft.authorName || "",
+        nationalId: (extracted.citizenNationalId || "").trim() || "",
+        mobileNumber: (extracted.citizenMobileNumber || "").trim() || "",
+        address: (extracted.citizenAddress || "").trim() || "",
+        village: (extracted.citizenVillage || "").trim() || "",
+        district: (extracted.citizenDistrict || "").trim() || "",
       },
     };
   }
@@ -81,6 +86,83 @@ function socialDraftToFormData(draft: SocialDraft): Partial<ComplaintCreateFormV
       district: "",
     },
   };
+}
+
+function normalizeArabic(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const SOCIAL_RECEPTION_METHOD_VARIANTS = [
+  "مراقبة وسائل التواصل",
+  "وسائل التواصل الاجتماعي",
+  "وسائل التواصل",
+  "تواصل اجتماعي",
+];
+
+function matchReferenceId(
+  items: ReferenceItem[] | undefined,
+  value: string,
+): string {
+  if (!items) return "";
+  const target = normalizeArabic(value);
+
+  for (const item of items) {
+    const name = normalizeArabic(item.name);
+    if (!name) continue;
+    if (name === target) return String(item.id);
+  }
+  for (const item of items) {
+    const name = normalizeArabic(item.name);
+    if (name && (target.includes(name) || name.includes(target))) {
+      return String(item.id);
+    }
+  }
+  return "";
+}
+
+function findSocialReceptionId(
+  items: ReferenceItem[] | undefined,
+): string {
+  for (const variant of SOCIAL_RECEPTION_METHOD_VARIANTS) {
+    const id = matchReferenceId(items, variant);
+    if (id) return id;
+  }
+  return "";
+}
+
+function stripAreaPrefix(value: string): string {
+  return normalizeArabic(value)
+    .replace(/^مركز\s+/, "")
+    .replace(/^محافظة\s+/, "");
+}
+
+function findCenterForLocation(
+  locations: LocationItem[] | undefined,
+  value: string,
+): LocationItem | undefined {
+  if (!locations) return undefined;
+  const target = normalizeArabic(value);
+  for (const location of locations) {
+    if (location.level < 3 || normalizeArabic(location.name) !== target) continue;
+    let current = location;
+    while (current.parentCode) {
+      const parent = locations.find((l) => l.code === current.parentCode);
+      if (!parent) break;
+      current = parent;
+      if (current.level === 2) return current;
+    }
+  }
+  return undefined;
 }
 
 const OCR_KEY_TO_FIELD: Record<string, string> = {
@@ -128,6 +210,7 @@ export function ComplaintCreateForm() {
   const { pathname, state } = useLocation();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
   const createMutation = useCreateComplaint();
+  const linkDraftMutation = useLinkDraft();
 
   const ocrData = (state as { ocrData?: Record<string, FieldResult> } | null)?.ocrData;
   const socialDraft = (state as { socialDraft?: SocialDraft } | null)?.socialDraft;
@@ -153,6 +236,50 @@ export function ComplaintCreateForm() {
     [socialDraft],
   );
 
+  const freshDefaults = useMemo(
+    () =>
+      ocrOriginal
+        ? { ...DEFAULT_DATA, ...ocrOriginal }
+        : socialOriginal
+          ? { ...DEFAULT_DATA, ...socialOriginal }
+          : DEFAULT_DATA,
+    [ocrOriginal, socialOriginal],
+  );
+
+  const initialValues = useMemo(() => {
+    if (!restoredDraft) return freshDefaults;
+    const values = { ...restoredDraft.values, citizen: { ...restoredDraft.values.citizen } };
+    for (const [key, value] of Object.entries(freshDefaults) as [
+      keyof ComplaintCreateFormValues,
+      unknown,
+    ][]) {
+      if (value === undefined) continue;
+      if (key === "citizen") {
+        for (const [citizenKey, citizenValue] of Object.entries(
+          freshDefaults.citizen,
+        ) as [keyof typeof values.citizen, unknown][]) {
+          if (citizenValue === undefined) continue;
+          if (!values.citizen[citizenKey]) {
+            values.citizen[citizenKey] = citizenValue as never;
+          }
+        }
+      } else if (Array.isArray(value)) {
+        if ((values[key] as unknown[]).length === 0 && (value as unknown[]).length > 0) {
+          values[key] = value as never;
+        }
+      } else if (typeof value === "string") {
+        if (!values[key]) values[key] = value as never;
+      } else if (values[key] === undefined || values[key] === null || values[key] === "") {
+        values[key] = value as never;
+      }
+    }
+    return values;
+  }, [restoredDraft, freshDefaults]);
+
+  const { data: complaintTypes } = useComplaintTypes();
+  const { data: receptionMethods } = useReceptionMethods();
+  const { data: locations } = useLocations();
+
   const [step, setStep] = useState(restoredDraft ? restoredDraft.step : 1);
   const [activeDraft, setActiveDraft] = useState<ComplaintDraft | null>(() => getDraft());
   const stepRef = useRef(step);
@@ -162,13 +289,7 @@ export function ComplaintCreateForm() {
 
   const form = useForm<ComplaintCreateFormValues>({
     resolver: zodResolver(complaintCreateSchema),
-    defaultValues: restoredDraft
-      ? restoredDraft.values
-      : ocrOriginal
-        ? { ...DEFAULT_DATA, ...ocrOriginal }
-        : socialOriginal
-          ? { ...DEFAULT_DATA, ...socialOriginal }
-          : DEFAULT_DATA,
+    defaultValues: initialValues,
     mode: "onTouched",
   });
 
@@ -205,6 +326,65 @@ export function ComplaintCreateForm() {
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
   }, []);
+
+  const autoFilledSocialIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!socialDraft) return;
+    const extracted = socialDraft.extractedFields;
+    const values = form.getValues();
+
+    if (
+      extracted?.complaintType &&
+      !autoFilledSocialIds.current.has("complaintTypeId")
+    ) {
+      const id = matchReferenceId(complaintTypes, extracted.complaintType);
+      if (id) {
+        autoFilledSocialIds.current.add("complaintTypeId");
+        form.setValue("complaintTypeId", id, { shouldValidate: false });
+      }
+    }
+
+    if (
+      values.receptionMethodId === "" &&
+      !autoFilledSocialIds.current.has("receptionMethodId")
+    ) {
+      const id = findSocialReceptionId(receptionMethods);
+      if (id) {
+        autoFilledSocialIds.current.add("receptionMethodId");
+        form.setValue("receptionMethodId", id, { shouldValidate: false });
+      }
+    }
+  }, [socialDraft, complaintTypes, receptionMethods, form]);
+
+  const autoFilledSocialLocation = useRef(false);
+  useEffect(() => {
+    if (!socialDraft || !locations || autoFilledSocialLocation.current) return;
+    const extracted = socialDraft.extractedFields;
+    const citizen = form.getValues("citizen");
+    const extractedVillage = (extracted?.citizenVillage || "").trim();
+    const extractedDistrict = (extracted?.citizenDistrict || "").trim();
+
+    let district = citizen.district;
+    if (!district && extractedDistrict) {
+      district =
+        locations.find(
+          (l) =>
+            l.level === 2 && stripAreaPrefix(l.name) === stripAreaPrefix(extractedDistrict),
+        )?.name ?? "";
+    }
+    if (!district && extractedVillage) {
+      district = findCenterForLocation(locations, extractedVillage)?.name ?? "";
+    }
+    if (district && district !== citizen.district) {
+      form.setValue("citizen.district", district, { shouldValidate: false });
+    }
+    if (extractedVillage && !citizen.village) {
+      form.setValue("citizen.village", extractedVillage, { shouldValidate: false });
+    }
+    if (district || (extractedVillage && !citizen.village)) {
+      autoFilledSocialLocation.current = true;
+    }
+  }, [socialDraft, locations, form]);
 
   const ocrFields = useMemo(() => {
     const fields = new Set<string>();
@@ -250,10 +430,19 @@ export function ComplaintCreateForm() {
       files: values.files.map((item) => item.file),
     };
     createMutation.mutate(payload, {
-      onSuccess: (created) => {
+      onSuccess: async (created) => {
         clearDraft();
         if (socialDraft?.id && created?.id) {
-          socialApi.linkDraft(socialDraft.id, created.id).catch(() => {});
+          try {
+            await linkDraftMutation.mutateAsync({
+              id: socialDraft.id,
+              complaintId: created.id,
+            });
+          } catch {
+            toast.warning(
+              "تم تقديم الشكوى بنجاح، لكن تعذر إزالة المنشور من قائمة مراجعة وسائل التواصل",
+            );
+          }
         }
         toast.success("تم تقديم الشكوى بنجاح");
         navigate(listPath);

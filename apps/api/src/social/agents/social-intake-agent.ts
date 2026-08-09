@@ -13,8 +13,11 @@ const fieldsSchema = z.object({
   citizenFullName: z.string(),
   citizenNationalId: z.string(),
   citizenMobileNumber: z.string(),
+  citizenAddress: z.string(),
   citizenVillage: z.string(),
   citizenDistrict: z.string(),
+  complaintType: z.string(),
+  receptionMethod: z.string(),
   severity: z.enum(["Low", "Medium", "High"]),
 });
 
@@ -38,8 +41,11 @@ const FALLBACK_FIELDS: SocialIntakeResult["fields"] = {
   citizenFullName: "",
   citizenNationalId: "",
   citizenMobileNumber: "",
+  citizenAddress: "",
   citizenVillage: "",
   citizenDistrict: "",
+  complaintType: "",
+  receptionMethod: "",
   severity: "Medium",
 };
 
@@ -67,9 +73,24 @@ For relevant posts, extract these fields from the post text (write in Arabic, ke
 - citizenFullName — the name of the citizen complaining if mentioned in the post text
 - citizenNationalId — a 14-digit Egyptian National ID if present (validate: exactly 14 digits)
 - citizenMobileNumber — an Egyptian mobile number if present (starts with 01, 11 digits)
-- citizenVillage — the village name if mentioned
-- citizenDistrict — the district/markez (center) name if mentioned
+- citizenAddress — the COMPLETE location of the incident exactly as written in the post: street name, block/area (مخطط), landmark, village — keep the full original wording, do NOT truncate. Even if the address includes a village or center name, put the whole location here.
+- citizenVillage — the village name if mentioned anywhere in the post text (it is often part of the address)
+- citizenDistrict — the district/center (مركز) name if mentioned anywhere in the post text
+- complaintType — pick the closest category from the KNOWN COMPLAINT CATEGORIES list given in the prompt (use the exact category name as written); leave empty if no category clearly matches
+- receptionMethod — how the citizen submitted/reported the complaint if mentioned in the post text (e.g. هاتف, بريد, فيس بوك, مكتب, باليد); leave empty if not mentioned
 - severity — Low (individual minor issue) / Medium (affects several people) / High (danger to life, health, or large community impact)
+
+EXAMPLE:
+[POST 0] Author: unknown
+Text: نرجوا التحقيق في عدم دخول عربات القمامه الى شارع الحاج أحمد عثمان بمخطط العشماوي بالبتانون منذ أكثر من شهرين وترك جبل من القمامة خلف هذا الشارع ايضا
+→ subject: "عدم دخول عربات القمامة لشارع الحاج أحمد عثمان بالبتانون"
+→ annotation: "نرجوا التحقيق في عدم دخول عربات القمامه الى شارع الحاج أحمد عثمان بمخطط العشماوي بالبتانون منذ أكثر من شهرين وترك جبل من القمامة خلف هذا الشارع ايضا"
+→ citizenAddress: "شارع الحاج أحمد عثمان بمخطط العشماوي بالبتانون"
+→ citizenVillage: "البتانون"
+→ citizenDistrict: ""
+→ complaintType: "التضرر من المخلفات"
+→ receptionMethod: ""
+→ severity: "Medium"
 
 RULES:
 - Return exactly ONE result per post, with index matching the [POST i] number
@@ -100,6 +121,7 @@ function fallbackResult(index: number, reason: string): BatchAnalysisResult {
 
 export async function analyzePosts(
   posts: PostToAnalyze[],
+  knownComplaintCategories: string[] = [],
 ): Promise<BatchAnalysisResult[]> {
   if (posts.length === 0) return [];
   if (!ENABLE_AI) {
@@ -107,11 +129,16 @@ export async function analyzePosts(
   }
 
   const agent = await getOrCreateAgent();
-  const prompt = posts
-    .map(
+  const prompt = [
+    knownComplaintCategories.length > 0
+      ? `KNOWN COMPLAINT CATEGORIES (pick the exact name from this list for complaintType, or an empty string if none fits): ${knownComplaintCategories.join("، ")}`
+      : "",
+    ...posts.map(
       (p, i) =>
         `[POST ${i}] Author: ${p.authorName || "unknown"}\nText:\n${p.text}`,
-    )
+    ),
+  ]
+    .filter(Boolean)
     .join("\n\n");
 
   try {

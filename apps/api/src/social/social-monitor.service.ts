@@ -78,6 +78,10 @@ export class SocialMonitorService {
       { isRelevant: boolean; fields: SocialIntakeResult["fields"] | null }
     >();
     if (ENABLE_AI && pending.length > 0) {
+      const complaintTypes = await this.prisma.client.complaintType.findMany({
+        select: { name: true },
+        orderBy: { name: "asc" },
+      });
       const toAnalyze: PostToAnalyze[] = pending.map((p) => ({
         text: p.post.message,
         authorName: p.post.authorName,
@@ -85,7 +89,10 @@ export class SocialMonitorService {
       this.logger.log(
         `Running AI intake on ${toAnalyze.length} posts in a single batch call`,
       );
-      const results = await analyzePosts(toAnalyze);
+      const results = await analyzePosts(
+        toAnalyze,
+        complaintTypes.map((t) => t.name),
+      );
       for (const result of results) {
         const hasExtraction =
           result.fields.subject ||
@@ -93,8 +100,11 @@ export class SocialMonitorService {
           result.fields.citizenFullName ||
           result.fields.citizenNationalId ||
           result.fields.citizenMobileNumber ||
+          result.fields.citizenAddress ||
           result.fields.citizenVillage ||
           result.fields.citizenDistrict ||
+          result.fields.complaintType ||
+          result.fields.receptionMethod ||
           result.fields.severity !== "Medium";
         analyses.set(result.index, {
           isRelevant: result.isRelevant,
@@ -117,6 +127,22 @@ export class SocialMonitorService {
         where: { sourcePostId: post.id },
       });
       if (existing) {
+        const storedFields =
+          existing.extractedFields && typeof existing.extractedFields === "object"
+            ? (existing.extractedFields as Record<string, unknown>)
+            : null;
+        const isStale =
+          existing.status === "Pending" &&
+          (!storedFields || !("citizenAddress" in storedFields));
+        if (isStale && analysis?.fields) {
+          await this.prisma.client.socialDraft.update({
+            where: { id: existing.id },
+            data: { extractedFields: analysis.fields },
+          });
+          this.logger.log(
+            `Re-extracted fields for existing draft ${existing.id} (${group.name})`,
+          );
+        }
         duplicatesSkipped++;
         continue;
       }
