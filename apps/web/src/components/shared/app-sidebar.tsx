@@ -2,16 +2,20 @@ import { type LucideIcon } from "lucide-react";
 
 import { Sidebar, SidebarFooter } from "@/components/ui/sidebar";
 import { SidebarBrand } from "@/components/shared/sidebar-brand";
-import { SidebarNav, type NavItem } from "@/components/shared/sidebar-nav";
+import {
+  SidebarNav,
+  type NavGroup,
+  type NavItem,
+} from "@/components/shared/sidebar-nav";
 import { LogoutButton } from "@/features/auth/logout-button";
 
-export type { NavItem };
+export type { NavGroup, NavItem };
 
 export function AppSidebar({
-  items,
+  groups,
   brand,
 }: {
-  items: NavItem[];
+  groups: NavGroup[];
   brand: { title: string; subtitle: string; icon: LucideIcon };
 }) {
   return (
@@ -21,7 +25,7 @@ export function AppSidebar({
         title={brand.title}
         subtitle={brand.subtitle}
       />
-      <SidebarNav items={items} />
+      <SidebarNav groups={groups} />
       <SidebarFooter className="p-4">
         <LogoutButton />
       </SidebarFooter>

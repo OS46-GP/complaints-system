@@ -23,17 +23,17 @@ export function NewComplaintButton({ newComplaintPath, ocrPath }: NewComplaintBu
           <span>جديد</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-40">
+      <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuItem asChild>
           <Link to={newComplaintPath} className="gap-2">
             <FileText className="size-4" />
-            إدخال عادي
+            شكوى جديدة
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to={ocrPath} className="gap-2">
             <ScanLine className="size-4" />
-            إدخال عبر OCR
+            شكوى عبر الماسح الضوئي
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
