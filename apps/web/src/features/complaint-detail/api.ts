@@ -2,6 +2,12 @@ import { complaintsApi } from "@/features/complaint-list/api";
 import type { ApiComplaint, RecurrenceMatch } from "@/features/complaint-list/types";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
+export function resolveUploadUrl(storageKey: string): string {
+  return `${API_BASE}/uploads/${storageKey}`;
+}
+
 export type SeverityLevel = "LOW" | "MEDIUM" | "HIGH";
 
 export interface AnalyzeResponse {
@@ -40,8 +46,6 @@ function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
     receptionMethodId: api.receptionMethod?.id ?? null,
     examinationStatusName: api.examinationStatus?.name ?? null,
     examinationStatusId: api.examinationStatus?.id ?? null,
-    presentationStatusName: api.presentationStatus?.name ?? null,
-    presentationStatusId: api.presentationStatus?.id ?? null,
     respondentName: api.respondentName ?? null,
     createdBy: api.createdBy?.username ?? null,
     createdAt: api.createdAt,

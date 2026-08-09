@@ -1,39 +1,57 @@
-import { Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { complaintsAgent } from "./mastra.config";
+import { ReportingService } from "../reporting/reporting.service";
+import { ENABLE_AI, getOrCreateAgent } from "./mastra.config";
+
+interface SummaryComplaint {
+  complaintNumber: number;
+  statementYear: number;
+  subject: string;
+  arrivalDate: Date;
+  examinationResult: string | null;
+  annotation: string | null;
+  citizen: { fullName: string; village: string | null };
+  department: { name: string } | null;
+  examinationStatus: { name: string } | null;
+}
 
 @Injectable()
 export class AiSummarizationService {
   private readonly logger = new Logger(AiSummarizationService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reportingService: ReportingService,
+  ) {}
 
   async summarizeComplaint(complaintId: string): Promise<{ draft: string }> {
-    const complaint = await this.prisma.client.complaint.findUnique({
-      where: { id: complaintId },
-      include: {
-        citizen: true,
-        department: true,
-        examinationStatus: true,
-      },
-    });
-
-    if (!complaint) {
-      throw new NotFoundException("Complaint not found");
-    }
-
+    const complaint = await this.fetchComplaint(complaintId);
     const prompt = `
 لخّص الشكوى التالية بلغة عربية واضحة وموجزة (فقرة واحدة أو اثنتان):
 
-- رقم الشكوى: ${complaint.complaintNumber} لسنة ${complaint.statementYear}
-- المواطن: ${complaint.citizen.fullName}
-- القرية/المنطقة: ${complaint.citizen.village ?? "غير محدد"}
-- الجهة المختصة: ${complaint.department?.name ?? "غير محددة"}
-- موضوع الشكوى: ${complaint.subject}
-- حالة الفحص: ${complaint.examinationStatus?.name ?? "قيد الفحص"}
-- نتيجة الفحص: ${complaint.examinationResult ?? "لم يتم بعد"}
-- ملاحظات: ${complaint.annotation ?? "لا يوجد"}
-- تاريخ الورود: ${complaint.arrivalDate.toLocaleDateString("ar-EG")}
+${this.summaryBullet(complaint)}
+    `.trim();
+
+    const draft = await this.generateDraft(prompt);
+    return { draft };
+  }
+
+  async summarizeComplaints(complaintIds: string[]): Promise<{ draft: string }> {
+    const complaints = await this.fetchComplaints(complaintIds);
+    if (complaints.length === 0) {
+      throw new NotFoundException("No complaints found");
+    }
+
+    const prompt = `
+لخّص الشكاوى التالية (${complaints.length} شكوى) في ملخصٍ واحدٍ متماسك باللغة العربية،
+يغطي القضايا المشتركة والاختلافات بينها، مع الإشارة لرقم كل شكوى عند الحاجة:
+
+${complaints.map((c) => this.summaryBullet(c)).join("\n\n")}
     `.trim();
 
     const draft = await this.generateDraft(prompt);
@@ -41,62 +59,76 @@ export class AiSummarizationService {
   }
 
   async draftReport(from: string, to: string): Promise<{ draft: string }> {
-    const start = new Date(from);
-    const end = new Date(to);
-    end.setHours(23, 59, 59, 999);
+    const data = await this.reportingService.getAchievementReport(
+      undefined,
+      from,
+      to,
+    );
 
-    const complaints = await this.prisma.client.complaint.findMany({
-      where: { arrivalDate: { gte: start, lte: end } },
-      include: {
-        department: true,
-        examinationStatus: true,
-      },
-    });
-
-    const total = complaints.length;
-
-    // Group by department
-    const byDept: Record<string, { total: number; finished: number; name: string }> = {};
-    for (const c of complaints) {
-      const key = c.departmentId ?? "unknown";
-      const name = c.department?.name ?? "غير محدد";
-      if (!byDept[key]) byDept[key] = { total: 0, finished: 0, name };
-      byDept[key].total++;
-      // "Finished" examination statuses
-      const finishedStatuses = new Set(["تم الفحص", "مستوفي", "Completed", "Resolved", "Finished", "منتهية"]);
-      if (finishedStatuses.has(c.examinationStatus?.name ?? "")) {
-        byDept[key].finished++;
-      }
-    }
-
-    const achievementRows = Object.values(byDept).map((d) => ({
-      department: d.name,
-      total: d.total,
-      finished: d.finished,
-      percentage: d.total > 0 ? Math.round((d.finished / d.total) * 100) : 0,
-    }));
-
-    const totalFinished = achievementRows.reduce((sum, r) => sum + r.finished, 0);
-
-    const periodLabel = `${start.toLocaleDateString("ar-EG")} إلى ${end.toLocaleDateString("ar-EG")}`;
-
-    const prompt = `
-صُغ تقريراً دورياً رسمياً باللغة العربية عن شكاوى الفترة من ${periodLabel}.
-
-إجمالي الشكاوى: ${total}
-المنجز منها: ${totalFinished}
-
-نسب الإنجاز حسب الجهة:
-${achievementRows.map((r) => `- ${r.department}: ${r.finished} من ${r.total} (${r.percentage}%)`).join("\n")}
-
-اكتب التقرير بأسلوب رسمي حكومي مناسب للمراجعة والاعتماد.
-    `.trim();
-
-    const draft = await this.generateDraft(prompt);
+    const draft = await this.generateDraft(
+      this.reportPrompt(
+        data,
+        `عن شكاوى الفترة من ${new Date(from).toLocaleDateString("ar-EG")} إلى ${new Date(to).toLocaleDateString("ar-EG")}`,
+      ),
+    );
     return { draft };
   }
 
-  async draftMemo(complaintId: string): Promise<{ draft: string }> {
+  async draftSelectionReport(complaintIds: string[]): Promise<{ draft: string }> {
+    const data = await this.reportingService.getAchievementForIds(complaintIds);
+    if (!data || data.governorateTotal === 0) {
+      throw new NotFoundException("No complaints found for the selection");
+    }
+
+    const draft = await this.generateDraft(
+      this.reportPrompt(data, "عن الشكاوى المحددة في هذا التقرير"),
+    );
+    return { draft };
+  }
+
+  private reportPrompt(
+    data: {
+      governorateTotal: number;
+      governorateFinished: number;
+      governorateAchievement: number;
+      departments: Array<{
+        department: string;
+        total: number;
+        finished: number;
+        percentage: number;
+      }>;
+    },
+    scopeLabel: string,
+  ): string {
+    return `
+صُغ تقريراً دورياً رسمياً باللغة العربية ${scopeLabel}.
+
+إجمالي الشكاوى: ${data.governorateTotal}
+المنجز منها: ${data.governorateFinished}
+نسبة الإنجاز الإجمالية: ${data.governorateAchievement}%
+
+نسب الإنجاز حسب الجهة:
+${data.departments.map((r) => `- ${r.department}: ${r.finished} من ${r.total} (${r.percentage}%)`).join("\n")}
+
+اكتب التقرير بأسلوب رسمي حكومي مناسب للمراجعة والاعتماد.
+    `.trim();
+  }
+
+  private summaryBullet(c: SummaryComplaint): string {
+    return [
+      `- رقم الشكوى: ${c.complaintNumber} لسنة ${c.statementYear}`,
+      `- المواطن: ${c.citizen.fullName}`,
+      `- القرية/المنطقة: ${c.citizen.village ?? "غير محدد"}`,
+      `- الجهة المختصة: ${c.department?.name ?? "غير محددة"}`,
+      `- موضوع الشكوى: ${c.subject}`,
+      `- حالة الفحص: ${c.examinationStatus?.name ?? "قيد الفحص"}`,
+      `- نتيجة الفحص: ${c.examinationResult ?? "لم يتم بعد"}`,
+      `- ملاحظات: ${c.annotation ?? "لا يوجد"}`,
+      `- تاريخ الورود: ${c.arrivalDate.toLocaleDateString("ar-EG")}`,
+    ].join("\n");
+  }
+
+  private async fetchComplaint(complaintId: string) {
     const complaint = await this.prisma.client.complaint.findUnique({
       where: { id: complaintId },
       include: {
@@ -109,26 +141,18 @@ ${achievementRows.map((r) => `- ${r.department}: ${r.finished} من ${r.total} (
     if (!complaint) {
       throw new NotFoundException("Complaint not found");
     }
+    return complaint;
+  }
 
-    const prompt = `
-صُغ خطاباً رسمياً (مذكرة) باللغة العربية الفصحى متعلقاً بالشكوى التالية:
-
-- رقم الشكوى: ${complaint.complaintNumber} لسنة ${complaint.statementYear}
-- المواطن: ${complaint.citizen.fullName}
-- عنوانه: ${complaint.citizen.address ?? ""} - ${complaint.citizen.village ?? ""}
-- الجهة المختصة: ${complaint.department?.name ?? "الجهة المختصة"}
-- موضوع الشكوى: ${complaint.subject}
-- نتيجة الفحص: ${complaint.examinationResult ?? "قيد الدراسة"}
-- رقم الخطاب الصادر: ${complaint.outgoingLetterNumber ?? "—"}
-- تاريخ اليوم: ${new Date().toLocaleDateString("ar-EG")}
-- محافظة: المنوفية
-
-الخطاب موجه من ديوان عام المحافظة إلى ${complaint.department?.name ?? "الجهة المختصة"}.
-استخدم صيغة رسمية حكومية مع التحية والختام المناسبين.
-    `.trim();
-
-    const draft = await this.generateDraft(prompt);
-    return { draft };
+  private fetchComplaints(complaintIds: string[]) {
+    return this.prisma.client.complaint.findMany({
+      where: { id: { in: complaintIds } },
+      include: {
+        citizen: true,
+        department: true,
+        examinationStatus: true,
+      },
+    });
   }
 
   /**
@@ -142,11 +166,18 @@ ${achievementRows.map((r) => `- ${r.department}: ${r.finished} من ${r.total} (
     retries = 3,
     delayMs = 5000,
   ): Promise<string> {
+    if (!ENABLE_AI) {
+      throw new ServiceUnavailableException(
+        "خدمة الذكاء الاصطناعي غير مفعّلة حالياً. يرجى التواصل مع مدير النظام لتفعيلها.",
+      );
+    }
+
     let attempt = 0;
 
     while (attempt < retries) {
       try {
-        const response = await complaintsAgent.generate(prompt, {
+        const agent = await getOrCreateAgent();
+        const response = await agent.generate(prompt, {
           modelSettings: { maxRetries: 0 },
         });
         return response.text;

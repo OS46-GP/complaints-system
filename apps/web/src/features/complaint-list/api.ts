@@ -12,7 +12,6 @@ export interface ListComplaintsParams {
   complaintTypeId?: number;
   examinationStatusId?: number;
   receptionMethodId?: number;
-  presentationStatusId?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
@@ -30,7 +29,6 @@ export interface CreateComplaintPayload {
   subject: string;
   respondentName?: string;
   departmentId?: string;
-  presentationStatusId?: number;
   annotation?: string;
   examinationStatusId?: number;
   examinationResult?: string;
@@ -73,8 +71,6 @@ export const complaintsApi = {
     axiosClient.get<ReferenceItem[]>("/api/complaints/complaint-types").then((res) => res.data),
   getReceptionMethods: () =>
     axiosClient.get<ReferenceItem[]>("/api/complaints/reception-methods").then((res) => res.data),
-  getPresentationStatuses: () =>
-    axiosClient.get<ReferenceItem[]>("/api/complaints/presentation-statuses").then((res) => res.data),
   getExaminationStatuses: () =>
     axiosClient.get<ReferenceItem[]>("/api/complaints/examination-statuses").then((res) => res.data),
   getLocations: () =>
@@ -98,6 +94,14 @@ export const complaintsApi = {
   summarize: (id: string) =>
     axiosClient
       .post<{ draft: string }>(`/api/ai/summarize/${id}`)
+      .then((res) => res.data),
+  summarizeBatch: (complaintIds: string[]) =>
+    axiosClient
+      .post<{ draft: string }>("/api/ai/summarize-batch", { complaintIds })
+      .then((res) => res.data),
+  draftSelectionReport: (complaintIds: string[]) =>
+    axiosClient
+      .post<{ draft: string }>("/api/ai/draft-selection-report", { complaintIds })
       .then((res) => res.data),
   getLinks: (id: string) =>
     axiosClient

@@ -107,11 +107,14 @@ export function ScheduledReports({ basePath }: ScheduledReportsProps) {
               {reports.map((report) => {
                 const isSelected = selected?.id === report.id;
                 return (
-                  <li key={report.id} className="flex items-center justify-between gap-4 px-6 py-4">
+                  <li
+                    key={report.id}
+                    className={cn("flex flex-col", isSelected && "bg-surface-container-low")}
+                  >
                     <button
                       type="button"
                       onClick={() => handleSelect(report)}
-                      className="flex min-w-0 flex-1 items-center gap-3 text-start"
+                      className="flex min-w-0 flex-1 items-center gap-3 px-6 py-4 text-start"
                     >
                       <span
                         className={cn(
@@ -137,16 +140,20 @@ export function ScheduledReports({ basePath }: ScheduledReportsProps) {
                       <ChevronLeft
                         className={cn(
                           "size-4 shrink-0 text-muted-foreground transition-transform rtl:rotate-180",
-                          isSelected && "text-primary",
+                          isSelected && "rotate-180 text-primary",
                         )}
                       />
                     </button>
+
+                    {isSelected && (
+                      <div className="border-t border-border px-6 py-6">
+                        <GeneratedReportView report={report} />
+                      </div>
+                    )}
                   </li>
                 );
               })}
             </ul>
-
-            {selected && <GeneratedReportView report={selected} />}
 
             {totalPages > 1 && (
               <div className="flex flex-col lg:flex-row items-center justify-between gap-4 rounded-xl border border-border bg-surface-container-lowest px-6 py-4">

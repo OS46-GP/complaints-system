@@ -58,7 +58,6 @@ export interface ApiComplaint {
   complaintType: ApiComplaintType | null;
   receptionMethod: ApiReferenceItem | null;
   examinationStatus: ApiExaminationStatus | null;
-  presentationStatus: ApiReferenceItem | null;
   createdBy: ApiCreatedBy | null;
   caseStatus: "FINISHED" | "NOT_FINISHED" | null;
   files: ApiComplaintFile[];

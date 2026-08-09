@@ -27,9 +27,7 @@ const complaintFields = {
   complaintTypeId: z.string().min(1, "يرجى اختيار الفئة"),
   severity: z.enum(["Low", "Medium", "High"]).optional(),
   receptionMethodId: z.string(),
-  respondentName: z.string().max(100, "اسم المقدم يجب ألا يزيد عن 100 حرف"),
   departmentId: z.string(),
-  presentationStatusId: z.string(),
   citizen: citizenSchema,
   files: z.array(fileItemSchema).max(5, "يمكن إرفاق 5 ملفات كحد أقصى"),
 } as const;
@@ -54,10 +52,8 @@ export const emptyFormValues: ComplaintCreateFormValues = {
   subject: "",
   complaintTypeId: "",
   receptionMethodId: "",
-  respondentName: "",
   departmentId: "",
   annotation: "",
-  presentationStatusId: "",
   citizen: {
     fullName: "",
     nationalId: "",
@@ -75,8 +71,6 @@ export const STEP_FIELDS: FieldPath<ComplaintCreateFormValues>[][] = [
     "complaintTypeId",
     "receptionMethodId",
     "departmentId",
-    "respondentName",
-    "presentationStatusId",
     "annotation",
   ],
   [

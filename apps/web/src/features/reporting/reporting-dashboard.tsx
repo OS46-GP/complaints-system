@@ -1,48 +1,38 @@
-import { useState } from "react";
+import { useMemo } from "react";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { AsyncLoader } from "@/components/shared/async-loader";
-import { Button } from "@/components/ui/button";
 import { ReportsNav } from "@/features/reporting/components/reports-nav";
 import { ReportingFilterBar } from "@/features/reporting/components/reporting-filter-bar";
 import { ReportingSummaryCards } from "@/features/reporting/components/reporting-summary-cards";
 import { AchievementSection } from "@/features/reporting/components/achievement-section";
 import { DelaySection } from "@/features/reporting/components/delay-section";
+import { ReportSection } from "@/features/reporting/components/report-section";
 import { ReportCardsSkeleton, ReportTableSkeleton } from "@/features/reporting/components/report-skeletons";
-import { lastYearRange, type DateRangeValue } from "@/features/reporting/components/date-range-picker";
+import { lastYearRange } from "@/features/reporting/components/date-range-picker";
+import { useReportFilters } from "@/features/reporting/use-report-filters";
 import { useAchievementReport, useDelayReport } from "@/features/reporting/hooks";
-import type { ReportFilters } from "@/features/reporting/types";
 
 interface ReportingDashboardProps {
   basePath: string;
 }
 
 export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
-  const [draftRange, setDraftRange] = useState<DateRangeValue>(lastYearRange());
-  const [draftDepartment, setDraftDepartment] = useState("");
-  const [applied, setApplied] = useState<ReportFilters>(lastYearRange());
+  const defaults = useMemo(() => lastYearRange(), []);
+  const { filters, setFilters } = useReportFilters(defaults);
 
   const {
     data: achievement,
     isLoading: achievementLoading,
     isError: achievementError,
     refetch: refetchAchievement,
-  } = useAchievementReport(applied);
+  } = useAchievementReport(filters);
 
   const {
     data: delays,
     isLoading: delaysLoading,
     isError: delaysError,
     refetch: refetchDelays,
-  } = useDelayReport(applied);
-
-  const handleApply = () => {
-    setApplied({
-      from: draftRange.from || undefined,
-      to: draftRange.to || undefined,
-      department: draftDepartment || undefined,
-    });
-  };
+  } = useDelayReport(filters);
 
   const totalOpen = achievement
     ? Math.max(0, achievement.governorateTotal - achievement.governorateFinished)
@@ -57,24 +47,14 @@ export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
         description="نسب الإنجاز والمتأخرات على مستوى المحافظة والجهات"
       />
 
-      <ReportingFilterBar
-        dateRange={draftRange}
-        onDateRangeChange={setDraftRange}
-        department={draftDepartment}
-        onDepartmentChange={setDraftDepartment}
-      />
+      <ReportingFilterBar value={filters} onChange={setFilters} showVillage />
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleApply}>
-          تطبيق الفلترة
-        </Button>
-      </div>
-
-      <AsyncLoader
+      <ReportSection
+        title="ملخص سريع"
         loading={achievementLoading}
         error={achievementError}
         onRetry={() => refetchAchievement()}
-        errorText="تعذر تحميل تقرير الإنجاز"
+        errorText="تعذر تحميل ملخص التقارير"
         skeleton={<ReportCardsSkeleton />}
       >
         <ReportingSummaryCards
@@ -82,9 +62,9 @@ export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
           totalOpen={totalOpen}
           totalOverdue={delays?.totalOverdue ?? 0}
         />
-      </AsyncLoader>
+      </ReportSection>
 
-      <AsyncLoader
+      <ReportSection
         loading={achievementLoading}
         error={achievementError}
         onRetry={() => refetchAchievement()}
@@ -92,9 +72,9 @@ export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
         skeleton={<ReportTableSkeleton />}
       >
         {achievement && <AchievementSection report={achievement} />}
-      </AsyncLoader>
+      </ReportSection>
 
-      <AsyncLoader
+      <ReportSection
         loading={delaysLoading}
         error={delaysError}
         onRetry={() => refetchDelays()}
@@ -102,7 +82,7 @@ export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
         skeleton={<ReportTableSkeleton />}
       >
         {delays && <DelaySection report={delays} />}
-      </AsyncLoader>
+      </ReportSection>
     </div>
   );
 }

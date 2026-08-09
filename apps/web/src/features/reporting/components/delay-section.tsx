@@ -7,6 +7,23 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DelayReport } from "@/features/reporting/types";
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const SEVERITY_META: Record<string, { label: string; chip: string }> = {
+  High: {
+    label: "عالية",
+    chip: "bg-red-500/10 text-red-600",
+  },
+  Medium: {
+    label: "متوسطة",
+    chip: "bg-amber-500/10 text-amber-600",
+  },
+  Low: {
+    label: "منخفضة",
+    chip: "bg-green-500/10 text-green-600",
+  },
+};
+
 const columns: DataTableColumn[] = [
   { key: "department", label: "الجهة" },
   { key: "overdueCount", label: "عدد المتأخر", className: "text-center" },
@@ -15,6 +32,19 @@ const columns: DataTableColumn[] = [
 
 interface DelaySectionProps {
   report: DelayReport;
+}
+
+function complaintOverdueDays(
+  arrivalDate: string,
+  severity: string | null,
+  thresholds: DelayReport["thresholds"],
+): number {
+  const thresholdDays =
+    severity === "High" || severity === "Medium" || severity === "Low"
+      ? thresholds[severity]
+      : thresholds.Medium;
+  const elapsed = Date.now() - new Date(arrivalDate).getTime();
+  return Math.max(0, Math.floor(elapsed / MS_PER_DAY) - thresholdDays);
 }
 
 export function DelaySection({ report }: DelaySectionProps) {
@@ -59,8 +89,26 @@ export function DelaySection({ report }: DelaySectionProps) {
           <AlarmClock className="size-4 text-destructive" />
           إجمالي المتأخر: {report.totalOverdue.toLocaleString("ar-SA")}
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          عتبة التأخير: {report.overdueThresholdDays.toLocaleString("ar-SA")} يوم
+        <span className="inline-flex flex-wrap items-center gap-2">
+          عتبات التأخير (يوم):
+          {[
+            { label: "عالية", days: report.thresholds?.High, className: "bg-red-500/10 text-red-600" },
+            { label: "متوسطة", days: report.thresholds?.Medium, className: "bg-amber-500/10 text-amber-600" },
+            { label: "منخفضة", days: report.thresholds?.Low, className: "bg-green-500/10 text-green-600" },
+          ].map(
+            ({ label, days, className }) =>
+              days !== undefined && (
+                <span
+                  key={label}
+                  className={cn(
+                    "inline-flex h-6 items-center gap-1 rounded-full px-2.5 font-mono text-mono-data",
+                    className,
+                  )}
+                >
+                  {label}: {days.toLocaleString("ar-SA")}
+                </span>
+              ),
+          )}
         </span>
       </div>
 
@@ -86,27 +134,52 @@ export function DelaySection({ report }: DelaySectionProps) {
 
           {showComplaints && (
             <ul className="divide-y divide-border border-t border-border">
-              {report.complaints.map((c) => (
-                <li
-                  key={c.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-6 py-3"
-                >
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="font-heading text-label-sm text-foreground truncate">
-                      {c.subject || "بدون موضوع"}
-                    </span>
-                    <span className="text-label-sm text-muted-foreground">
-                      {c.citizenName} · {c.department ?? "غير محدد"}
-                    </span>
-                  </div>
-                  <span
-                    dir="ltr"
-                    className="font-mono text-mono-data text-muted-foreground"
+              {report.complaints.map((c) => {
+                const severityMeta = c.severity
+                  ? SEVERITY_META[c.severity]
+                  : undefined;
+                const daysOverdue = complaintOverdueDays(
+                  c.arrivalDate,
+                  c.severity,
+                  report.thresholds,
+                );
+                return (
+                  <li
+                    key={c.id}
+                    className="flex flex-wrap items-center justify-between gap-3 px-6 py-3"
                   >
-                    #{c.complaintNumber}
-                  </span>
-                </li>
-              ))}
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="font-heading text-label-sm text-foreground truncate">
+                        {c.subject || "بدون موضوع"}
+                      </span>
+                      <span className="flex flex-wrap items-center gap-2 text-label-sm text-muted-foreground">
+                        {c.citizenName} · {c.department ?? "غير محدد"}
+                        {severityMeta && (
+                          <span
+                            className={cn(
+                              "inline-flex h-5 items-center rounded-full px-2 font-mono text-mono-data",
+                              severityMeta.chip,
+                            )}
+                          >
+                            {severityMeta.label}
+                          </span>
+                        )}
+                        {daysOverdue > 0 && (
+                          <span className="inline-flex h-5 items-center rounded-full bg-destructive/10 px-2 font-mono text-mono-data text-destructive">
+                            +{daysOverdue.toLocaleString("ar-SA")} يوم تأخير
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <span
+                      dir="ltr"
+                      className="font-mono text-mono-data text-muted-foreground"
+                    >
+                      #{c.complaintNumber}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

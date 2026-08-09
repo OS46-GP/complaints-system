@@ -15,6 +15,10 @@ export class AchievementQueryDto {
   department?: string;
 
   @IsOptional()
+  @IsString()
+  village?: string;
+
+  @IsOptional()
   @IsDateString()
   from?: string;
 
@@ -27,6 +31,10 @@ export class DelayQueryDto {
   @IsOptional()
   @IsString()
   department?: string;
+
+  @IsOptional()
+  @IsString()
+  village?: string;
 
   @IsOptional()
   @IsDateString()
@@ -62,6 +70,11 @@ export class CustomReportBodyDto {
   @IsOptional()
   @IsString()
   examinationStatus?: string;
+}
+
+export class CustomReportExportBodyDto extends CustomReportBodyDto {
+  @IsIn(["pdf", "xlsx"])
+  format!: "pdf" | "xlsx";
 }
 
 export class GenerateReportBodyDto {

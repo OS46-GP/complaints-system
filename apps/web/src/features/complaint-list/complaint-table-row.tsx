@@ -4,6 +4,8 @@ import { ComplaintActionsDropdown } from "@/features/complaint-list/complaint-ac
 import { ComplaintPriority } from "@/features/complaint-list/complaint-priority";
 import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import { PATHS } from "@/router/paths";
 import {
   Tooltip,
@@ -13,9 +15,15 @@ import {
 
 interface ComplaintTableRowProps {
   complaint: ComplaintItem;
+  selected: boolean;
+  onToggle: () => void;
 }
 
-export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
+export function ComplaintTableRow({
+  complaint,
+  selected,
+  onToggle,
+}: ComplaintTableRowProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith("/admin");
@@ -25,9 +33,22 @@ export function ComplaintTableRow({ complaint }: ComplaintTableRowProps) {
 
   return (
     <DataTableRow
-      className="hover:bg-surface-container-low transition-colors group cursor-pointer"
+      className={cn(
+        "hover:bg-surface-container-low transition-colors group cursor-pointer",
+        selected && "bg-primary/5",
+      )}
       onClick={() => navigate(detailPath)}
     >
+      <DataTableCell
+        className="p-0 px-6 py-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Checkbox
+          checked={selected}
+          onCheckedChange={onToggle}
+          aria-label={`اختيار الشكوى ${complaint.displayId}`}
+        />
+      </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data font-bold text-primary">
         {complaint.displayId}
       </DataTableCell>

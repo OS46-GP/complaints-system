@@ -8,10 +8,8 @@ export function mapDetailsToForm(details: ComplaintDetailsData): ComplaintCreate
     complaintTypeId: details.complaintTypeId ? String(details.complaintTypeId) : "",
     severity: details.severity,
     receptionMethodId: details.receptionMethodId ? String(details.receptionMethodId) : "",
-    respondentName: details.respondentName ?? "",
     departmentId: details.departmentId ?? "",
     annotation: details.annotation ?? "",
-    presentationStatusId: details.presentationStatusId ? String(details.presentationStatusId) : "",
     citizen: {
       fullName: details.citizenName,
       nationalId: details.citizenNationalId ?? "",
@@ -33,10 +31,8 @@ export async function updateComplaint(
     severity: data.severity,
     receptionMethodId: data.receptionMethodId ? Number(data.receptionMethodId) : undefined,
     complaintTypeId: data.complaintTypeId ? Number(data.complaintTypeId) : undefined,
-    respondentName: data.respondentName || undefined,
     departmentId: data.departmentId || undefined,
     annotation: data.annotation || undefined,
-    presentationStatusId: data.presentationStatusId ? Number(data.presentationStatusId) : undefined,
     citizen: {
       fullName: data.citizen.fullName || undefined,
       nationalId: data.citizen.nationalId || undefined,

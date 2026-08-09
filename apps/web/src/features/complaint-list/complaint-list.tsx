@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useSearchParams } from "react-router";
+import { FileText, Sparkles, X } from "lucide-react";
 import { ListPagination } from "@/components/shared/list-pagination";
 import { ComplaintCard } from "@/features/complaint-list/complaint-card";
 import { ComplaintTableRow } from "@/features/complaint-list/complaint-table-row";
 import { ComplaintToolbar } from "@/features/complaint-list/complaint-list-toolbar";
 import { EmptyState } from "@/features/complaint-list/empty-state";
+import { BatchAiDialog } from "@/features/complaint-list/batch-ai-dialog";
 import type { FilterValues } from "@/features/complaint-list/complaint-filter-sheet";
 import {
   DataTable,
@@ -11,6 +14,8 @@ import {
   DataTableBody,
   type DataTableColumn,
 } from "@/components/shared/data-table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { usePreferences } from "@/features/settings/preferences/store";
 import type { ComplaintItem } from "@/features/complaint-list/types";
 
@@ -26,7 +31,7 @@ interface ComplaintListProps {
   pageSize: number;
 }
 
-const columns: DataTableColumn[] = [
+const BASE_COLUMNS: DataTableColumn[] = [
   { key: "id", label: "رقم الشكوى", className: "w-28" },
   { key: "subject", label: "الموضوع", className: "w-64" },
   { key: "citizen", label: "المواطن", className: "w-40" },
@@ -43,7 +48,6 @@ function filtersFromParams(params: URLSearchParams): FilterValues {
     complaintTypeId: params.get("complaintTypeId") ?? "",
     examinationStatusId: params.get("examinationStatusId") ?? "",
     receptionMethodId: params.get("receptionMethodId") ?? "",
-    presentationStatusId: params.get("presentationStatusId") ?? "",
     complaintNumber: params.get("complaintNumber") ?? "",
     statementYear: params.get("statementYear") ?? "",
   };
@@ -70,6 +74,10 @@ export function ComplaintList({
     sortBy: preferences.complaints.sortBy,
     sortOrder: preferences.complaints.sortOrder,
   });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [aiMode, setAiMode] = useState<"summary" | "report">("summary");
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
   const handlePageChange = (page: number) => {
     setSearchParams((prev) => {
@@ -116,6 +124,57 @@ export function ComplaintList({
   const start = (currentPage - 1) * pageSize + 1;
   const end = Math.min(currentPage * pageSize, totalCount);
 
+  const pageIds = complaints.map((c) => c.id);
+  const pageSelectedCount = pageIds.filter((id) => selectedIds.has(id)).length;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of pageIds) {
+        if (checked) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const openAiDialog = (mode: "summary" | "report") => {
+    setAiMode(mode);
+    setAiDialogOpen(true);
+  };
+
+  const columns: DataTableColumn[] = [
+    {
+      key: "select",
+      label: (
+        <Checkbox
+          aria-label="تحديد كل الشكاوى في الصفحة"
+          checked={
+            pageIds.length > 0 && pageSelectedCount === pageIds.length
+              ? true
+              : pageSelectedCount > 0
+                ? "indeterminate"
+                : false
+          }
+          onCheckedChange={(checked) => toggleSelectAll(checked === true)}
+        />
+      ),
+      className: "w-10",
+    },
+    ...BASE_COLUMNS,
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       <ComplaintToolbar
@@ -131,13 +190,44 @@ export function ComplaintList({
         totalCount={totalCount}
       />
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          <p className="font-heading text-label-sm font-semibold text-foreground">
+            تم تحديد {selectedIds.size.toLocaleString("ar-SA")} شكوى
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={() => openAiDialog("summary")}>
+              <Sparkles className="size-4" />
+              ملخص جماعي
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openAiDialog("report")}
+            >
+              <FileText className="size-4" />
+              تقرير
+            </Button>
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <X className="size-4" />
+              إلغاء التحديد
+            </Button>
+          </div>
+        </div>
+      )}
+
       {isEmpty ? (
         <EmptyState hasFilters={hasFilters} onClear={clearFilters} />
       ) : (
         <>
           <div className="md:hidden grid grid-cols-1 gap-4">
             {complaints.map((complaint) => (
-              <ComplaintCard key={complaint.id} complaint={complaint} />
+              <ComplaintCard
+                key={complaint.id}
+                complaint={complaint}
+                selected={selectedIds.has(complaint.id)}
+                onToggle={() => toggleSelect(complaint.id)}
+              />
             ))}
           </div>
 
@@ -148,7 +238,12 @@ export function ComplaintList({
             <DataTableHeader columns={columns} />
             <DataTableBody>
               {complaints.map((complaint) => (
-                <ComplaintTableRow key={complaint.id} complaint={complaint} />
+                <ComplaintTableRow
+                  key={complaint.id}
+                  complaint={complaint}
+                  selected={selectedIds.has(complaint.id)}
+                  onToggle={() => toggleSelect(complaint.id)}
+                />
               ))}
             </DataTableBody>
           </DataTable>
@@ -165,6 +260,14 @@ export function ComplaintList({
           />
         </div>
       )}
+
+      <BatchAiDialog
+        open={aiDialogOpen}
+        onOpenChange={setAiDialogOpen}
+        complaintIds={Array.from(selectedIds)}
+        count={selectedIds.size}
+        initialMode={aiMode}
+      />
     </div>
   );
 }

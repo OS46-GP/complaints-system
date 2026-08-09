@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 
 export interface DataTableColumn {
   key: string;
-  label: string;
+  label: ReactNode;
   className?: string;
 }
 

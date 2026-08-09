@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { AiSummarizationService } from "./ai-summarization.service";
-import { IsDateString } from "class-validator";
+import { IsDateString, IsArray, IsString, ArrayNotEmpty } from "class-validator";
 
 class DraftReportDto {
   @IsDateString()
@@ -15,6 +15,13 @@ class DraftReportDto {
 
   @IsDateString()
   to!: string;
+}
+
+class ComplaintIdsDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  complaintIds!: string[];
 }
 
 @Controller("ai")
@@ -27,13 +34,18 @@ export class AiSummarizationController {
     return this.aiSummarizationService.summarizeComplaint(complaintId);
   }
 
+  @Post("summarize-batch")
+  summarizeBatch(@Body() dto: ComplaintIdsDto) {
+    return this.aiSummarizationService.summarizeComplaints(dto.complaintIds);
+  }
+
   @Post("draft-report")
   draftReport(@Body() dto: DraftReportDto) {
     return this.aiSummarizationService.draftReport(dto.from, dto.to);
   }
 
-  @Post("draft-memo/:complaintId")
-  draftMemo(@Param("complaintId") complaintId: string) {
-    return this.aiSummarizationService.draftMemo(complaintId);
+  @Post("draft-selection-report")
+  draftSelectionReport(@Body() dto: ComplaintIdsDto) {
+    return this.aiSummarizationService.draftSelectionReport(dto.complaintIds);
   }
 }

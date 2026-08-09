@@ -17,7 +17,6 @@ import {
   useComplaintTypes,
   useExaminationStatuses,
   useReceptionMethods,
-  usePresentationStatuses,
 } from "@/features/complaint-list/hooks";
 
 export interface FilterValues {
@@ -26,7 +25,6 @@ export interface FilterValues {
   complaintTypeId: string;
   examinationStatusId: string;
   receptionMethodId: string;
-  presentationStatusId: string;
   complaintNumber: string;
   statementYear: string;
 }
@@ -52,7 +50,6 @@ const EMPTY_FILTERS: FilterValues = {
   complaintTypeId: "",
   examinationStatusId: "",
   receptionMethodId: "",
-  presentationStatusId: "",
   complaintNumber: "",
   statementYear: "",
 };
@@ -146,7 +143,6 @@ export function ComplaintFilterSheet({
   const { data: complaintTypes } = useComplaintTypes();
   const { data: examinationStatuses } = useExaminationStatuses();
   const { data: receptionMethods } = useReceptionMethods();
-  const { data: presentationStatuses } = usePresentationStatuses();
 
   const departmentItems = useMemo(
     () => toComboItems(departments),
@@ -163,10 +159,6 @@ export function ComplaintFilterSheet({
   const receptionMethodItems = useMemo(
     () => toComboItems(receptionMethods),
     [receptionMethods],
-  );
-  const presentationStatusItems = useMemo(
-    () => toComboItems(presentationStatuses),
-    [presentationStatuses],
   );
 
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
@@ -305,15 +297,6 @@ export function ComplaintFilterSheet({
                 receptionMethodItems,
                 draft.receptionMethodId,
                 (v) => setDraft({ ...draft, receptionMethodId: v }),
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label>حالة التقديم</Label>
-              {renderCombobox(
-                presentationStatusItems,
-                draft.presentationStatusId,
-                (v) => setDraft({ ...draft, presentationStatusId: v }),
               )}
             </div>
 

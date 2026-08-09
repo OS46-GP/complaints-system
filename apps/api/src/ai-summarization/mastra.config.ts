@@ -1,5 +1,9 @@
-import { Agent } from "@mastra/core/agent";
+import type { Agent } from "@mastra/core/agent";
 import { resolveChatModel } from "../common/llm/model-provider";
+
+const ENABLE_AI = Boolean(process.env.LLM_MODEL);
+// When ENABLE_AI is false, the summarization / report-drafting endpoints
+// return 503 — there is no deterministic fallback for prose generation.
 
 const AGENT_INSTRUCTIONS = `أنت مساعد ذكاء اصطناعي متخصص في نظام إدارة الشكاوى الحكومية في محافظة المنوفية، مصر.
 مهمتك هي مساعدة المسؤولين الحكوميين في:
@@ -13,9 +17,19 @@ const AGENT_INSTRUCTIONS = `أنت مساعد ذكاء اصطناعي متخصص
 - كن دقيقاً ومختصراً، وتجنب الحشو أو التكرار
 - احترم الخصوصية: لا تذكر أرقام الهوية الوطنية في الملخصات العامة`;
 
-export const complaintsAgent = new Agent({
-  id: "complaints-agent",
-  name: "ComplaintsAgent",
-  instructions: AGENT_INSTRUCTIONS,
-  model: resolveChatModel(process.env.LLM_MODEL) || "google/gemini-3.6-flash",
-});
+let summarizationAgent: Agent | null = null;
+
+async function getOrCreateAgent(): Promise<Agent> {
+  if (!summarizationAgent) {
+    const { Agent } = await import("@mastra/core/agent");
+    summarizationAgent = new Agent({
+      id: "complaints-agent",
+      name: "ComplaintsAgent",
+      instructions: AGENT_INSTRUCTIONS,
+      model: resolveChatModel(process.env.LLM_MODEL),
+    });
+  }
+  return summarizationAgent;
+}
+
+export { ENABLE_AI, getOrCreateAgent };
