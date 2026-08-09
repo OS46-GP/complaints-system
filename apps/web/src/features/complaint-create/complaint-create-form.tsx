@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Send, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Send, Loader2, Trash2, ScanLine } from "lucide-react";
 
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 import type { FieldResult, LocationItem, ReferenceItem } from "@/features/complaint-list/types";
@@ -209,6 +209,7 @@ export function ComplaintCreateForm() {
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
   const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
+  const ocrPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINT_OCR : PATHS.ADMIN.COMPLAINT_OCR;
   const createMutation = useCreateComplaint();
   const linkDraftMutation = useLinkDraft();
 
@@ -465,18 +466,30 @@ export function ComplaintCreateForm() {
               يرجى تعبئة التفاصيل أدناه لمساعدتنا في معالجة شكواك بفعالية.
             </p>
           </div>
-          {showClearDraft && (
+          <div className="flex items-center gap-2 shrink-0">
+            {showClearDraft && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleClearDraft}
+                className="gap-2"
+                title="مسح البيانات المحفوظة والبدء من جديد"
+              >
+                <Trash2 className="size-4" />
+                مسح المسودة
+              </Button>
+            )}
             <Button
               type="button"
-              variant="ghost"
-              onClick={handleClearDraft}
-              className="gap-2 shrink-0"
-              title="مسح البيانات المحفوظة والبدء من جديد"
+              variant="outline"
+              onClick={() => navigate(ocrPath)}
+              className="gap-2"
+              title="إدخال بيانات الشكوى عبر الماسح الضوئي"
             >
-              <Trash2 className="size-4" />
-              مسح المسودة
+              <ScanLine className="size-4" />
+              إدخال عبر الماسح الضوئي
             </Button>
-          )}
+          </div>
         </div>
 
         <div className="mb-6 md:mb-8">

@@ -2,7 +2,6 @@ import { User, Settings } from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/shared/mode-toggle";
-import { NotificationBell } from "@/components/shared/notification-bell";
 import { SearchBar } from "@/components/shared/search-bar";
 import { SearchDialog } from "@/components/shared/search-dialog";
 import { UserNav, type UserNavItem } from "@/components/shared/user-nav";
@@ -62,7 +61,6 @@ export function AppHeader({
       <div className="flex items-center gap-1 md:gap-4">
         <SearchDialog />
         <ModeToggle />
-        <NotificationBell />
         <div className="mx-1 h-8 w-px bg-border md:mx-2" />
         <UserNav
           name={displayName}
