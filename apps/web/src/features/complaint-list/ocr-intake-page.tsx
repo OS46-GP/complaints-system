@@ -52,7 +52,7 @@ export function OcrIntakePage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="إدخال عبر OCR"
+        title="شكوى عبر الماسح الضوئي"
         description="رفع صورة شكوى لاستخراج البيانات تلقائياً"
       >
         <Button variant="outline" className="gap-2" onClick={() => navigate(listPath)}>
