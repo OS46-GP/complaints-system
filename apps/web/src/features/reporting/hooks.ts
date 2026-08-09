@@ -65,3 +65,34 @@ export function useGenerateMemo() {
     mutationFn: (complaintId: string) => reportingApi.memo(complaintId),
   });
 }
+
+export function useExportCustomReport() {
+  return useMutation({
+    mutationFn: (payload: CustomReportFilters & { format: ExportFormat }) =>
+      reportingApi.exportCustomReport(payload),
+  });
+}
+
+export function useDelayThresholds() {
+  return useQuery({
+    queryKey: ["settings-delay-thresholds"],
+    queryFn: () => reportingApi.getDelayThresholds(),
+  });
+}
+
+export function useUpdateDelayThresholds() {
+  return useMutation({
+    mutationFn: (payload: {
+      lowDays: number;
+      mediumDays: number;
+      highDays: number;
+    }) => reportingApi.updateDelayThresholds(payload),
+  });
+}
+
+export function useAiDraftPeriodReport() {
+  return useMutation({
+    mutationFn: ({ from, to }: { from: string; to: string }) =>
+      reportingApi.draftPeriodReport(from, to),
+  });
+}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { Search, FileText, Building2, MapPin, CheckSquare } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
@@ -16,14 +17,19 @@ import { ReportResultTable } from "@/features/reporting/components/report-result
 import { ExportButtons } from "@/features/reporting/components/export-buttons";
 import { ReportsNav } from "@/features/reporting/components/reports-nav";
 import { DateRangePicker, type DateRangeValue } from "@/features/reporting/components/date-range-picker";
-import { useCustomReport } from "@/features/reporting/hooks";
+import { useCustomReport, useExportCustomReport } from "@/features/reporting/hooks";
+import { openDownload } from "@/features/reporting/download";
 import {
   useDepartments,
   useExaminationStatuses,
   useLocations,
 } from "@/features/complaint-list/hooks";
 import type { DataTableColumn } from "@/components/shared/data-table";
-import type { CustomReportResult } from "@/features/reporting/types";
+import type {
+  CustomReportFilters,
+  CustomReportResult,
+  ExportFormat,
+} from "@/features/reporting/types";
 
 const columns: DataTableColumn[] = [
   { key: "number", label: "رقم الشكوى", className: "text-center" },
@@ -51,32 +57,81 @@ interface CustomReportBuilderProps {
 }
 
 export function CustomReportBuilder({ basePath }: CustomReportBuilderProps) {
-  const [dateRange, setDateRange] = useState<DateRangeValue>({});
-  const [village, setVillage] = useState("");
-  const [department, setDepartment] = useState("");
-  const [examinationStatus, setExaminationStatus] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [dateRange, setDateRange] = useState<DateRangeValue>(() => {
+    const from = searchParams.get("from") ?? undefined;
+    const to = searchParams.get("to") ?? undefined;
+    return from && to ? { from, to } : {};
+  });
+  const [village, setVillage] = useState(searchParams.get("village") ?? "");
+  const [department, setDepartment] = useState(
+    searchParams.get("department") ?? "",
+  );
+  const [examinationStatus, setExaminationStatus] = useState(
+    searchParams.get("examinationStatus") ?? "",
+  );
   const [result, setResult] = useState<CustomReportResult | null>(null);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
   const customMutation = useCustomReport();
+  const exportMutation = useExportCustomReport();
   const { data: departments, isLoading: departmentsLoading } = useDepartments();
   const { data: statuses, isLoading: statusesLoading } = useExaminationStatuses();
   const { data: locations, isLoading: locationsLoading } = useLocations();
 
   const villages = uniqueNames(locations ?? []);
 
-  const handleGenerate = () => {
-    customMutation.mutate(
-      {
-        dateRange:
-          dateRange.from && dateRange.to
-            ? { from: dateRange.from, to: dateRange.to }
-            : undefined,
-        village: village || undefined,
-        department: department || undefined,
-        examinationStatus: examinationStatus || undefined,
+  const buildFilters = (): CustomReportFilters => ({
+    dateRange:
+      dateRange.from && dateRange.to
+        ? { from: dateRange.from, to: dateRange.to }
+        : undefined,
+    village: village || undefined,
+    department: department || undefined,
+    examinationStatus: examinationStatus || undefined,
+  });
+
+  const syncUrl = () => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [key, value] of Object.entries(buildFilters())) {
+          if (value === undefined || value === "") {
+            next.delete(key);
+          } else if (key === "dateRange") {
+            const range = value as { from: string; to: string };
+            next.set("from", range.from);
+            next.set("to", range.to);
+          } else {
+            next.set(key, String(value));
+          }
+        }
+        return next;
       },
+      { replace: true },
+    );
+  };
+
+  const handleGenerate = () => {
+    syncUrl();
+    customMutation.mutate(buildFilters(), {
+      onSuccess: (data) => setResult(data),
+    });
+  };
+
+  const handleExport = (format: ExportFormat) => {
+    if (!result) return;
+    setExportingFormat(format);
+    exportMutation.mutate(
+      { ...buildFilters(), format },
       {
-        onSuccess: (data) => setResult(data),
+        onSuccess: (res) => {
+          setExportingFormat(null);
+          openDownload(res);
+        },
+        onError: () => {
+          setExportingFormat(null);
+        },
       },
     );
   };
@@ -247,9 +302,10 @@ export function CustomReportBuilder({ basePath }: CustomReportBuilderProps) {
               الشكاوى المطابقة
             </h2>
             <ExportButtons
-              disabled
-              disabledHint="تصدير التقارير المخصصة غير مدعوم مباشرة — يمكن توليد تقرير إنجاز أو متأخرات وتصديره من شاشة التوليد عند الطلب"
-              onExport={() => {}}
+              onExport={handleExport}
+              isExporting={exportingFormat}
+              disabled={!result}
+              disabledHint="ولّد التقرير أولًا ثم صدّره"
             />
           </div>
 

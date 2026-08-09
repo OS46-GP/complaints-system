@@ -31,10 +31,16 @@ export interface OverdueComplaint {
   citizenName: string;
   department: string | null;
   subject: string;
+  severity: string | null;
 }
 
 export interface DelayReport {
   period: ReportPeriod;
+  thresholds: {
+    Low: number;
+    Medium: number;
+    High: number;
+  };
   overdueThresholdDays: number;
   totalOverdue: number;
   departments: DelayRow[];
@@ -98,10 +104,21 @@ export interface MemoResult {
   mime: string;
 }
 
+export interface DelayThresholds {
+  id: number;
+  lowDays: number;
+  mediumDays: number;
+  highDays: number;
+  updatedAt: string;
+}
+
 export interface ReportFilters {
   from?: string;
   to?: string;
   department?: string;
+  village?: string;
+  sortBy?: "overdueCount" | "avgDaysOverdue";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CustomReportFilters {

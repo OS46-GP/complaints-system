@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Zap } from "lucide-react";
+import { Sparkles, Zap } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportsNav } from "@/features/reporting/components/reports-nav";
 import { GeneratedReportView } from "@/features/reporting/components/generated-report-view";
+import { AiReportDraftDialog } from "@/features/reporting/components/ai-report-draft-dialog";
 import { DateRangePicker, type DateRangeValue } from "@/features/reporting/components/date-range-picker";
 import { useGenerateReport } from "@/features/reporting/hooks";
 import { getReportTypeLabel, type ReportType } from "@/features/reporting/types";
@@ -25,6 +26,7 @@ interface OnDemandReportProps {
 export function OnDemandReport({ basePath }: OnDemandReportProps) {
   const [type, setType] = useState<ReportType>("ACHIEVEMENT");
   const [dateRange, setDateRange] = useState<DateRangeValue>({});
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const generateMutation = useGenerateReport();
   const generated = generateMutation.data;
 
@@ -87,7 +89,17 @@ export function OnDemandReport({ basePath }: OnDemandReportProps) {
             </div>
           </div>
 
-          <div className="mt-5 flex justify-end">
+          <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={!canGenerate}
+              onClick={() => setAiDialogOpen(true)}
+            >
+              <Sparkles className="size-4 text-primary" />
+              صياغة مسودة تقرير بالذكاء الاصطناعي
+            </Button>
             <Button
               type="button"
               className="gap-2"
@@ -107,6 +119,15 @@ export function OnDemandReport({ basePath }: OnDemandReportProps) {
       </Card>
 
       {generated && <GeneratedReportView report={generated} />}
+
+      {dateRange.from && dateRange.to && (
+        <AiReportDraftDialog
+          open={aiDialogOpen}
+          onOpenChange={setAiDialogOpen}
+          from={dateRange.from}
+          to={dateRange.to}
+        />
+      )}
 
       {!generated && !generateMutation.isPending && (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">

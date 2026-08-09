@@ -1,37 +1,26 @@
-import { useState } from "react";
+import { useMemo } from "react";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { AsyncLoader } from "@/components/shared/async-loader";
-import { Button } from "@/components/ui/button";
 import { ReportingFilterBar } from "@/features/reporting/components/reporting-filter-bar";
 import { DelaySection } from "@/features/reporting/components/delay-section";
 import { ReportsNav } from "@/features/reporting/components/reports-nav";
+import { ReportSection } from "@/features/reporting/components/report-section";
 import { ReportTableSkeleton } from "@/features/reporting/components/report-skeletons";
 import {
   lastYearRange,
-  type DateRangeValue,
 } from "@/features/reporting/components/date-range-picker";
+import { useReportFilters } from "@/features/reporting/use-report-filters";
 import { useDelayReport } from "@/features/reporting/hooks";
-import type { ReportFilters } from "@/features/reporting/types";
 
 interface DelaysReportPageProps {
   basePath: string;
 }
 
 export function DelaysReportPage({ basePath }: DelaysReportPageProps) {
-  const [draftRange, setDraftRange] = useState<DateRangeValue>(lastYearRange());
-  const [draftDepartment, setDraftDepartment] = useState("");
-  const [applied, setApplied] = useState<ReportFilters>(lastYearRange());
+  const defaults = useMemo(() => lastYearRange(), []);
+  const { filters, setFilters } = useReportFilters(defaults);
 
-  const { data, isLoading, isError, refetch } = useDelayReport(applied);
-
-  const handleApply = () => {
-    setApplied({
-      from: draftRange.from || undefined,
-      to: draftRange.to || undefined,
-      department: draftDepartment || undefined,
-    });
-  };
+  const { data, isLoading, isError, refetch } = useDelayReport(filters);
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,19 +32,13 @@ export function DelaysReportPage({ basePath }: DelaysReportPageProps) {
       />
 
       <ReportingFilterBar
-        dateRange={draftRange}
-        onDateRangeChange={setDraftRange}
-        department={draftDepartment}
-        onDepartmentChange={setDraftDepartment}
+        value={filters}
+        onChange={setFilters}
+        showVillage
+        showSort
       />
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleApply}>
-          تطبيق الفلترة
-        </Button>
-      </div>
-
-      <AsyncLoader
+      <ReportSection
         loading={isLoading}
         error={isError}
         onRetry={() => refetch()}
@@ -63,7 +46,7 @@ export function DelaysReportPage({ basePath }: DelaysReportPageProps) {
         skeleton={<ReportTableSkeleton />}
       >
         {data && <DelaySection report={data} />}
-      </AsyncLoader>
+      </ReportSection>
     </div>
   );
 }

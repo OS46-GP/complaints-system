@@ -1,17 +1,15 @@
-import { useState } from "react";
-import { Filter } from "lucide-react";
+import { useMemo } from "react";
 
 import { AsyncLoader } from "@/components/shared/async-loader";
 import { PageHeader } from "@/components/shared/page-header";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   currentMonthRange,
   lastYearRange,
-  type DateRangeValue,
 } from "@/features/reporting/components/date-range-picker";
 import { ReportCardsSkeleton } from "@/features/reporting/components/report-skeletons";
 import { ReportingFilterBar } from "@/features/reporting/components/reporting-filter-bar";
+import { useReportFilters } from "@/features/reporting/use-report-filters";
 import { useAchievementReport, useDelayReport } from "@/features/reporting/hooks";
 import type { ReportFilters } from "@/features/reporting/types";
 import { usePreferences } from "@/features/settings/preferences/store";
@@ -43,25 +41,18 @@ export function DashboardPage({
   delaysUrl,
 }: DashboardPageProps) {
   const { preferences } = usePreferences();
-  const defaultRange = (): DateRangeValue =>
-    preferences.dashboard.dateRange === "currentMonth"
-      ? currentMonthRange()
-      : lastYearRange();
-  const [draftRange, setDraftRange] = useState<DateRangeValue>(defaultRange);
-  const [draftDepartment, setDraftDepartment] = useState("");
-  const [applied, setApplied] = useState<ReportFilters>(defaultRange);
+  const defaultRange = useMemo(
+    (): ReportFilters =>
+      preferences.dashboard.dateRange === "currentMonth"
+        ? currentMonthRange()
+        : lastYearRange(),
+    [preferences.dashboard.dateRange],
+  );
+  const { filters, setFilters } = useReportFilters(defaultRange);
 
-  const achievement = useAchievementReport(applied);
-  const delays = useDelayReport(applied);
-  const status = useDashboardStatus(applied);
-
-  const handleApply = () => {
-    setApplied({
-      from: draftRange.from || undefined,
-      to: draftRange.to || undefined,
-      department: draftDepartment || undefined,
-    });
-  };
+  const achievement = useAchievementReport(filters);
+  const delays = useDelayReport(filters);
+  const status = useDashboardStatus(filters);
 
   const total = achievement.data?.governorateTotal ?? 0;
   const finished = achievement.data?.governorateFinished ?? 0;
@@ -80,19 +71,7 @@ export function DashboardPage({
 
       <QuickActions items={quickActions} />
 
-      <ReportingFilterBar
-        dateRange={draftRange}
-        onDateRangeChange={setDraftRange}
-        department={draftDepartment}
-        onDepartmentChange={setDraftDepartment}
-      />
-
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleApply} className="gap-2">
-          <Filter className="size-4" />
-          تطبيق الفلترة
-        </Button>
-      </div>
+      <ReportingFilterBar value={filters} onChange={setFilters} />
 
       <AsyncLoader
         loading={achievement.isLoading || delays.isLoading}

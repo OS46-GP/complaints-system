@@ -11,6 +11,7 @@ import type {
   ScheduledReportsResponse,
   AchievementReport,
   DelayReport,
+  DelayThresholds,
 } from "@/features/reporting/types";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -40,6 +41,7 @@ export const reportingApi = {
           department: filters?.department || undefined,
           from: filters?.from || undefined,
           to: filters?.to || undefined,
+          village: filters?.village || undefined,
         },
       })
       .then((res) => res.data),
@@ -51,6 +53,9 @@ export const reportingApi = {
           department: filters?.department || undefined,
           from: filters?.from || undefined,
           to: filters?.to || undefined,
+          village: filters?.village || undefined,
+          sortBy: filters?.sortBy || undefined,
+          order: filters?.sortOrder || undefined,
         },
       })
       .then((res) => res.data),
@@ -58,6 +63,11 @@ export const reportingApi = {
   custom: (payload: CustomReportFilters) =>
     axiosClient
       .post<CustomReportResult>("/api/reports/custom", payload)
+      .then((res) => res.data),
+
+  exportCustomReport: (payload: CustomReportFilters & { format: ExportFormat }) =>
+    axiosClient
+      .post<ExportResult>("/api/reports/custom/export", payload)
       .then((res) => res.data),
 
   scheduled: (params?: ScheduledReportsParams) =>
@@ -84,5 +94,24 @@ export const reportingApi = {
   memo: (complaintId: string) =>
     axiosClient
       .post<MemoResult>(`/api/complaints/${complaintId}/memo`)
+      .then((res) => res.data),
+
+  getDelayThresholds: () =>
+    axiosClient
+      .get<DelayThresholds>("/api/settings/delay-thresholds")
+      .then((res) => res.data),
+
+  updateDelayThresholds: (payload: {
+    lowDays: number;
+    mediumDays: number;
+    highDays: number;
+  }) =>
+    axiosClient
+      .put<DelayThresholds>("/api/settings/delay-thresholds", payload)
+      .then((res) => res.data),
+
+  draftPeriodReport: (from: string, to: string) =>
+    axiosClient
+      .post<{ draft: string }>("/api/ai/draft-report", { from, to })
       .then((res) => res.data),
 };

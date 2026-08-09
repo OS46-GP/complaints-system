@@ -127,8 +127,10 @@ export function DelaysChartCard({ report, detailsUrl }: DelaysChartCardProps) {
               إجمالي المتأخر: {report.totalOverdue.toLocaleString("ar-SA")}
             </span>
             <span>
-              عتبة التأخير:{" "}
-              {report.overdueThresholdDays.toLocaleString("ar-SA")} يوم
+              عتبات التأخير (يوم) — عالية:{" "}
+              {report.thresholds?.High.toLocaleString("ar-SA")} · متوسطة:{" "}
+              {report.thresholds?.Medium.toLocaleString("ar-SA")} · منخفضة:{" "}
+              {report.thresholds?.Low.toLocaleString("ar-SA")}
             </span>
           </div>
         </>
