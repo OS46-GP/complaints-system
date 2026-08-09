@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Param,
   Body,
   UseGuards,
@@ -42,6 +43,11 @@ export class SocialController {
     @Body("notes") notes?: string,
   ) {
     return this.socialService.rejectDraft(id, notes);
+  }
+
+  @Delete("drafts/:id")
+  deleteDraft(@Param("id") id: string) {
+    return this.socialService.deleteDraft(id);
   }
 
   @Post("drafts/:id/link")

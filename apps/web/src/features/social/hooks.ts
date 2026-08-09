@@ -77,6 +77,16 @@ export function useRejectDraft() {
   });
 }
 
+export function useDeleteDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => socialApi.deleteDraft(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SOCIAL_QUERY_KEYS.drafts });
+    },
+  });
+}
+
 export function useLinkDraft() {
   const queryClient = useQueryClient();
   return useMutation({

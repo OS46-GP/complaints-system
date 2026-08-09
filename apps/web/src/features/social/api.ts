@@ -30,6 +30,8 @@ export const socialApi = {
     axiosClient
       .post(`/api/social/drafts/${id}/reject`, { notes })
       .then((res) => res.data),
+  deleteDraft: (id: string) =>
+    axiosClient.delete(`/api/social/drafts/${id}`).then((res) => res.data),
   linkDraft: (id: string, complaintId: string) =>
     axiosClient
       .post(`/api/social/drafts/${id}/link`, { complaintId })

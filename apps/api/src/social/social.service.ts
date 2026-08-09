@@ -37,6 +37,15 @@ export class SocialService {
     });
   }
 
+  async deleteDraft(id: string) {
+    const draft = await this.prisma.client.socialDraft.findUnique({
+      where: { id },
+    });
+    if (!draft) throw new NotFoundException("Social draft not found");
+
+    return this.prisma.client.socialDraft.delete({ where: { id } });
+  }
+
   async linkDraftToComplaint(id: string, complaintId: string) {
     const draft = await this.prisma.client.socialDraft.findUnique({
       where: { id },

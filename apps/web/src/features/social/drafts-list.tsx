@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
-import { Check, X, ExternalLink, Loader2 } from "lucide-react";
+import { Check, X, ExternalLink, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useRejectDraft } from "@/features/social/hooks";
+import { useRejectDraft, useDeleteDraft } from "@/features/social/hooks";
 import type { SocialDraft } from "@/features/social/types";
 
 interface DraftsListProps {
@@ -32,8 +32,10 @@ export function DraftsList({ drafts }: DraftsListProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const rejectMutation = useRejectDraft();
+  const deleteMutation = useDeleteDraft();
   const [draftToReject, setDraftToReject] = useState<SocialDraft | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
+  const [draftToDelete, setDraftToDelete] = useState<SocialDraft | null>(null);
 
   const handleApprove = (draft: SocialDraft) => {
     const newComplaintPath = pathname.startsWith("/user")
@@ -55,6 +57,17 @@ export function DraftsList({ drafts }: DraftsListProps) {
         onError: () => toast.error("تعذر رفض المنشور"),
       },
     );
+  };
+
+  const handleDelete = () => {
+    if (!draftToDelete) return;
+    deleteMutation.mutate(draftToDelete.id, {
+      onSuccess: () => {
+        toast.success("تم حذف المنشور");
+        setDraftToDelete(null);
+      },
+      onError: () => toast.error("تعذر حذف المنشور"),
+    });
   };
 
   return (
@@ -85,15 +98,25 @@ export function DraftsList({ drafts }: DraftsListProps) {
                   {statusLabels[draft.status]}
                 </Badge>
               </div>
-              <a
-                href={draft.sourceLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-body-sm text-primary hover:underline"
-              >
-                رابط المنشور
-                <ExternalLink className="size-3.5" />
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={draft.sourceLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-body-sm text-primary hover:underline"
+                >
+                  رابط المنشور
+                  <ExternalLink className="size-3.5" />
+                </a>
+                <button
+                  type="button"
+                  title="حذف المنشور"
+                  className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  onClick={() => setDraftToDelete(draft)}
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
             </div>
 
             <p className="text-body-md text-foreground/90 whitespace-pre-wrap">
@@ -180,6 +203,44 @@ export function DraftsList({ drafts }: DraftsListProps) {
                 <X className="size-4" />
               )}
               تأكيد الرفض
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!draftToDelete}
+        onOpenChange={(open) => !open && setDraftToDelete(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>حذف المنشور</DialogTitle>
+            <DialogDescription>
+              سيتم حذف هذا المنشور نهائيًا من قائمة المراجعة. لا يمكن التراجع عن
+              هذه العملية.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setDraftToDelete(null)}
+              disabled={deleteMutation.isPending}
+            >
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="gap-2"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+              تأكيد الحذف
             </Button>
           </DialogFooter>
         </DialogContent>
