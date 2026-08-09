@@ -13,6 +13,7 @@ import {
   AchievementQueryDto,
   DelayQueryDto,
   CustomReportBodyDto,
+  CustomReportExportBodyDto,
   GenerateReportBodyDto,
   ExportQueryDto,
   ScheduledReportQueryDto,
@@ -29,6 +30,7 @@ export class ReportingController {
       query.department,
       query.from,
       query.to,
+      query.village,
     );
   }
 
@@ -38,6 +40,7 @@ export class ReportingController {
       query.department,
       query.from,
       query.to,
+      query.village,
       query.sortBy,
       query.order,
     );
@@ -46,6 +49,26 @@ export class ReportingController {
   @Post('custom')
   async customReport(@Body() body: CustomReportBodyDto) {
     return this.reportingService.getCustomReport(body);
+  }
+
+  @Post('custom/export')
+  async exportCustom(
+    @Body() body: CustomReportExportBodyDto,
+  ) {
+    const result = await this.reportingService.exportCustomReport(
+      {
+        dateRange: body.dateRange,
+        village: body.village,
+        department: body.department,
+        examinationStatus: body.examinationStatus,
+      },
+      body.format,
+    );
+    return {
+      downloadUrl: result.downloadUrl,
+      filename: result.filename,
+      mime: result.mime,
+    };
   }
 
   @Get('scheduled')

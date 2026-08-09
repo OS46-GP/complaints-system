@@ -232,6 +232,14 @@ model GeneratedReport {
   @@index([type])
 }
 
+model DelayThreshold {
+  id         Int      @id @default(1)
+  lowDays    Int      @default(45)
+  mediumDays Int      @default(30)
+  highDays   Int      @default(15)
+  updatedAt  DateTime @updatedAt
+}
+
 enum SocialDraftStatus {
   Pending
   Approved

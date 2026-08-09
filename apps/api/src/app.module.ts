@@ -13,6 +13,7 @@ import { AiTriageModule } from "./ai-triage/ai-triage.module";
 import { AiSummarizationModule } from "./ai-summarization/ai-summarization.module";
 import { SocialModule } from "./social/social.module";
 import { IntakeModule } from "./intake/intake.module";
+import { SettingsModule } from "./settings/settings.module";
 import { RequestLoggingMiddleware } from "./common/request-logging.middleware";
 
 @Module({
@@ -31,6 +32,7 @@ import { RequestLoggingMiddleware } from "./common/request-logging.middleware";
     IntakeModule,
     SocialModule,
     AiSummarizationModule,
+    SettingsModule,
   ],
 })
 export class AppModule implements NestModule {

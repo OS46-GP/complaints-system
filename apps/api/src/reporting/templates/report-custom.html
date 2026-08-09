@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head><meta charset="utf-8"><style>
+  body { font-family: "Noto Sans Arabic", sans-serif; padding: 20px; font-size: 12px; line-height: 1.6; }
+  h1 { text-align: center; font-size: 20px; margin-bottom: 4px; }
+  .period { text-align: center; font-size: 13px; color: #555; margin-bottom: 20px; }
+  .summary { margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: center; }
+  th { background: #1a365d; color: #fff; font-weight: bold; }
+  tr:nth-child(even) td { background: #f7fafc; }
+  .footer { text-align: center; font-size: 10px; color: #888; margin-top: 24px; }
+</style></head>
+<body>
+  <h1>تقرير مخصوص</h1>
+  <div class="period">{{filtersLabel}}</div>
+  <div class="summary">إجمالي الشكاوى المطابقة: {{totalRows}}</div>
+  <table>
+    <thead>
+      <tr><th>رقم الشكوى</th><th>المواطن</th><th>القرية / المركز</th><th>الجهة</th><th>حالة الفحص</th><th>تاريخ الوصول</th></tr>
+    </thead>
+    <tbody>
+      {{tableRows}}
+    </tbody>
+  </table>
+  <div class="footer">تم إنشاء هذا التقرير في {{generatedDate}}</div>
+</body>
+</html>

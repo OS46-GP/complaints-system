@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SettingsService } from '../settings/settings.service';
 import { computeCaseStatus } from '../complaints/case-status.config';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
 import * as path from 'path';
 import { renderHtmlToPdf } from './pdf-generator';
 
-const OVERDUE_THRESHOLD_DAYS = 30;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export interface AchievementRow {
   department: string;
@@ -21,8 +22,21 @@ export interface DelayRow {
   avgDaysOverdue: number;
 }
 
+export interface CustomReportComplaint {
+  id: string;
+  complaintNumber: number;
+  statementYear: number;
+  arrivalDate: string;
+  subject: string;
+  citizenName: string;
+  citizenVillage: string | null;
+  department: string | null;
+  examinationStatus: string | null;
+  severity: string | null;
+}
+
 export interface CustomReportResult {
-  complaints: Array<Record<string, unknown>>;
+  complaints: CustomReportComplaint[];
   summary: {
     total: number;
     byStatus: Record<string, number>;
@@ -66,7 +80,10 @@ function escapeHtml(value: string): string {
 
 @Injectable()
 export class ReportingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private settingsService: SettingsService,
+  ) {}
 
   private isFinished(examinationStatusName: string | null): boolean {
     return computeCaseStatus(examinationStatusName) === 'FINISHED';
@@ -83,13 +100,21 @@ export class ReportingService {
     return { start, end };
   }
 
-  async getAchievementReport(department?: string, from?: string, to?: string) {
+  async getAchievementReport(
+    department?: string,
+    from?: string,
+    to?: string,
+    village?: string,
+  ) {
     const { start, end } = this.parseDateRange(from, to);
     const where: Record<string, unknown> = {
       arrivalDate: { gte: start, lte: end },
     };
     if (department) {
       where.department = { name: department };
+    }
+    if (village) {
+      where.citizen = { village };
     }
 
     const complaints = await this.prisma.complaint.findMany({
@@ -159,18 +184,33 @@ export class ReportingService {
     department?: string,
     from?: string,
     to?: string,
+    village?: string,
     sortBy?: string,
     order?: 'asc' | 'desc',
   ) {
     const { start, end } = this.parseDateRange(from, to);
     const now = Date.now();
-    const thresholdMs = OVERDUE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
+
+    const thresholds = await this.settingsService.getDelayThresholds();
+    const thresholdDays: Record<string, number> = {
+      Low: thresholds.lowDays,
+      Medium: thresholds.mediumDays,
+      High: thresholds.highDays,
+    };
+    const maxThresholdDays = Math.max(
+      thresholds.lowDays,
+      thresholds.mediumDays,
+      thresholds.highDays,
+    );
 
     const where: Record<string, unknown> = {
       arrivalDate: { gte: start, lte: end },
     };
     if (department) {
       where.department = { name: department };
+    }
+    if (village) {
+      where.citizen = { village };
     }
 
     const complaints = await this.prisma.complaint.findMany({
@@ -181,8 +221,10 @@ export class ReportingService {
 
     const overdueComplaints = complaints.filter((c) => {
       if (this.isFinished(c.examinationStatus?.name ?? null)) return false;
+      const days =
+        (c.severity && thresholdDays[c.severity]) || thresholds.mediumDays;
       const elapsed = now - c.arrivalDate.getTime();
-      return elapsed > thresholdMs;
+      return elapsed > days * MS_PER_DAY;
     });
 
     const grouped = new Map<string, { count: number; totalDays: number }>();
@@ -194,9 +236,13 @@ export class ReportingService {
         grouped.set(deptName, { count: 0, totalDays: 0 });
       }
       const row = grouped.get(deptName)!;
+      const days =
+        (c.severity && thresholdDays[c.severity]) || thresholds.mediumDays;
       row.count++;
       totalOverdue++;
-      row.totalDays += Math.floor((now - c.arrivalDate.getTime() - thresholdMs) / (24 * 60 * 60 * 1000));
+      row.totalDays += Math.floor(
+        (now - c.arrivalDate.getTime() - days * MS_PER_DAY) / MS_PER_DAY,
+      );
     }
 
     const departments: DelayRow[] = Array.from(grouped.entries()).map(
@@ -217,7 +263,12 @@ export class ReportingService {
 
     return {
       period: { from: start.toISOString(), to: end.toISOString() },
-      overdueThresholdDays: OVERDUE_THRESHOLD_DAYS,
+      thresholds: {
+        Low: thresholds.lowDays,
+        Medium: thresholds.mediumDays,
+        High: thresholds.highDays,
+      },
+      overdueThresholdDays: maxThresholdDays,
       totalOverdue,
       departments,
       complaints: overdueComplaints.map((c) => ({
@@ -227,6 +278,7 @@ export class ReportingService {
         citizenName: c.citizen.fullName,
         department: c.department?.name ?? null,
         subject: c.subject,
+        severity: c.severity ?? null,
       })),
     };
   }
@@ -399,6 +451,134 @@ export class ReportingService {
       downloadUrl: `/uploads/${storageKey}`,
       mime,
       filename: `report-${report.type.toLowerCase()}.${format}`,
+    };
+  }
+
+  async exportCustomReport(
+    filters: {
+      dateRange?: { from: string; to: string };
+      village?: string;
+      department?: string;
+      examinationStatus?: string;
+    },
+    format: 'pdf' | 'xlsx',
+  ) {
+    const result = await this.getCustomReport(filters);
+
+    const dir = path.resolve('uploads', 'reports');
+    fs.mkdirSync(dir, { recursive: true });
+
+    const storageKey = `reports/custom-${Date.now()}.${format}`;
+    const fullPath = path.resolve('uploads', storageKey);
+
+    let buffer: Buffer;
+    let mime: string;
+
+    if (format === 'pdf') {
+      const out = await this.generateCustomReportPdf(result, filters);
+      buffer = out.buffer;
+      mime = out.mime;
+    } else {
+      const out = await this.generateCustomReportXlsx(result);
+      buffer = out.buffer;
+      mime = out.mime;
+    }
+
+    fs.writeFileSync(fullPath, buffer);
+
+    return {
+      downloadUrl: `/uploads/${storageKey}`,
+      mime,
+      filename: `custom-report.${format}`,
+    };
+  }
+
+  private async generateCustomReportPdf(
+    result: CustomReportResult,
+    filters: {
+      dateRange?: { from: string; to: string };
+      village?: string;
+      department?: string;
+      examinationStatus?: string;
+    },
+  ): Promise<{ buffer: Buffer; mime: string }> {
+    const formatDate = (iso: string) =>
+      new Date(iso).toLocaleDateString('ar-EG');
+
+    const tableRows = result.complaints
+      .map(
+        (c) => `<tr>
+          <td>${c.complaintNumber}-${c.statementYear}</td>
+          <td>${escapeHtml(c.citizenName)}</td>
+          <td>${escapeHtml(c.citizenVillage ?? '—')}</td>
+          <td>${escapeHtml(c.department ?? '—')}</td>
+          <td>${escapeHtml(c.examinationStatus ?? '—')}</td>
+          <td>${formatDate(c.arrivalDate)}</td>
+        </tr>`,
+      )
+      .join('\n');
+
+    const filtersLabelParts: string[] = [];
+    if (filters.dateRange) {
+      filtersLabelParts.push(
+        `الفترة: من ${new Date(filters.dateRange.from).toLocaleDateString('ar-EG')} إلى ${new Date(filters.dateRange.to).toLocaleDateString('ar-EG')}`,
+      );
+    }
+    if (filters.village) filtersLabelParts.push(`القرية/المركز: ${filters.village}`);
+    if (filters.department) filtersLabelParts.push(`الجهة: ${filters.department}`);
+    if (filters.examinationStatus)
+      filtersLabelParts.push(`حالة الفحص: ${filters.examinationStatus}`);
+
+    const html = replacePlaceholders(readTemplate('report-custom.html'), {
+      filtersLabel: filtersLabelParts.length > 0 ? filtersLabelParts.join(' • ') : 'جميع الشكاوى',
+      totalRows: String(result.summary.total),
+      tableRows,
+      generatedDate: new Date().toLocaleDateString('ar-EG'),
+    });
+
+    const buffer = await renderHtmlToPdf(html);
+    return { buffer, mime: 'application/pdf' };
+  }
+
+  private async generateCustomReportXlsx(
+    result: CustomReportResult,
+  ): Promise<{ buffer: Buffer; mime: string }> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('تقرير مخصص');
+    ws.views = [{ rightToLeft: true }];
+
+    const titleCell = ws.getCell('A1');
+    titleCell.value = 'تقرير مخصص';
+    titleCell.font = { size: 16, bold: true };
+    ws.mergeCells('A1:F1');
+
+    ws.getCell('A2').value = 'إجمالي الشكاوى المطابقة';
+    ws.getCell('B2').value = result.summary.total;
+    ws.mergeCells('A2:A2');
+
+    const headers = ['رقم الشكوى', 'المواطن', 'القرية / المركز', 'الجهة', 'حالة الفحص', 'تاريخ الوصول'];
+    headers.forEach((h, i) => {
+      ws.getCell(4, i + 1).value = h;
+    });
+
+    result.complaints.forEach((c, i) => {
+      const r = 5 + i;
+      ws.getCell(`A${r}`).value = `${c.complaintNumber}-${c.statementYear}`;
+      ws.getCell(`B${r}`).value = c.citizenName;
+      ws.getCell(`C${r}`).value = c.citizenVillage ?? '—';
+      ws.getCell(`D${r}`).value = c.department ?? '—';
+      ws.getCell(`E${r}`).value = c.examinationStatus ?? '—';
+      ws.getCell(`F${r}`).value = new Date(c.arrivalDate).toLocaleDateString('ar-EG');
+    });
+
+    ['A', 'B', 'C', 'D', 'E', 'F'].forEach((col) => {
+      ws.getColumn(col).width = 20;
+    });
+
+    const buf = await wb.xlsx.writeBuffer();
+    return {
+      buffer: Buffer.from(buf),
+      mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     };
   }
 
