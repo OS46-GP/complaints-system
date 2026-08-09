@@ -56,7 +56,11 @@ export class SocialMonitorService {
 
     for (const group of groups) {
       try {
-        const posts = await this.provider.fetchPosts(group.groupId, group.name);
+        const posts = await this.provider.fetchPosts(
+          group.groupId,
+          group.name,
+          group.type,
+        );
 
         for (const post of posts) {
           postsFetched++;

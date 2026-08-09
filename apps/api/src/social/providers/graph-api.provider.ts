@@ -1,5 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
-import type { SocialPost, SocialDataSourceProvider } from "./social-data-source.interface";
+import type {
+  SocialPost,
+  SocialDataSourceProvider,
+  SocialSourceType,
+} from "./social-data-source.interface";
 
 type FacebookPostRaw = {
   id: string;
@@ -14,7 +18,11 @@ export class GraphApiProvider implements SocialDataSourceProvider {
   readonly name = "graph-api";
   private readonly logger = new Logger(GraphApiProvider.name);
 
-  async fetchPosts(groupId: string, groupName: string): Promise<SocialPost[]> {
+  async fetchPosts(
+    groupId: string,
+    groupName: string,
+    _type: SocialSourceType,
+  ): Promise<SocialPost[]> {
     const accessToken = process.env.FB_ACCESS_TOKEN;
     if (!accessToken) {
       this.logger.warn("FB_ACCESS_TOKEN not set");
