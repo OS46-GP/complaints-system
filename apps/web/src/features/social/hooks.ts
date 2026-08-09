@@ -76,3 +76,14 @@ export function useRejectDraft() {
     },
   });
 }
+
+export function useLinkDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, complaintId }: { id: string; complaintId: string }) =>
+      socialApi.linkDraft(id, complaintId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SOCIAL_QUERY_KEYS.drafts });
+    },
+  });
+}

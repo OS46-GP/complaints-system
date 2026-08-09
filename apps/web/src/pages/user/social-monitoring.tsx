@@ -9,7 +9,7 @@ import { useSocialDrafts } from "@/features/social/hooks";
 import type { SocialDraftStatus } from "@/features/social/types";
 
 export default function UserSocialMonitoring() {
-  const [draftStatus, setDraftStatus] = useState<SocialDraftStatus | "">("");
+  const [draftStatus, setDraftStatus] = useState<SocialDraftStatus | "">("Pending");
 
   const {
     data: drafts,

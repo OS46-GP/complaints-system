@@ -18,7 +18,7 @@ import type { SocialDraftStatus } from "@/features/social/types";
 
 export default function AdminSocialMonitoring() {
   const { data: groups, isLoading, isError, refetch } = useMonitoredGroups();
-  const [draftStatus, setDraftStatus] = useState<SocialDraftStatus | "">("");
+  const [draftStatus, setDraftStatus] = useState<SocialDraftStatus | "">("Pending");
 
   const {
     data: drafts,
