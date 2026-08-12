@@ -1,0 +1,35 @@
+meta {
+  name: Generate Letter
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/complaints/{{complaintId}}/letters
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "templateId": "{{templateId}}"
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.downloadUrl: $notNull
+  res.body.filename: $notNull
+  res.body.mime: eq("application/pdf")
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.downloadUrl) {
+    bru.setVar("letterDownloadUrl", data.downloadUrl);
+  }
+}

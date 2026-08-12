@@ -1,0 +1,28 @@
+meta {
+  name: Update Letter Settings
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/letter-settings
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "managerName": "اسم المدير (محدث من برونو)",
+    "responseDefaultDays": 20
+  }
+}
+
+assert {
+  res.status: eq(200)
+  res.body.managerName: eq("اسم المدير (محدث من برونو)")
+  res.body.responseDefaultDays: eq(20)
+}

@@ -1,0 +1,39 @@
+meta {
+  name: Create Letter Template
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/letter-templates
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "name": "خطاب برونو تجريبي",
+    "description": "نموذج تجريبي أنشأته اختبارات برونو",
+    "type": "HTML",
+    "isActive": true,
+    "sortOrder": 99,
+    "body": "<div class=\"letter-head\"><div class=\"org-name\">{{organizationNameAr}}</div></div><p class=\"to\">إلى السيد/ مدير {{department}}</p><p>{{subject}}</p><div class=\"sign\">{{managerName}} <img src=\"{{managerSignature}}\" /></div>"
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.id: $notNull
+  res.body.name: eq("خطاب برونو تجريبي")
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.id) {
+    bru.setVar("templateId", data.id);
+  }
+}

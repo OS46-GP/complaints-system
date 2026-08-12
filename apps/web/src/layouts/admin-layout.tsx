@@ -14,6 +14,8 @@ import {
   ScanLine,
   PlusCircle,
   CalendarClock,
+  FileStack,
+  Landmark,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -55,6 +57,8 @@ const navGroups: NavGroup[] = [
       { title: "الجهات المعنية", url: PATHS.ADMIN.DEPARTMENTS, icon: Building2 },
       { title: "الفئات", url: PATHS.ADMIN.COMPLAINT_TYPES, icon: Tags },
       { title: "طرق الاستلام", url: PATHS.ADMIN.RECEPTION_METHODS, icon: Inbox },
+      { title: "نماذج الخطابات", url: PATHS.ADMIN.LETTER_TEMPLATES, icon: FileStack },
+      { title: "بيانات الجهة والخطابات", url: PATHS.ADMIN.LETTER_SETTINGS, icon: Landmark },
       { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },
     ],
   },

@@ -1,0 +1,25 @@
+meta {
+  name: List Letter Templates
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/letter-templates
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (Array.isArray(data) && data.length > 0) {
+    bru.setVar("templateId", data[0].id);
+  }
+}
