@@ -5,6 +5,7 @@ import {
   getComplaintLinks,
   analyzeComplaint,
   updateComplaintSeverity,
+  updateComplaintCaseStatus,
   unlinkComplaints,
   type SeverityLevel,
 } from "@/features/complaint-detail/api";
@@ -40,6 +41,18 @@ export function useUpdateSeverity(complaintId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (severity: SeverityLevel) => updateComplaintSeverity(complaintId, severity),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaint(complaintId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaints });
+    },
+  });
+}
+
+export function useUpdateCaseStatus(complaintId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (caseStatus: "FINISHED" | "NOT_FINISHED") =>
+      updateComplaintCaseStatus(complaintId, caseStatus),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaint(complaintId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.complaints });

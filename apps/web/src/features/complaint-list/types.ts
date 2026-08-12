@@ -6,6 +6,7 @@ export interface ApiCitizen {
   address: string;
   village: string | null;
   district: string | null;
+  locationCode: string | null;
 }
 
 export interface ApiDepartment {
@@ -37,6 +38,70 @@ export interface ApiComplaintFile {
   uploadedAt: string;
 }
 
+export type AssignmentStatus =
+  | "RESPONDED"
+  | "ACTIVE"
+  | "OVERDUE"
+  | "ENDED_WITHOUT_RESPONSE"
+  | "ENDED_WITH_RESPONSE";
+
+export interface ApiComplaintDepartment {
+  id: string;
+  complaintId: string;
+  departmentId: string;
+  department: ApiDepartment;
+  assignmentIndex: number;
+  createdAt: string;
+  endedAt: string | null;
+  assignmentStatus: AssignmentStatus;
+  responseText: string | null;
+  responseNumber: string | null;
+  responseDate: string | null;
+  importDate: string | null;
+  examinationStatus: ApiExaminationStatus | null;
+  examinationResult: string | null;
+  respondedAt: string | null;
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: string | null;
+  responseDeadlineDays: number | null;
+}
+
+export interface ApiComplaintUrgency {
+  id: string;
+  complaintId: string;
+  departmentId: string;
+  department: ApiDepartment;
+  assignmentId: string | null;
+  outgoingLetterNumber: string;
+  outgoingLetterDate: string;
+  createdAt: string;
+}
+
+export interface DueAssignmentRow {
+  assignmentId: string;
+  assignmentIndex: number;
+  createdAt: string;
+  complaintId: string;
+  complaintNumber: number;
+  statementYear: number;
+  subject: string;
+  citizenName: string | null;
+  departmentId: string;
+  departmentName: string;
+  departmentSubAuthority: string | null;
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: string | null;
+  responseDeadlineDays: number | null;
+  dueDate: string;
+  status: "ACTIVE" | "OVERDUE";
+}
+
+export interface DueAssignmentsResponse {
+  endingToday: DueAssignmentRow[];
+  overdue: DueAssignmentRow[];
+  counts: { endingToday: number; overdue: number };
+}
+
 export interface ApiComplaint {
   id: string;
   complaintNumber: number;
@@ -55,6 +120,8 @@ export interface ApiComplaint {
   createdAt: string;
   citizen: ApiCitizen;
   department: ApiDepartment | null;
+  departments: ApiComplaintDepartment[];
+  urgencies: ApiComplaintUrgency[];
   complaintType: ApiComplaintType | null;
   receptionMethod: ApiReferenceItem | null;
   examinationStatus: ApiExaminationStatus | null;

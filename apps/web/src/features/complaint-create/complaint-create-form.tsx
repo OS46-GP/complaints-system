@@ -44,7 +44,16 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
     subject: get("complaint_subject") || undefined,
     severity: (get("severity") as "Low" | "Medium" | "High") || undefined,
     complaintTypeId: get("complaint_typeId") || undefined,
-    departmentId: get("complaint_departmentId") || undefined,
+    departments: get("complaint_departmentId")
+      ? [
+          {
+            departmentId: get("complaint_departmentId"),
+            outgoingLetterNumber: "",
+            outgoingLetterDate: "",
+            responseDeadlineDays: "",
+          },
+        ]
+      : undefined,
     annotation: get("complaint_annotation") || undefined,
     citizen: {
       fullName: get("citizen_fullName") || "",
@@ -170,7 +179,7 @@ const OCR_KEY_TO_FIELD: Record<string, string> = {
   complaint_subject: "subject",
   severity: "severity",
   complaint_typeId: "complaintTypeId",
-  complaint_departmentId: "departmentId",
+  complaint_departmentId: "departments",
   complaint_annotation: "annotation",
   citizen_fullName: "citizen.fullName",
   citizen_nationalId: "citizen.nationalId",
@@ -186,19 +195,19 @@ const getNestedValue = (obj: Record<string, unknown>, path: string): string => {
     if (current === null || typeof current !== "object") return "";
     current = (current as Record<string, unknown>)[part];
   }
+  if (Array.isArray(current)) return current.length > 0 && typeof current[0] === "string" ? current[0] : "";
   return typeof current === "string" ? current : "";
 };
 
 const TOTAL_STEPS = STEP_FIELDS.length;
 
 function draftHasContent(draft: ComplaintDraft): boolean {
-  if (draft.step !== 1) return true;
   const v = draft.values;
   return (
     v.subject !== "" ||
     v.complaintTypeId !== "" ||
     v.receptionMethodId !== "" ||
-    v.departmentId !== "" ||
+    v.departments.some((department) => department.departmentId !== "") ||
     v.annotation !== "" ||
     v.files.length > 0 ||
     Object.values(v.citizen).some((value) => value !== "")
@@ -224,7 +233,7 @@ export function ComplaintCreateForm() {
 
   const restoredDraft = useMemo(() => {
     const draft = getDraft();
-    return draft && draft.seedTag === seedTag ? draft : null;
+    return draft && draft.seedTag === seedTag && draftHasContent(draft) ? draft : null;
   }, [seedTag]);
 
   const ocrOriginal = useMemo(
@@ -265,7 +274,16 @@ export function ComplaintCreateForm() {
           }
         }
       } else if (Array.isArray(value)) {
-        if ((values[key] as unknown[]).length === 0 && (value as unknown[]).length > 0) {
+        const currentArray = values[key] as unknown[];
+        const isEmptyDepartmentArray =
+          key === "departments" &&
+          (currentArray as never[]).every(
+            (item) => !((item as { departmentId: string }).departmentId || ""),
+          );
+        if (
+          (currentArray.length === 0 || isEmptyDepartmentArray) &&
+          (value as unknown[]).length > 0
+        ) {
           values[key] = value as never;
         }
       } else if (typeof value === "string") {
@@ -284,6 +302,7 @@ export function ComplaintCreateForm() {
   const [step, setStep] = useState(restoredDraft ? restoredDraft.step : 1);
   const [activeDraft, setActiveDraft] = useState<ComplaintDraft | null>(() => getDraft());
   const stepRef = useRef(step);
+  const suppressPersist = useRef(false);
   useEffect(() => {
     stepRef.current = step;
   }, [step]);
@@ -295,6 +314,7 @@ export function ComplaintCreateForm() {
   });
 
   useEffect(() => {
+    if (suppressPersist.current) return;
     const draft = {
       seedTag,
       values: form.getValues(),
@@ -304,6 +324,7 @@ export function ComplaintCreateForm() {
     setDraft(draft);
     setActiveDraft(draft);
     const subscription = form.watch((values) => {
+      if (suppressPersist.current) return;
       const nextDraft = {
         seedTag,
         values: values as ComplaintCreateFormValues,
@@ -418,10 +439,17 @@ export function ComplaintCreateForm() {
   };
 
   const handleClearDraft = () => {
-    form.reset(DEFAULT_DATA);
+    suppressPersist.current = true;
     clearDraft();
+    form.reset(DEFAULT_DATA);
     setActiveDraft(null);
     setStep(1);
+    if (ocrData || socialDraft) {
+      navigate(pathname, { replace: true, state: null });
+    }
+    setTimeout(() => {
+      suppressPersist.current = false;
+    }, 0);
   };
 
   const handleSubmit = (values: ComplaintCreateFormValues) => {
@@ -499,8 +527,8 @@ export function ComplaintCreateForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
-              {step === 1 && <ComplaintBasicInfoStep ocrFields={ocrFields} />}
-              {step === 2 && <ComplaintCitizenStep ocrFields={ocrFields} />}
+              {step === 1 && <ComplaintCitizenStep ocrFields={ocrFields} />}
+              {step === 2 && <ComplaintBasicInfoStep ocrFields={ocrFields} />}
               {step === 3 && <ComplaintAttachmentStep />}
               {step === 4 && <ComplaintReviewStep ocrFields={ocrFields} onGoToStep={setStep} />}
 

@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcrypt";
+import { LOCATION_SEED } from "./location-seed.data";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -19,6 +20,84 @@ async function syncSequences() {
       `SELECT setval(pg_get_serial_sequence('"${table}"','id'), (SELECT MAX(id) FROM "${table}"))`,
     );
   }
+}
+
+async function pruneFakeLocationHierarchy() {
+  const leftover = await prisma.location.findFirst({
+    where: { code: { startsWith: "MEN" } },
+    select: { code: true },
+  });
+  if (!leftover) return;
+  const attached = await prisma.citizen.count({
+    where: { locationCode: { startsWith: "MEN" } },
+  });
+  if (attached > 0) {
+    console.warn(`Skipping removal of legacy "MEN" locations: ${attached} citizens still reference them.`);
+    return;
+  }
+  const deleted = await prisma.location.deleteMany({
+    where: { code: { startsWith: "MEN" } },
+  });
+  if (deleted.count > 0) {
+    console.log(`Removed legacy fake location hierarchy (${deleted.count} rows).`);
+  }
+}
+
+async function backfillCitizenLocations() {
+  const locations = await prisma.location.findMany({
+    select: { code: true, name: true, level: true, parentCode: true },
+  });
+  const byCode = new Map(
+    locations.map((location) => [location.code, location]),
+  );
+
+  const districtFor = (location: (typeof locations)[number]): string => {
+    if (location.level === 2) return location.name;
+    let current = location;
+    while (current.parentCode) {
+      const parent = byCode.get(current.parentCode);
+      if (!parent) break;
+      current = parent;
+      if (current.level === 2) return current.name;
+    }
+    return "";
+  };
+
+  let updated = 0;
+  const BATCH = 1000;
+  let cursor = "";
+  for (;;) {
+    const citizens = await prisma.citizen.findMany({
+      where: {
+        locationCode: { not: null },
+        OR: [{ district: null }, { district: "" }, { village: null }, { village: "" }],
+        ...(cursor ? { id: { gt: cursor } } : {}),
+      },
+      select: { id: true, locationCode: true, district: true, village: true },
+      orderBy: { id: "asc" },
+      take: BATCH,
+    });
+    if (citizens.length === 0) break;
+    for (const citizen of citizens) {
+      const location = citizen.locationCode ? byCode.get(citizen.locationCode) : undefined;
+      if (!location) continue;
+      const district = citizen.district ? undefined : districtFor(location);
+      const village =
+        citizen.village
+          ? undefined
+          : (location.level ?? 0) >= 2
+            ? location.name
+            : undefined;
+      if (!district && !village) continue;
+      await prisma.citizen.update({
+        where: { id: citizen.id },
+        data: { ...(district ? { district } : {}), ...(village ? { village } : {}) },
+      });
+      updated += 1;
+    }
+    cursor = citizens[citizens.length - 1].id;
+  }
+  console.log(`Backfilled village/district for ${updated} citizens.`);
 }
 
 async function main() {
@@ -116,98 +195,14 @@ async function main() {
 
   await prisma.location.createMany({
     skipDuplicates: true,
-    data: [
-      {
-        code: "MEN",
-        name: "محافظة المنوفية",
-        parentCode: null,
-        level: 1,
-        levelDesc: "محافظة",
-        p0: "MEN",
-      },
-      {
-        code: "MEN_SHB",
-        name: "مركز شبين الكوم",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_SHB",
-      },
-      {
-        code: "MEN_QWS",
-        name: "مركز قويسنا",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_QWS",
-      },
-      {
-        code: "MEN_BRK",
-        name: "مركز بركة السبع",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_BRK",
-      },
-      {
-        code: "MEN_TLA",
-        name: "مركز تلا",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_TLA",
-      },
-      {
-        code: "MEN_MNF",
-        name: "مركز منوف",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_MNF",
-      },
-      {
-        code: "MEN_ASH",
-        name: "مركز أشمون",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_ASH",
-      },
-      {
-        code: "MEN_BAG",
-        name: "مركز الباجور",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_BAG",
-      },
-      {
-        code: "MEN_SAD",
-        name: "مركز السادات",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_SAD",
-      },
-      {
-        code: "MEN_SHD",
-        name: "مركز الشهداء",
-        parentCode: "MEN",
-        level: 2,
-        levelDesc: "مركز",
-        p0: "MEN",
-        p1: "MEN_SHD",
-      },
-    ],
+    data: LOCATION_SEED.map(
+      ({ p0, p1, p2, p3, p4, p5, ...location }) => location,
+    ),
   });
+
+  await pruneFakeLocationHierarchy();
+
+  await backfillCitizenLocations();
 
   await syncSequences();
 }

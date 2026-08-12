@@ -1,12 +1,10 @@
 import {
   AlertTriangle,
-  Building2,
   Calendar,
   Badge,
   FileDigit,
   Hash,
   Sparkles,
-  User,
 } from "lucide-react";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 import type { SeverityLevel } from "@/features/complaint-detail/api";
@@ -71,11 +69,9 @@ export function ComplaintMetaPanel({
     : { label: complaint.examinationStatusName || "-", variant: "bg-muted text-muted-foreground" };
 
   const rows = [
-    { icon: Hash, label: "رقم الشكوى", value: `#${complaint.complaintNumber}-${complaint.statementYear}` },
+    { icon: Hash, label: "رقم الشكوى", value: `#${complaint.complaintNumber}` },
     { icon: FileDigit, label: "سنة البيان", value: String(complaint.statementYear) },
     { icon: Calendar, label: "تاريخ الوصول", value: new Date(complaint.arrivalDate).toLocaleDateString("ar-SA") },
-    { icon: Building2, label: "الجهة", value: complaint.departmentName || "-" },
-    { icon: User, label: "المواطن", value: complaint.citizenName },
     {
       icon: Badge,
       label: "الحالة",

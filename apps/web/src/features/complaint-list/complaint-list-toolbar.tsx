@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, CalendarClock, Clock } from "lucide-react";
 import { useLocation } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,9 @@ interface ComplaintToolbarProps {
   onFiltersClear: () => void;
   sort: SortState;
   onSortChange: (sort: SortState) => void;
+  quickDueToday?: boolean;
+  quickOverdue?: boolean;
+  onToggleQuickFilter?: (key: "dueToday" | "overdueUnresponded") => void;
   start: number;
   end: number;
   totalCount: number;
@@ -45,6 +48,9 @@ export function ComplaintToolbar({
   onFiltersClear,
   sort,
   onSortChange,
+  quickDueToday,
+  quickOverdue,
+  onToggleQuickFilter,
   start,
   end,
   totalCount,
@@ -82,6 +88,30 @@ export function ComplaintToolbar({
           onFiltersChange={onFiltersChange}
           onClear={onFiltersClear}
         />
+        {onToggleQuickFilter && (
+          <>
+            <Button
+              variant={quickDueToday ? "default" : "outline"}
+              size="sm"
+              className="gap-1 md:gap-2"
+              onClick={() => onToggleQuickFilter("dueToday")}
+              aria-pressed={quickDueToday}
+            >
+              <CalendarClock className="size-4 text-warning" />
+              <span className="hidden sm:inline">تنتهي اليوم</span>
+            </Button>
+            <Button
+              variant={quickOverdue ? "default" : "outline"}
+              size="sm"
+              className="gap-1 md:gap-2"
+              onClick={() => onToggleQuickFilter("overdueUnresponded")}
+              aria-pressed={quickOverdue}
+            >
+              <Clock className="size-4 text-destructive" />
+              <span className="hidden sm:inline">متأخرة دون رد</span>
+            </Button>
+          </>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1 md:gap-2">

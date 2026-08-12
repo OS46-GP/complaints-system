@@ -3,12 +3,19 @@ export interface FileItem {
   id: string;
 }
 
+export interface DepartmentAssignmentFormValue {
+  departmentId: string;
+  outgoingLetterNumber: string;
+  outgoingLetterDate: string;
+  responseDeadlineDays: string;
+}
+
 export interface ComplaintCreateFormData {
   subject: string;
   complaintTypeId: string;
   severity?: "Low" | "Medium" | "High";
   receptionMethodId: string;
-  departmentId: string;
+  departments: DepartmentAssignmentFormValue[];
   annotation: string;
   citizen: {
     fullName: string;

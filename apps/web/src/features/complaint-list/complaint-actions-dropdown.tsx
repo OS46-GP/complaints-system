@@ -8,6 +8,8 @@ import {
   MessageSquareReply,
   Archive,
   Sparkles,
+  Repeat,
+  Zap,
   Trash2,
 } from "lucide-react";
 
@@ -52,11 +54,19 @@ export function ComplaintActionsDropdown({
   const archivePath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_ARCHIVE(complaintId)
     : PATHS.USER.COMPLAINT_ARCHIVE(complaintId);
+  const reassignPath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_REASSIGN(complaintId)
+    : PATHS.USER.COMPLAINT_REASSIGN(complaintId);
+  const urgencyPath = isAdmin
+    ? PATHS.ADMIN.COMPLAINT_URGENCY(complaintId)
+    : PATHS.USER.COMPLAINT_URGENCY(complaintId);
 
   const handleView = () => navigate(detailPath);
   const handleEdit = () => navigate(editPath);
   const handleResponse = () => navigate(responsePath);
   const handleArchive = () => navigate(archivePath);
+  const handleReassign = () => navigate(reassignPath);
+  const handleUrgency = () => navigate(urgencyPath);
   const handleDelete = () => setDeleteOpen(true);
   const handleSummary = () => setSummaryOpen(true);
 
@@ -94,6 +104,14 @@ export function ComplaintActionsDropdown({
           <DropdownMenuItem onClick={handleArchive} className="w-full gap-2">
             <Archive className="size-4" />
             أرشفة
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleReassign} className="w-full gap-2">
+            <Repeat className="size-4" />
+            إعادة إحالة
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleUrgency} className="w-full gap-2">
+            <Zap className="size-4 text-warning" />
+            استعجال
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

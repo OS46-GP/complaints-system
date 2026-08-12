@@ -1,10 +1,12 @@
 import { axiosClient } from "@/api/axios-client";
-import type { ApiComplaint, ApiCitizen, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload } from "@/features/complaint-list/types";
+import type { ApiComplaint, ApiCitizen, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload, DueAssignmentsResponse } from "@/features/complaint-list/types";
 
 export interface ListComplaintsParams {
   page?: number;
   limit?: number;
   departmentId?: string;
+  citizenNationalId?: string;
+  citizenFullName?: string;
   name?: string;
   complaintNumber?: number;
   statementYear?: number;
@@ -14,11 +16,31 @@ export interface ListComplaintsParams {
   receptionMethodId?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  dueToday?: boolean;
+  overdueUnresponded?: boolean;
 }
 
 export type UpdateComplaintPayload = Omit<Partial<CreateComplaintPayload>, "citizen"> & {
   citizen?: Partial<CreateComplaintPayload["citizen"]>;
 };
+
+export interface DepartmentResponsePayload {
+  responseText: string;
+  responseNumber?: string;
+  responseDate?: string;
+  examinationStatusId?: number;
+  examinationResult?: string;
+  outgoingLetterNumber?: string;
+  outgoingLetterDate?: string;
+  responseDeadlineDays?: number;
+}
+
+export interface DepartmentAssignmentPayload {
+  departmentId: string;
+  outgoingLetterNumber?: string;
+  outgoingLetterDate?: string;
+  responseDeadlineDays?: number;
+}
 
 export interface CreateComplaintPayload {
   statementYear: number;
@@ -29,6 +51,8 @@ export interface CreateComplaintPayload {
   subject: string;
   respondentName?: string;
   departmentId?: string;
+  departmentIds?: string[];
+  departments?: DepartmentAssignmentPayload[];
   annotation?: string;
   examinationStatusId?: number;
   examinationResult?: string;
@@ -55,6 +79,10 @@ export const complaintsApi = {
       .then((res) => res.data),
   getById: (id: string) =>
     axiosClient.get<ApiComplaint>(`/api/complaints/${id}`).then((res) => res.data),
+  getDueAssignments: () =>
+    axiosClient
+      .get<DueAssignmentsResponse>("/api/complaints/assignments/due")
+      .then((res) => res.data),
   remove: (id: string) =>
     axiosClient.delete(`/api/complaints/${id}`).then((res) => res.data),
   generatePdf: (id: string) =>
@@ -65,6 +93,43 @@ export const complaintsApi = {
     axiosClient.post("/api/complaints", payload).then((res) => res.data),
   update: (id: string, payload: UpdateComplaintPayload) =>
     axiosClient.patch(`/api/complaints/${id}`, payload).then((res) => res.data),
+  submitDepartmentResponse: (
+    id: string,
+    departmentId: string,
+    payload: DepartmentResponsePayload,
+  ) =>
+    axiosClient
+      .post<ApiComplaint>(`/api/complaints/${id}/departments/${departmentId}/response`, payload)
+      .then((res) => res.data),
+  reassignComplaint: (
+    id: string,
+    departmentId: string,
+    payload?: {
+      outgoingLetterNumber?: string;
+      outgoingLetterDate?: string;
+      responseDeadlineDays?: number;
+    },
+  ) =>
+    axiosClient
+      .post<ApiComplaint>(`/api/complaints/${id}/reassign`, {
+        departmentId,
+        ...(payload ?? {}),
+      })
+      .then((res) => res.data),
+  sendUrgency: (
+    id: string,
+    departmentId: string,
+    payload: {
+      outgoingLetterNumber: string;
+      outgoingLetterDate: string;
+    },
+  ) =>
+    axiosClient
+      .post<ApiComplaint>(`/api/complaints/${id}/urgency`, {
+        departmentId,
+        ...payload,
+      })
+      .then((res) => res.data),
   getDepartments: () =>
     axiosClient.get<Department[]>("/api/complaints/departments").then((res) => res.data),
   getComplaintTypes: () =>
@@ -78,6 +143,10 @@ export const complaintsApi = {
   getCitizenByNationalId: (nationalId: string) =>
     axiosClient
       .get<ApiCitizen | null>(`/api/complaints/citizens/${encodeURIComponent(nationalId)}`)
+      .then((res) => res.data),
+  findCitizensByName: (name: string) =>
+    axiosClient
+      .get<ApiCitizen[]>(`/api/complaints/citizens/by-name/${encodeURIComponent(name)}`)
       .then((res) => res.data),
   checkDuplicates: (payload: CheckDuplicatesPayload) =>
     axiosClient

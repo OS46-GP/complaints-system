@@ -6,10 +6,16 @@ import {
   Archive,
   Sparkles,
   Printer,
+  CheckCircle2,
   ChevronLeft,
+  Repeat,
+  Zap,
 } from "lucide-react";
+import { toast } from "sonner";
 import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useGenerateComplaintPdf } from "@/features/complaint-list/hooks";
+import { useUpdateCaseStatus } from "@/features/complaint-detail/hooks";
 
 interface ActionItem {
   icon: React.ReactNode;
@@ -21,16 +27,20 @@ interface ActionItem {
 interface ComplaintQuickActionsProps {
   complaintId: string;
   complaintLabel?: string;
+  caseStatus?: "FINISHED" | "NOT_FINISHED" | null;
 }
 
 export function ComplaintQuickActions({
   complaintId,
   complaintLabel,
+  caseStatus,
 }: ComplaintQuickActionsProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const pdfMutation = useGenerateComplaintPdf();
+  const caseStatusMutation = useUpdateCaseStatus(complaintId);
   const isAdmin = pathname.startsWith("/admin");
   const editPath = isAdmin
     ? `/admin/complaints/${complaintId}/edit`
@@ -38,16 +48,32 @@ export function ComplaintQuickActions({
   const responsePath = isAdmin
     ? `/admin/complaints/${complaintId}/response`
     : `/user/complaints/${complaintId}/response`;
+  const reassignPath = isAdmin
+    ? `/admin/complaints/${complaintId}/reassign`
+    : `/user/complaints/${complaintId}/reassign`;
+  const urgencyPath = isAdmin
+    ? `/admin/complaints/${complaintId}/urgency`
+    : `/user/complaints/${complaintId}/urgency`;
   const archivePath = isAdmin
     ? `/admin/complaints/${complaintId}/archive`
     : `/user/complaints/${complaintId}/archive`;
+
+  const isFinished = caseStatus === "FINISHED";
 
   const actions: ActionItem[] = [
     { icon: <Sparkles className="size-5" />, label: "الملخص الذكي", onClick: () => setSummaryOpen(true) },
     { icon: <Pencil className="size-5" />, label: "تعديل الشكوى", onClick: () => navigate(editPath) },
     { icon: <MessageSquareReply className="size-5" />, label: "إضافة رد", onClick: () => navigate(responsePath) },
+    { icon: <Repeat className="size-5" />, label: "إعادة إحالة", onClick: () => navigate(reassignPath) },
+    { icon: <Zap className="size-5" />, label: "استعجال", onClick: () => navigate(urgencyPath) },
     { icon: <Archive className="size-5" />, label: "أرشفة", onClick: () => navigate(archivePath) },
     { icon: <Printer className="size-5" />, label: "طباعة", onClick: () => pdfMutation.mutate(complaintId) },
+    {
+      icon: <CheckCircle2 className="size-5" />,
+      label: isFinished ? "إعادة فتح الشكوى" : "إغلاق الشكوى",
+      variant: isFinished ? "default" : "destructive",
+      onClick: () => setCloseConfirmOpen(true),
+    },
   ];
 
   return (
@@ -99,6 +125,38 @@ export function ComplaintQuickActions({
         onOpenChange={setSummaryOpen}
         complaintId={complaintId}
         complaintLabel={complaintLabel ?? complaintId}
+      />
+
+      <ConfirmDialog
+        open={closeConfirmOpen}
+        onOpenChange={setCloseConfirmOpen}
+        title={isFinished ? "إعادة فتح الشكوى" : "إغلاق الشكوى"}
+        description={
+          isFinished
+            ? "هل أنت متأكد من إعادة فتح هذه الشكوى؟ سيتم تحويل حالتها إلى قيد الفحص."
+            : "هل أنت متأكد من إغلاق هذه الشكوى؟ سيتم تحويل حالتها إلى منتهية."
+        }
+        confirmLabel={
+          caseStatusMutation.isPending
+            ? isFinished
+              ? "جارٍ الفتح..."
+              : "جارٍ الإغلاق..."
+            : isFinished
+              ? "إعادة فتح"
+              : "إغلاق"
+        }
+        cancelLabel="إلغاء"
+        variant={isFinished ? "default" : "destructive"}
+        loading={caseStatusMutation.isPending}
+        onConfirm={() =>
+          caseStatusMutation.mutate(isFinished ? "NOT_FINISHED" : "FINISHED", {
+            onSuccess: () => {
+              toast.success(isFinished ? "تم إعادة فتح الشكوى" : "تم إغلاق الشكوى");
+              setCloseConfirmOpen(false);
+            },
+            onError: () => toast.error("تعذر تحديث حالة الشكوى"),
+          })
+        }
       />
     </div>
   );

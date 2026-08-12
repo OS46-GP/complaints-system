@@ -17,8 +17,12 @@ export function LogoutButton({ className }: { className?: string }) {
 
   return (
     <Button
-      variant="destructive"
-      className={cn("gap-2", className)}
+      variant="ghost"
+      className={cn(
+        "gap-2 w-full justify-start text-sidebar-foreground",
+        "hover:bg-transparent! hover:text-destructive active:bg-transparent!",
+        className,
+      )}
       onClick={handleLogout}
     >
       <LogOut className="size-5" />

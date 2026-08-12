@@ -8,7 +8,16 @@ export function mapDetailsToForm(details: ComplaintDetailsData): ComplaintCreate
     complaintTypeId: details.complaintTypeId ? String(details.complaintTypeId) : "",
     severity: details.severity,
     receptionMethodId: details.receptionMethodId ? String(details.receptionMethodId) : "",
-    departmentId: details.departmentId ?? "",
+    departments: details.departments.map((department) => ({
+      departmentId: department.id,
+      outgoingLetterNumber: department.outgoingLetterNumber ?? "",
+      outgoingLetterDate: department.outgoingLetterDate
+        ? department.outgoingLetterDate.slice(0, 10)
+        : "",
+      responseDeadlineDays: department.responseDeadlineDays
+        ? String(department.responseDeadlineDays)
+        : "",
+    })),
     annotation: details.annotation ?? "",
     citizen: {
       fullName: details.citizenName,
@@ -22,6 +31,19 @@ export function mapDetailsToForm(details: ComplaintDetailsData): ComplaintCreate
   };
 }
 
+export function buildDepartmentAssignments(data: ComplaintCreateFormData) {
+  return data.departments
+    .filter((department) => department.departmentId.trim())
+    .map((department) => ({
+      departmentId: department.departmentId,
+      outgoingLetterNumber: department.outgoingLetterNumber.trim(),
+      outgoingLetterDate: department.outgoingLetterDate,
+      responseDeadlineDays: department.responseDeadlineDays
+        ? Number(department.responseDeadlineDays)
+        : undefined,
+    }));
+}
+
 export async function updateComplaint(
   id: string,
   data: ComplaintCreateFormData,
@@ -31,7 +53,7 @@ export async function updateComplaint(
     severity: data.severity,
     receptionMethodId: data.receptionMethodId ? Number(data.receptionMethodId) : undefined,
     complaintTypeId: data.complaintTypeId ? Number(data.complaintTypeId) : undefined,
-    departmentId: data.departmentId || undefined,
+    departments: buildDepartmentAssignments(data),
     annotation: data.annotation || undefined,
     citizen: {
       fullName: data.citizen.fullName || undefined,

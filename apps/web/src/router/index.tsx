@@ -18,6 +18,9 @@ const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
 
 const AdminDashboardPage = lazy(() => import("@/pages/admin/dashboard"));
 const AdminComplaintsPage = lazy(() => import("@/pages/admin/complaints"));
+const AdminDueAssignmentsPage = lazy(
+  () => import("@/pages/admin/assignments-due"),
+);
 const AdminOcrIntakePage = lazy(() => import("@/pages/admin/ocr-intake"));
 const AdminComplaintDetailPage = lazy(
   () => import("@/pages/admin/complaint-detail"),
@@ -28,6 +31,12 @@ const AdminEditComplaintPage = lazy(
 );
 const AdminComplaintResponsePage = lazy(
   () => import("@/pages/admin/complaint-response"),
+);
+const AdminComplaintReassignPage = lazy(
+  () => import("@/pages/admin/complaint-reassign"),
+);
+const AdminComplaintUrgencyPage = lazy(
+  () => import("@/pages/admin/complaint-urgency"),
 );
 const AdminComplaintArchivePage = lazy(
   () => import("@/pages/admin/complaint-archive"),
@@ -62,6 +71,9 @@ const AdminProfilePage = lazy(() => import("@/pages/admin/profile"));
 
 const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
 const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
+const UserDueAssignmentsPage = lazy(
+  () => import("@/pages/user/assignments-due"),
+);
 const UserOcrIntakePage = lazy(() => import("@/pages/user/ocr-intake"));
 const UserNewComplaintPage = lazy(() => import("@/pages/user/new-complaint"));
 const UserEditComplaintPage = lazy(
@@ -69,6 +81,12 @@ const UserEditComplaintPage = lazy(
 );
 const UserComplaintResponsePage = lazy(
   () => import("@/pages/user/complaint-response"),
+);
+const UserComplaintReassignPage = lazy(
+  () => import("@/pages/user/complaint-reassign"),
+);
+const UserComplaintUrgencyPage = lazy(
+  () => import("@/pages/user/complaint-urgency"),
 );
 const UserComplaintArchivePage = lazy(
   () => import("@/pages/user/complaint-archive"),
@@ -163,6 +181,14 @@ const AppRouter = () => {
               }
             />
             <Route
+              path={PATHS.ADMIN.DUE_ASSIGNMENTS}
+              element={
+                <SuspenseBoundary>
+                  <AdminDueAssignmentsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
               path={PATHS.ADMIN.COMPLAINT_OCR}
               element={
                 <SuspenseBoundary>
@@ -199,6 +225,22 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminComplaintResponsePage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.COMPLAINT_REASSIGN(":id")}
+              element={
+                <SuspenseBoundary>
+                  <AdminComplaintReassignPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.COMPLAINT_URGENCY(":id")}
+              element={
+                <SuspenseBoundary>
+                  <AdminComplaintUrgencyPage />
                 </SuspenseBoundary>
               }
             />
@@ -384,6 +426,22 @@ const AppRouter = () => {
               }
             />
             <Route
+              path={PATHS.USER.COMPLAINT_REASSIGN(":id")}
+              element={
+                <SuspenseBoundary>
+                  <UserComplaintReassignPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.COMPLAINT_URGENCY(":id")}
+              element={
+                <SuspenseBoundary>
+                  <UserComplaintUrgencyPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
               path={PATHS.USER.COMPLAINT_ARCHIVE(":id")}
               element={
                 <SuspenseBoundary>
@@ -396,6 +454,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserComplaintsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.DUE_ASSIGNMENTS}
+              element={
+                <SuspenseBoundary>
+                  <UserDueAssignmentsPage />
                 </SuspenseBoundary>
               }
             />

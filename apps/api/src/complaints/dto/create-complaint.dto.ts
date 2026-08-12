@@ -1,7 +1,8 @@
 import { Type } from "class-transformer";
-import { IsString, IsNotEmpty, IsDateString, IsOptional, ValidateNested, IsInt, Min, IsEnum } from "class-validator";
+import { IsString, IsNotEmpty, IsDateString, IsOptional, ValidateNested, IsInt, Min, IsEnum, IsArray } from "class-validator";
 import { Severity } from "@prisma/client";
 import { CreateCitizenDto } from "./create-citizen.dto";
+import { DepartmentAssignmentDto } from "./department-assignment.dto";
 
 export class CreateComplaintDto {
   @IsInt()
@@ -34,6 +35,17 @@ export class CreateComplaintDto {
   @IsOptional()
   @IsString()
   departmentId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  departmentIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DepartmentAssignmentDto)
+  departments?: DepartmentAssignmentDto[];
 
   @IsOptional()
   @IsInt()

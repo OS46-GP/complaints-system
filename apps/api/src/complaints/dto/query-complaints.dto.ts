@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, IsEnum, Min } from "class-validator";
+import { IsOptional, IsString, IsInt, IsEnum, Min, IsBooleanString } from "class-validator";
 import { Type } from "class-transformer";
 import { Severity } from "@prisma/client";
 
@@ -18,6 +18,14 @@ export class QueryComplaintsDto {
   @IsOptional()
   @IsString()
   departmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  citizenNationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  citizenFullName?: string;
 
   @IsOptional()
   @IsString()
@@ -65,4 +73,12 @@ export class QueryComplaintsDto {
   @IsOptional()
   @IsString()
   sortOrder?: "asc" | "desc";
+
+  @IsOptional()
+  @IsBooleanString()
+  dueToday?: string;
+
+  @IsOptional()
+  @IsBooleanString()
+  overdueUnresponded?: string;
 }
