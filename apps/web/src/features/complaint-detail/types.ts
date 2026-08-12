@@ -20,8 +20,7 @@ export interface ComplaintDetailsData {
   citizenAddress: string | null;
   citizenVillage: string | null;
   citizenDistrict: string | null;
-  departmentName: string | null;
-  departmentId: string | null;
+  departments: { id: string; name: string }[];
   complaintTypeName: string | null;
   complaintTypeId: number | null;
   receptionMethodName: string | null;

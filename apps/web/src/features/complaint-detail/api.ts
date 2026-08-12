@@ -38,8 +38,15 @@ function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
     citizenAddress: api.citizen.address || null,
     citizenVillage: api.citizen.village || null,
     citizenDistrict: api.citizen.district || null,
-    departmentName: api.department?.name ?? null,
-    departmentId: api.department?.id ?? null,
+    departments:
+      api.departments?.length > 0
+        ? api.departments.map((entry) => ({
+            id: entry.department.id,
+            name: entry.department.name,
+          }))
+        : api.department
+          ? [{ id: api.department.id, name: api.department.name }]
+          : [],
     complaintTypeName: api.complaintType?.name ?? null,
     complaintTypeId: api.complaintType?.id ?? null,
     receptionMethodName: api.receptionMethod?.name ?? null,
@@ -77,6 +84,26 @@ export async function updateComplaintSeverity(
   severity: SeverityLevel,
 ): Promise<{ severity: SeverityLevel }> {
   return complaintsApi.updateSeverity(id, severity);
+}
+
+const EXAMINATION_STATUS_NAMES: Record<"FINISHED" | "NOT_FINISHED", string> = {
+  FINISHED: "تم الفحص",
+  NOT_FINISHED: "قيد الفحص",
+};
+
+export async function updateComplaintCaseStatus(
+  id: string,
+  caseStatus: "FINISHED" | "NOT_FINISHED",
+): Promise<{ caseStatus: "FINISHED" | "NOT_FINISHED" }> {
+  const statuses = await complaintsApi.getExaminationStatuses();
+  const target = statuses.find(
+    (status) => status.name === EXAMINATION_STATUS_NAMES[caseStatus],
+  );
+  if (!target) {
+    throw new Error(`No examination status matching ${caseStatus}`);
+  }
+  await complaintsApi.update(id, { examinationStatusId: target.id });
+  return { caseStatus };
 }
 
 export async function unlinkComplaints(

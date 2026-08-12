@@ -4,6 +4,8 @@ import { ComplaintDescriptionCard } from "@/features/complaint-detail/complaint-
 import { ComplaintEvidenceGallery } from "@/features/complaint-detail/complaint-evidence-gallery";
 import { ComplaintTimeline } from "@/features/complaint-detail/complaint-timeline";
 import { ComplaintMetaPanel } from "@/features/complaint-detail/complaint-meta-panel";
+import { ComplaintCitizenCard } from "@/features/complaint-detail/complaint-citizen-card";
+import { ComplaintDepartmentsCard } from "@/features/complaint-detail/complaint-departments-card";
 import { ComplaintQuickActions } from "@/features/complaint-detail/complaint-quick-actions";
 import { ComplaintLinksPanel } from "@/features/complaint-detail/complaint-links-panel";
 import { useAnalyzeComplaint, useUpdateSeverity } from "@/features/complaint-detail/hooks";
@@ -37,6 +39,8 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
             subject={complaint.subject}
             annotation={complaint.annotation ?? ""}
           />
+          <ComplaintCitizenCard complaint={complaint} />
+          <ComplaintDepartmentsCard complaint={complaint} />
           {complaint.authorityResponseText && (
             <div className="bg-card border border-border rounded-xl p-4 md:p-6">
               <div className="flex items-center gap-2 mb-3">
@@ -79,7 +83,11 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
             isAnalyzing={analyzeMutation.isPending}
             onAnalyze={() => analyzeMutation.mutate()}
           />
-          <ComplaintQuickActions complaintId={complaint.id} complaintLabel={complaint.displayId} />
+          <ComplaintQuickActions
+            complaintId={complaint.id}
+            complaintLabel={complaint.displayId}
+            caseStatus={complaint.caseStatus}
+          />
         </div>
       </div>
     </>

@@ -8,7 +8,7 @@ export function mapDetailsToForm(details: ComplaintDetailsData): ComplaintCreate
     complaintTypeId: details.complaintTypeId ? String(details.complaintTypeId) : "",
     severity: details.severity,
     receptionMethodId: details.receptionMethodId ? String(details.receptionMethodId) : "",
-    departmentIds: details.departmentId ? [details.departmentId] : [],
+    departmentIds: details.departments.map((department) => department.id),
     annotation: details.annotation ?? "",
     citizen: {
       fullName: details.citizenName,
