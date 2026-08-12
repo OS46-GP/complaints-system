@@ -32,6 +32,9 @@ const relationMap: Record<string, string> = {
 const complaintInclude = {
   citizen: true,
   department: true,
+  departments: {
+    include: { department: true },
+  },
   receptionMethod: true,
   complaintType: true,
   examinationStatus: true,
@@ -77,9 +80,17 @@ export class ComplaintsService {
   ) {}
 
   async create(dto: CreateComplaintDto, user?: { id: string; role: string }) {
-    const { citizen, ...complaintData } = dto;
+    const { citizen, departmentIds, ...complaintData } = dto;
+
+    const uniqueDepartmentIds = [...new Set((departmentIds ?? []).filter((id) => id?.trim()))];
 
     const data: Record<string, unknown> = toRelationData(complaintData);
+    if (uniqueDepartmentIds.length > 0) {
+      data.department = { connect: { id: uniqueDepartmentIds[0] } };
+      data.departments = {
+        create: uniqueDepartmentIds.map((departmentId) => ({ departmentId })),
+      };
+    }
     parseDates(data);
     if (user) {
       data.createdBy = { connect: { id: user.id } };
@@ -161,13 +172,18 @@ export class ComplaintsService {
       presentationStatusId,
       sortBy,
       sortOrder = "desc",
+      citizenNationalId,
     } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ComplaintWhereInput = {};
 
     if (departmentId) {
-      where.departmentId = departmentId;
+      where.departments = { some: { departmentId } };
+    }
+
+    if (citizenNationalId) {
+      where.citizen = { nationalId: citizenNationalId };
     }
 
     if (name) {
@@ -278,10 +294,14 @@ export class ComplaintsService {
   async update(id: string, dto: UpdateComplaintDto) {
     const current = await this.findById(id);
 
-    const { citizen, ...complaintData } = dto;
+    const { citizen, departmentIds, ...complaintData } = dto;
 
     const data: Record<string, unknown> = toRelationData(complaintData);
     parseDates(data);
+
+    const uniqueDepartmentIds = departmentIds
+      ? [...new Set(departmentIds.filter((departmentId) => departmentId?.trim()))]
+      : null;
 
     const currentCitizenId = (current as Record<string, unknown>).citizenId as string | undefined;
 
@@ -305,10 +325,32 @@ export class ComplaintsService {
       }
     }
 
-    const complaint = await this.prisma.complaint.update({
-      where: { id },
-      data: data as Prisma.ComplaintUpdateInput,
-      include: complaintInclude,
+    const complaint = await this.prisma.client.$transaction(async (tx) => {
+      const txPrisma = tx as typeof this.prisma.client;
+
+      if (uniqueDepartmentIds) {
+        await (txPrisma as any).complaintDepartment.deleteMany({
+          where: { complaintId: id },
+        });
+        if (uniqueDepartmentIds.length > 0) {
+          await (txPrisma as any).complaintDepartment.createMany({
+            data: uniqueDepartmentIds.map((departmentId) => ({
+              complaintId: id,
+              departmentId,
+            })),
+          });
+        }
+        delete data.department;
+        data.department = uniqueDepartmentIds[0]
+          ? { connect: { id: uniqueDepartmentIds[0] } }
+          : { disconnect: true };
+      }
+
+      return txPrisma.complaint.update({
+        where: { id },
+        data: data as Prisma.ComplaintUpdateInput,
+        include: complaintInclude,
+      });
     });
 
     return this.addCaseStatus(complaint);
