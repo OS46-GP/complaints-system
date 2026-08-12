@@ -77,6 +77,31 @@ export interface ApiComplaintUrgency {
   createdAt: string;
 }
 
+export interface DueAssignmentRow {
+  assignmentId: string;
+  assignmentIndex: number;
+  createdAt: string;
+  complaintId: string;
+  complaintNumber: number;
+  statementYear: number;
+  subject: string;
+  citizenName: string | null;
+  departmentId: string;
+  departmentName: string;
+  departmentSubAuthority: string | null;
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: string | null;
+  responseDeadlineDays: number | null;
+  dueDate: string;
+  status: "ACTIVE" | "OVERDUE";
+}
+
+export interface DueAssignmentsResponse {
+  endingToday: DueAssignmentRow[];
+  overdue: DueAssignmentRow[];
+  counts: { endingToday: number; overdue: number };
+}
+
 export interface ApiComplaint {
   id: string;
   complaintNumber: number;

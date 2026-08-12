@@ -18,6 +18,9 @@ const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
 
 const AdminDashboardPage = lazy(() => import("@/pages/admin/dashboard"));
 const AdminComplaintsPage = lazy(() => import("@/pages/admin/complaints"));
+const AdminDueAssignmentsPage = lazy(
+  () => import("@/pages/admin/assignments-due"),
+);
 const AdminOcrIntakePage = lazy(() => import("@/pages/admin/ocr-intake"));
 const AdminComplaintDetailPage = lazy(
   () => import("@/pages/admin/complaint-detail"),
@@ -68,6 +71,9 @@ const AdminProfilePage = lazy(() => import("@/pages/admin/profile"));
 
 const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
 const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
+const UserDueAssignmentsPage = lazy(
+  () => import("@/pages/user/assignments-due"),
+);
 const UserOcrIntakePage = lazy(() => import("@/pages/user/ocr-intake"));
 const UserNewComplaintPage = lazy(() => import("@/pages/user/new-complaint"));
 const UserEditComplaintPage = lazy(
@@ -171,6 +177,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminComplaintsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.DUE_ASSIGNMENTS}
+              element={
+                <SuspenseBoundary>
+                  <AdminDueAssignmentsPage />
                 </SuspenseBoundary>
               }
             />
@@ -440,6 +454,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserComplaintsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.DUE_ASSIGNMENTS}
+              element={
+                <SuspenseBoundary>
+                  <UserDueAssignmentsPage />
                 </SuspenseBoundary>
               }
             />

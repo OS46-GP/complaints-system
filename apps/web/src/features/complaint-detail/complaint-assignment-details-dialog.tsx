@@ -1,5 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router";
 import {
+  ArrowLeft,
   Building2,
   CalendarClock,
   FileText,
@@ -24,6 +26,7 @@ interface ComplaintAssignmentDetailsDialogProps {
   assignment: DepartmentAssignment;
   departmentAssignments?: DepartmentAssignment[];
   initialAssignmentId?: string;
+  complaintHref?: string;
 }
 
 function DetailRow({
@@ -72,6 +75,7 @@ export function ComplaintAssignmentDetailsDialog({
   assignment,
   departmentAssignments,
   initialAssignmentId,
+  complaintHref,
 }: ComplaintAssignmentDetailsDialogProps) {
   const list = useMemo(() => {
     const items =
@@ -216,6 +220,16 @@ export function ComplaintAssignmentDetailsDialog({
               </span>
             )}
           </div>
+
+          {complaintHref && (
+            <Link
+              to={complaintHref}
+              className="mt-4 inline-flex items-center gap-1.5 text-label-sm text-primary hover:underline"
+            >
+              <ArrowLeft className="size-4" />
+              عرض الشكوى بأكملها
+            </Link>
+          )}
         </div>
       </DialogContent>
     </Dialog>

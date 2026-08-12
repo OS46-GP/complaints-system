@@ -39,6 +39,7 @@ export default function AdminDashboard() {
     <DashboardPage
       quickActions={quickActions}
       delaysUrl={PATHS.ADMIN.REPORTS.DELAYS}
+      dueAssignmentsUrl={PATHS.ADMIN.DUE_ASSIGNMENTS}
     />
   );
 }

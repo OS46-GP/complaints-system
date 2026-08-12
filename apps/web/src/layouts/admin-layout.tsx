@@ -13,6 +13,7 @@ import {
   Inbox,
   ScanLine,
   PlusCircle,
+  CalendarClock,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -31,6 +32,11 @@ const navGroups: NavGroup[] = [
     label: "الشكاوى",
     items: [
       { title: "الشكاوى", url: PATHS.ADMIN.COMPLAINTS, icon: ClipboardList },
+      {
+        title: "إحالات بانتظار الرد",
+        url: PATHS.ADMIN.DUE_ASSIGNMENTS,
+        icon: CalendarClock,
+      },
       {
         title: "شكوى عبر الماسح الضوئي",
         url: PATHS.ADMIN.COMPLAINT_OCR,

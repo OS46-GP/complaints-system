@@ -1,5 +1,5 @@
 import { axiosClient } from "@/api/axios-client";
-import type { ApiComplaint, ApiCitizen, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload } from "@/features/complaint-list/types";
+import type { ApiComplaint, ApiCitizen, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload, DueAssignmentsResponse } from "@/features/complaint-list/types";
 
 export interface ListComplaintsParams {
   page?: number;
@@ -16,6 +16,8 @@ export interface ListComplaintsParams {
   receptionMethodId?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  dueToday?: boolean;
+  overdueUnresponded?: boolean;
 }
 
 export type UpdateComplaintPayload = Omit<Partial<CreateComplaintPayload>, "citizen"> & {
@@ -77,6 +79,10 @@ export const complaintsApi = {
       .then((res) => res.data),
   getById: (id: string) =>
     axiosClient.get<ApiComplaint>(`/api/complaints/${id}`).then((res) => res.data),
+  getDueAssignments: () =>
+    axiosClient
+      .get<DueAssignmentsResponse>("/api/complaints/assignments/due")
+      .then((res) => res.data),
   remove: (id: string) =>
     axiosClient.delete(`/api/complaints/${id}`).then((res) => res.data),
   generatePdf: (id: string) =>

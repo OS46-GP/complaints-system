@@ -41,6 +41,25 @@ type AssignmentStatusInput = {
   responseDeadlineDays: number | null;
 };
 
+export type DueAssignmentRow = {
+  assignmentId: string;
+  assignmentIndex: number;
+  createdAt: string;
+  complaintId: string;
+  complaintNumber: number;
+  statementYear: number;
+  subject: string;
+  citizenName: string | null;
+  departmentId: string;
+  departmentName: string;
+  departmentSubAuthority: string | null;
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: string | null;
+  responseDeadlineDays: number | null;
+  dueDate: string;
+  status: "ACTIVE" | "OVERDUE";
+};
+
 export function computeAssignmentStatus(
   row: AssignmentStatusInput,
   now = new Date(),
@@ -299,6 +318,21 @@ export class ComplaintsService {
 
     if (presentationStatusId) {
       where.presentationStatusId = presentationStatusId;
+    }
+
+    const dueToday = query.dueToday === "true";
+    const overdueUnresponded = query.overdueUnresponded === "true";
+    if (dueToday || overdueUnresponded) {
+      const buckets: Array<"dueToday" | "overdue"> = [];
+      if (dueToday) buckets.push("dueToday");
+      if (overdueUnresponded) buckets.push("overdue");
+      const ids = new Set<string>();
+      for (const bucket of buckets) {
+        for (const id of await this.getUnrespondedDueComplaintIds(bucket)) {
+          ids.add(id);
+        }
+      }
+      where.id = { in: [...ids] };
     }
 
     const validSortFields = [
@@ -635,6 +669,132 @@ export class ComplaintsService {
     });
 
     return this.addCaseStatus(result!);
+  }
+
+  private findUnrespondedOpenAssignments() {
+    return this.prisma.client.complaintDepartment.findMany({
+      where: {
+        endedAt: null,
+        respondedAt: null,
+        OR: [{ responseText: null }, { responseText: "" }],
+      },
+      include: {
+        department: true,
+        complaint: {
+          select: {
+            id: true,
+            complaintNumber: true,
+            statementYear: true,
+            subject: true,
+            citizen: { select: { fullName: true } },
+          },
+        },
+      },
+      orderBy: [{ assignmentIndex: "asc" }, { createdAt: "asc" }],
+    });
+  }
+
+  async getAssignmentsDue() {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+    );
+
+    const rows = (await this.findUnrespondedOpenAssignments()) as Array<{
+      id: string;
+      complaintId: string;
+      departmentId: string;
+      assignmentIndex: number;
+      createdAt: Date;
+      outgoingLetterNumber: string | null;
+      outgoingLetterDate: Date | null;
+      responseDeadlineDays: number | null;
+      department: { name: string; subAuthority: string | null };
+      complaint: {
+        complaintNumber: number;
+        statementYear: number;
+        subject: string;
+        citizen: { fullName: string };
+      };
+    }>;
+
+    const endingToday: DueAssignmentRow[] = [];
+    const overdue: DueAssignmentRow[] = [];
+
+    for (const row of rows) {
+      if (!row.outgoingLetterDate || !row.responseDeadlineDays) continue;
+      const due = new Date(row.outgoingLetterDate);
+      due.setDate(due.getDate() + row.responseDeadlineDays);
+      const dueTime = due.getTime();
+      if (dueTime >= endOfToday.getTime()) continue;
+
+      const item: DueAssignmentRow = {
+        assignmentId: row.id,
+        assignmentIndex: row.assignmentIndex,
+        createdAt: row.createdAt.toISOString(),
+        complaintId: row.complaintId,
+        complaintNumber: row.complaint.complaintNumber,
+        statementYear: row.complaint.statementYear,
+        subject: row.complaint.subject,
+        citizenName: row.complaint.citizen.fullName,
+        departmentId: row.departmentId,
+        departmentName: row.department.name,
+        departmentSubAuthority: row.department.subAuthority,
+        outgoingLetterNumber: row.outgoingLetterNumber,
+        outgoingLetterDate: row.outgoingLetterDate.toISOString(),
+        responseDeadlineDays: row.responseDeadlineDays,
+        dueDate: due.toISOString(),
+        status: dueTime < startOfToday.getTime() ? "OVERDUE" : "ACTIVE",
+      };
+
+      if (dueTime < startOfToday.getTime()) overdue.push(item);
+      else endingToday.push(item);
+    }
+
+    const byDue = (a: DueAssignmentRow, b: DueAssignmentRow) =>
+      a.dueDate.localeCompare(b.dueDate);
+
+    return {
+      endingToday: endingToday.sort(byDue),
+      overdue: overdue.sort(byDue),
+      counts: {
+        endingToday: endingToday.length,
+        overdue: overdue.length,
+      },
+    };
+  }
+
+  private async getUnrespondedDueComplaintIds(bucket: "dueToday" | "overdue") {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+    );
+
+    const rows = (await this.findUnrespondedOpenAssignments()) as Array<{
+      complaintId: string;
+      outgoingLetterDate: Date | null;
+      responseDeadlineDays: number | null;
+    }>;
+
+    const ids = new Set<string>();
+    for (const row of rows) {
+      if (!row.outgoingLetterDate || !row.responseDeadlineDays) continue;
+      const due = new Date(row.outgoingLetterDate);
+      due.setDate(due.getDate() + row.responseDeadlineDays);
+      const dueTime = due.getTime();
+      if (dueTime >= endOfToday.getTime()) continue;
+      const isOverdue = dueTime < startOfToday.getTime();
+      if (bucket === "overdue" ? isOverdue : !isOverdue) {
+        ids.add(row.complaintId);
+      }
+    }
+    return [...ids];
   }
 
   async getDepartments() {

@@ -70,6 +70,8 @@ export function ComplaintList({
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
   const search = searchParams.get("search") ?? "";
   const filters = filtersFromParams(searchParams);
+  const quickDueToday = (searchParams.get("dueToday") ?? "") === "true";
+  const quickOverdue = (searchParams.get("overdueUnresponded") ?? "") === "true";
   const sort = sortFromParams(searchParams, {
     sortBy: preferences.complaints.sortBy,
     sortOrder: preferences.complaints.sortOrder,
@@ -114,11 +116,21 @@ export function ComplaintList({
     });
   };
 
+  const toggleQuickFilter = (key: "dueToday" | "overdueUnresponded") => {
+    setSearchParams((prev) => {
+      if (prev.get(key) === "true") prev.delete(key);
+      else prev.set(key, "true");
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
   const clearFilters = () => {
     setSearchParams({});
   };
 
-  const hasFilters = !!search || Object.values(filters).some((v) => v !== "");
+  const hasFilters =
+    !!search || Object.values(filters).some((v) => v !== "") || quickDueToday || quickOverdue;
   const isEmpty = complaints.length === 0;
 
   const start = (currentPage - 1) * pageSize + 1;
@@ -185,6 +197,9 @@ export function ComplaintList({
         onFiltersClear={clearFilters}
         sort={sort}
         onSortChange={handleSortChange}
+        quickDueToday={quickDueToday}
+        quickOverdue={quickOverdue}
+        onToggleQuickFilter={toggleQuickFilter}
         start={start}
         end={end}
         totalCount={totalCount}

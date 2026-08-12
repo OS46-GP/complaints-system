@@ -115,6 +115,11 @@ export class ComplaintsController {
     return new StreamableFile(stream);
   }
 
+  @Get("assignments/due")
+  getAssignmentsDue() {
+    return this.complaintsService.getAssignmentsDue();
+  }
+
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.complaintsService.findById(id);

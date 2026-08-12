@@ -1,5 +1,5 @@
 import { type LucideIcon } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import {
   SidebarContent,
@@ -27,6 +27,10 @@ export interface NavGroup {
 
 export function SidebarNav({ groups }: { groups: NavGroup[] }) {
   const { setOpenMobile } = useSidebar();
+  const { pathname } = useLocation();
+
+  const isItemActive = (item: NavItem) =>
+    item.isActive ?? (item.url !== "#" && pathname.startsWith(item.url));
 
   return (
     <SidebarContent className="my-10">
@@ -35,27 +39,29 @@ export function SidebarNav({ groups }: { groups: NavGroup[] }) {
           {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
-              {group.items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={item.isActive}
-                    tooltip={item.title}
-                    className={cn(
-                      "h-11 px-4 py-3 text-xs font-medium text-start",
-                      item.isActive &&
-                        "border-r-2 border-sidebar-primary bg-sidebar-accent text-sidebar-primary",
-                    )}
-                  >
-                    <Link to={item.url} onClick={() => setOpenMobile(false)}>
-                      <item.icon
-                        className={cn("size-5", item.isActive && "fill-current")}
-                      />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {group.items.map((item) => {
+                const isActive = isItemActive(item);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className={cn(
+                        "h-11 px-4 py-3 text-xs font-medium text-start rounded-md",
+                        "hover:bg-transparent! active:bg-transparent! data-open:hover:bg-transparent! data-active:bg-transparent! hover:text-sidebar-foreground data-active:text-sidebar-accent-foreground",
+                        isActive &&
+                          "border-r-2 border-sidebar-primary bg-sidebar-accent text-sidebar-primary hover:bg-sidebar-accent! active:bg-sidebar-accent! data-active:bg-sidebar-accent! data-active:text-sidebar-accent-foreground!",
+                      )}
+                    >
+                      <Link to={item.url} onClick={() => setOpenMobile(false)}>
+                        <item.icon className="size-5" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -17,6 +17,7 @@ export const QUERY_KEYS = {
   locations: ["locations"] as const,
   users: ["users"] as const,
   user: (id: string) => ["user", id] as const,
+  dueAssignments: ["due-assignments"] as const,
 };
 
 export function useComplaints(params: ListComplaintsParams) {
@@ -44,6 +45,8 @@ export function useComplaintsFromSearchParams(
   const receptionMethodId = searchParams.get("receptionMethodId") ?? "";
   const complaintNumber = searchParams.get("complaintNumber") ?? "";
   const statementYear = searchParams.get("statementYear") ?? "";
+  const dueToday = (searchParams.get("dueToday") ?? "") === "true";
+  const overdueUnresponded = (searchParams.get("overdueUnresponded") ?? "") === "true";
   const sortBy = searchParams.get("sortBy") ?? preferences.complaints.sortBy;
   const sortOrder =
     (searchParams.get("sortOrder") as "asc" | "desc" | null) ??
@@ -60,8 +63,17 @@ export function useComplaintsFromSearchParams(
     receptionMethodId: receptionMethodId ? Number(receptionMethodId) : undefined,
     complaintNumber: complaintNumber ? Number(complaintNumber) : undefined,
     statementYear: statementYear ? Number(statementYear) : undefined,
+    dueToday: dueToday || undefined,
+    overdueUnresponded: overdueUnresponded || undefined,
     sortBy: sortBy ?? undefined,
     sortOrder: sortOrder ?? undefined,
+  });
+}
+
+export function useDueAssignments() {
+  return useQuery({
+    queryKey: QUERY_KEYS.dueAssignments,
+    queryFn: complaintsApi.getDueAssignments,
   });
 }
 

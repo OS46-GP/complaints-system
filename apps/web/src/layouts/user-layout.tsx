@@ -32,6 +32,11 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "الشكاوى", url: PATHS.USER.COMPLAINTS, icon: ClipboardList },
       {
+        title: "إحالات بانتظار الرد",
+        url: PATHS.USER.DUE_ASSIGNMENTS,
+        icon: CalendarClock,
+      },
+      {
         title: "شكوى عبر الماسح الضوئي",
         url: PATHS.USER.COMPLAINT_OCR,
         icon: ScanLine,

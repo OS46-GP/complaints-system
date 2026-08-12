@@ -39,6 +39,7 @@ export default function UserDashboard() {
     <DashboardPage
       quickActions={quickActions}
       delaysUrl={PATHS.USER.REPORTS.DELAYS}
+      dueAssignmentsUrl={PATHS.USER.DUE_ASSIGNMENTS}
     />
   );
 }

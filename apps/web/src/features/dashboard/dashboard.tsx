@@ -16,6 +16,7 @@ import { usePreferences } from "@/features/settings/preferences/store";
 
 import { useDashboardStatus } from "./dashboard-hooks";import { DashboardKpiCards } from "./kpi-cards";
 import { DelaysChartCard } from "./delays-chart-card";
+import { DueAssignmentsCard } from "@/features/due-assignments/due-assignments-card";
 import { QuickActions, type QuickActionItem } from "./quick-actions";
 import { StatusDonutCard } from "./status-donut-card";
 
@@ -24,6 +25,7 @@ export type { QuickActionItem } from "./quick-actions";
 interface DashboardPageProps {
   quickActions: QuickActionItem[];
   delaysUrl?: string;
+  dueAssignmentsUrl?: string;
 }
 
 function ChartCardSkeleton() {
@@ -39,6 +41,7 @@ function ChartCardSkeleton() {
 export function DashboardPage({
   quickActions,
   delaysUrl,
+  dueAssignmentsUrl,
 }: DashboardPageProps) {
   const { preferences } = usePreferences();
   const defaultRange = useMemo(
@@ -70,6 +73,8 @@ export function DashboardPage({
       />
 
       <QuickActions items={quickActions} />
+
+      <DueAssignmentsCard detailsUrl={dueAssignmentsUrl} />
 
       <ReportingFilterBar value={filters} onChange={setFilters} />
 
