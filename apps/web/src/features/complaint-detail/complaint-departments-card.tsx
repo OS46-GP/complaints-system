@@ -1,4 +1,15 @@
-import { Building2, MessageSquareReply, FileUp } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertTriangle,
+  Building2,
+  FileUp,
+  History,
+  MessageSquareReply,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AssignmentStatusBadge } from "@/features/complaint-detail/assignment-status-badge";
+import { ComplaintAssignmentDetailsDialog } from "@/features/complaint-detail/complaint-assignment-details-dialog";
+import { formatDate } from "@/features/complaint-detail/assignment-status";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
 interface ComplaintDepartmentsCardProps {
@@ -6,6 +17,19 @@ interface ComplaintDepartmentsCardProps {
 }
 
 export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCardProps) {
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+
+  const selectedDepartment = selectedDepartmentId
+    ? complaint.departments.find((department) => department.id === selectedDepartmentId)
+    : null;
+  const selectedDepartmentAssignments = selectedDepartmentId
+    ? complaint.assignmentHistory.filter(
+        (assignment) => assignment.departmentId === selectedDepartmentId,
+      )
+    : [];
+  const selectedAssignment =
+    selectedDepartmentAssignments[selectedDepartmentAssignments.length - 1] ?? null;
+
   return (
     <section className="rounded-xl border border-border bg-surface-container-lowest p-stack-lg">
       <h3 className="font-heading text-title-sm md:text-title-md text-foreground mb-4 flex items-center gap-2">
@@ -16,11 +40,31 @@ export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCard
         <ul className="space-y-3">
           {complaint.departments.map((department) => {
             const hasResponse = !!department.responseText;
+            const missedDeadline =
+              department.assignmentStatus === "OVERDUE" ||
+              department.assignmentStatus === "ENDED_WITHOUT_RESPONSE";
             return (
               <li key={department.id} className="space-y-2">
-                <div className="flex items-start gap-2 font-body text-body-md text-foreground">
-                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
-                  {department.name}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 font-body text-body-md text-foreground">
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                    <span className="flex items-center gap-2 flex-wrap">
+                      {department.name}
+                      <AssignmentStatusBadge status={department.assignmentStatus} />
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 shrink-0"
+                    onClick={() =>
+                      setSelectedDepartmentId(department.id)
+                    }
+                  >
+                    <History className="size-3.5" />
+                    السجل
+                  </Button>
                 </div>
 
                 {(department.outgoingLetterNumber ||
@@ -32,9 +76,7 @@ export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCard
                       <span>رقم الصادر: {department.outgoingLetterNumber}</span>
                     )}
                     {department.outgoingLetterDate && (
-                      <span>
-                        {new Date(department.outgoingLetterDate).toLocaleDateString("ar-SA")}
-                      </span>
+                      <span>{formatDate(department.outgoingLetterDate)}</span>
                     )}
                     {department.responseDeadlineDays && (
                       <span>المهلة: {department.responseDeadlineDays} يوم</span>
@@ -56,20 +98,20 @@ export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCard
                         <span>رقم الوارد: {department.responseNumber}</span>
                       )}
                       {department.importDate && (
-                        <span>
-                          تاريخ الوارد:{" "}
-                          {new Date(department.importDate).toLocaleDateString("ar-SA")}
-                        </span>
+                        <span>تاريخ الوارد: {formatDate(department.importDate)}</span>
                       )}
                       {department.examinationStatusName && (
                         <span>{department.examinationStatusName}</span>
                       )}
                       {department.responseDate && (
-                        <span>
-                          {new Date(department.responseDate).toLocaleDateString("ar-SA")}
-                        </span>
+                        <span>{formatDate(department.responseDate)}</span>
                       )}
                     </div>
+                  </div>
+                ) : missedDeadline ? (
+                  <div className="ms-4 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-body-sm text-destructive">
+                    <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                    <span>انتهت المهلة دون رد</span>
                   </div>
                 ) : (
                   <p className="ms-4 font-body text-body-sm text-muted-foreground">
@@ -82,6 +124,18 @@ export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCard
         </ul>
       ) : (
         <p className="font-body text-body-md text-muted-foreground">—</p>
+      )}
+
+      {selectedDepartment && selectedAssignment && (
+        <ComplaintAssignmentDetailsDialog
+          open={!!selectedDepartmentId}
+          onOpenChange={(open) => {
+            if (!open) setSelectedDepartmentId(null);
+          }}
+          displayId={complaint.displayId}
+          assignment={selectedAssignment}
+          departmentAssignments={selectedDepartmentAssignments}
+        />
       )}
     </section>
   );

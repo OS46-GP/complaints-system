@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { Repeat, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
@@ -6,6 +6,7 @@ import { Repeat, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { useComplaint } from "@/features/complaint-detail/hooks";
 import { useDepartments } from "@/features/complaint-list/hooks";
 import { useReassignComplaint } from "@/features/complaint-reassign/hooks";
+import { AssignmentStatusBadge } from "@/features/complaint-detail/assignment-status-badge";
 import { AsyncLoader } from "@/components/shared/async-loader";
 import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { PATHS } from "@/router/paths";
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { DepartmentAssignment } from "@/features/complaint-detail/types";
 
 interface ComplaintReassignFormProps {
   complaintId: string;
@@ -41,6 +43,35 @@ export function ComplaintReassignForm({ complaintId }: ComplaintReassignFormProp
   const { data: complaint, isLoading, isError, refetch } = useComplaint(complaintId);
   const { data: departments } = useDepartments();
 
+  const selectedDepartmentId = departmentId || complaint?.departments[0]?.id || "";
+
+  const selectedDepartmentHistory = useMemo(
+    () =>
+      (complaint?.assignmentHistory ?? []).filter(
+        (assignment) => assignment.departmentId === selectedDepartmentId,
+      ),
+    [complaint, selectedDepartmentId],
+  );
+  const mostRecentAssignment: DepartmentAssignment | null =
+    selectedDepartmentHistory[selectedDepartmentHistory.length - 1] ?? null;
+
+  const [prefilledDepartmentId, setPrefilledDepartmentId] = useState<string | null>(null);
+
+  if (selectedDepartmentId && selectedDepartmentId !== prefilledDepartmentId) {
+    setPrefilledDepartmentId(selectedDepartmentId);
+    setOutgoingLetterNumber(mostRecentAssignment?.outgoingLetterNumber ?? "");
+    setOutgoingLetterDate(
+      mostRecentAssignment?.outgoingLetterDate
+        ? mostRecentAssignment.outgoingLetterDate.slice(0, 10)
+        : "",
+    );
+    setResponseDeadlineDays(
+      mostRecentAssignment?.responseDeadlineDays
+        ? String(mostRecentAssignment.responseDeadlineDays)
+        : "",
+    );
+  }
+
   if (!complaint) {
     return (
       <AsyncLoader
@@ -53,39 +84,26 @@ export function ComplaintReassignForm({ complaintId }: ComplaintReassignFormProp
     );
   }
 
-  const assignedDepartmentIds = new Set(complaint.departments.map((department) => department.id));
-  const respondedDepartmentIds = new Set(
-    complaint.departments
-      .filter((department) => department.responseText)
-      .map((department) => department.id),
-  );
-
-  const selectedDepartmentId = departmentId || complaint.departments[0]?.id || "";
-  const selectedDepartmentRecord = complaint.departments.find(
-    (department) => department.id === selectedDepartmentId,
-  );
   const selectedDepartment = departments?.find(
     (department) => department.id === selectedDepartmentId,
   );
-  const isAssigned = assignedDepartmentIds.has(selectedDepartmentId);
-  const isResponded = respondedDepartmentIds.has(selectedDepartmentId);
 
-  useEffect(() => {
-    if (!selectedDepartmentRecord) return;
-    setOutgoingLetterNumber((previous) => previous || selectedDepartmentRecord.outgoingLetterNumber || "");
-    setOutgoingLetterDate((previous) =>
-      previous ||
-      (selectedDepartmentRecord.outgoingLetterDate
-        ? selectedDepartmentRecord.outgoingLetterDate.slice(0, 10)
-        : ""),
-    );
-    setResponseDeadlineDays((previous) =>
-      previous ||
-      (selectedDepartmentRecord.responseDeadlineDays
-        ? String(selectedDepartmentRecord.responseDeadlineDays)
-        : ""),
-    );
-  }, [selectedDepartmentRecord]);
+  const currentStateText = !mostRecentAssignment
+    ? "سيتم إحالة الشكوى إلى هذه الجهة لأول مرة."
+    : mostRecentAssignment.status === "RESPONDED"
+      ? "سبق أن ردت الجهة على الشكوى. ستُفتح إحالة جديدة ويفتح باب الرد من جديد لديها."
+      : mostRecentAssignment.status === "ENDED_WITH_RESPONSE"
+        ? "انتهت إحالة سابقة بعد رد الجهة. سيتم فتح إحالة جديدة لها."
+        : mostRecentAssignment.status === "OVERDUE"
+          ? "لدى الجهة إحالة مفتوحة متأخرة عن الرد (انتهت المهلة). سيتم فتح إحالة جديدة لها."
+          : mostRecentAssignment.status === "ENDED_WITHOUT_RESPONSE"
+            ? "انتهت إحالة الجهة السابقة دون رد. سيتم فتح إحالة جديدة لها."
+            : "لدى الجهة إحالة مفتوحة حالياً دون رد. سيتم فتح إحالة جديدة بنفس الجهة.";
+
+  const hasWarningState = !!mostRecentAssignment &&
+    (mostRecentAssignment.status === "RESPONDED" ||
+      mostRecentAssignment.status === "ENDED_WITH_RESPONSE" ||
+      mostRecentAssignment.status === "OVERDUE");
 
   const isFormValid =
     !!selectedDepartmentId &&
@@ -147,9 +165,9 @@ export function ComplaintReassignForm({ complaintId }: ComplaintReassignFormProp
 
           {selectedDepartment && (
             <div className="rounded-lg border border-border bg-surface-container-low p-4 flex items-start gap-3">
-              {isResponded ? (
+              {hasWarningState ? (
                 <AlertTriangle className="size-5 text-warning shrink-0 mt-0.5" />
-              ) : isAssigned ? (
+              ) : mostRecentAssignment ? (
                 <Info className="size-5 text-primary shrink-0 mt-0.5" />
               ) : (
                 <CheckCircle2 className="size-5 text-success shrink-0 mt-0.5" />
@@ -161,12 +179,16 @@ export function ComplaintReassignForm({ complaintId }: ComplaintReassignFormProp
                     ? ` — ${selectedDepartment.subAuthority}`
                     : ""}
                 </p>
+                {mostRecentAssignment && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <AssignmentStatusBadge status={mostRecentAssignment.status} />
+                    <span className="text-label-xs text-muted-foreground">
+                      الإحالة رقم {mostRecentAssignment.assignmentIndex}
+                    </span>
+                  </div>
+                )}
                 <p className="font-body text-body-sm text-muted-foreground">
-                  {isResponded
-                    ? "هذه الجهة سبق أن ردت على الشكوى. ستُعاد إحالة الشكوى إليها ويفتح باب الرد من جديد لديها."
-                    : isAssigned
-                      ? "هذه الجهة مرتبطة بالفعل بهذه الشكوى ولم ترد بعد."
-                      : "سيتم إحالة الشكوى إلى هذه الجهة لأول مرة."}
+                  {currentStateText}
                 </p>
               </div>
             </div>

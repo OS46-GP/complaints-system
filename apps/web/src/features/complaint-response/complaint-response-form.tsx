@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
@@ -40,8 +40,23 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
   const { data: complaint, isLoading, isError, refetch } = useComplaint(complaintId);
   const { data: examinationStatuses } = useExaminationStatuses();
 
-  const departments = complaint?.departments.filter((department) => !department.responseText) ?? [];
-  const selectedDepartmentId = departmentId || departments[0]?.id || "";
+  const openDepartments = useMemo(() => {
+    const latest = new Map<string, { id: string; name: string; index: number }>();
+    for (const assignment of complaint?.assignmentHistory ?? []) {
+      if (assignment.endedAt || assignment.responseText) continue;
+      const existing = latest.get(assignment.departmentId);
+      if (!existing || assignment.assignmentIndex > existing.index) {
+        latest.set(assignment.departmentId, {
+          id: assignment.departmentId,
+          name: assignment.departmentName,
+          index: assignment.assignmentIndex,
+        });
+      }
+    }
+    return [...latest.values()];
+  }, [complaint]);
+
+  const selectedDepartmentId = departmentId || openDepartments[0]?.id || "";
 
   if (!complaint) {
     return (
@@ -103,16 +118,16 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
                 <SelectValue placeholder="اختر الجهة المعنية" />
               </SelectTrigger>
               <SelectContent>
-                {departments.map((department) => (
+                {openDepartments.map((department) => (
                   <SelectItem key={department.id} value={department.id}>
                     {department.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {departments.length === 0 && (
+            {openDepartments.length === 0 && (
               <p className="text-body-sm text-muted-foreground">
-                لا توجد جهات معنية لم ترد بعد على هذه الشكوى.
+                لا توجد جهات معنية بإحالة مفتوحة دون رد على هذه الشكوى.
               </p>
             )}
           </div>

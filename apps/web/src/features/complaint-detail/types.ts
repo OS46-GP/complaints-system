@@ -1,3 +1,50 @@
+export type AssignmentStatus =
+  | "RESPONDED"
+  | "ACTIVE"
+  | "OVERDUE"
+  | "ENDED_WITHOUT_RESPONSE"
+  | "ENDED_WITH_RESPONSE";
+
+export interface DepartmentAssignment {
+  id: string;
+  assignmentIndex: number;
+  departmentId: string;
+  departmentName: string;
+  departmentSubAuthority: string | null;
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: string | null;
+  responseDeadlineDays: number | null;
+  responseText: string | null;
+  responseNumber: string | null;
+  responseDate: string | null;
+  importDate: string | null;
+  examinationStatusName: string | null;
+  examinationResult: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  endedAt: string | null;
+  status: AssignmentStatus;
+}
+
+export interface DepartmentSummary {
+  id: string;
+  name: string;
+  assignmentStatus: AssignmentStatus;
+  assignmentId: string | null;
+  assignmentIndex: number | null;
+  responseText: string | null;
+  responseNumber: string | null;
+  responseDate: string | null;
+  importDate: string | null;
+  examinationStatusName: string | null;
+  examinationResult: string | null;
+  respondedAt: string | null;
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: string | null;
+  responseDeadlineDays: number | null;
+  endedAt: string | null;
+}
+
 export interface ComplaintDetailsData {
   id: string;
   displayId: string;
@@ -20,20 +67,8 @@ export interface ComplaintDetailsData {
   citizenAddress: string | null;
   citizenVillage: string | null;
   citizenDistrict: string | null;
-  departments: {
-    id: string;
-    name: string;
-    responseText: string | null;
-    responseNumber: string | null;
-    responseDate: string | null;
-    importDate: string | null;
-    examinationStatusName: string | null;
-    examinationResult: string | null;
-    respondedAt: string | null;
-    outgoingLetterNumber: string | null;
-    outgoingLetterDate: string | null;
-    responseDeadlineDays: number | null;
-  }[];
+  departments: DepartmentSummary[];
+  assignmentHistory: DepartmentAssignment[];
   complaintTypeName: string | null;
   complaintTypeId: number | null;
   receptionMethodName: string | null;

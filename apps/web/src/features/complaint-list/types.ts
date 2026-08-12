@@ -38,8 +38,22 @@ export interface ApiComplaintFile {
   uploadedAt: string;
 }
 
+export type AssignmentStatus =
+  | "RESPONDED"
+  | "ACTIVE"
+  | "OVERDUE"
+  | "ENDED_WITHOUT_RESPONSE"
+  | "ENDED_WITH_RESPONSE";
+
 export interface ApiComplaintDepartment {
+  id: string;
+  complaintId: string;
+  departmentId: string;
   department: ApiDepartment;
+  assignmentIndex: number;
+  createdAt: string;
+  endedAt: string | null;
+  assignmentStatus: AssignmentStatus;
   responseText: string | null;
   responseNumber: string | null;
   responseDate: string | null;

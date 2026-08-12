@@ -1,6 +1,13 @@
 import { complaintsApi } from "@/features/complaint-list/api";
-import type { ApiComplaint, RecurrenceMatch } from "@/features/complaint-list/types";
-import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
+import type {
+  ApiComplaint,
+  ApiComplaintDepartment,
+  RecurrenceMatch,
+} from "@/features/complaint-list/types";
+import type {
+  ComplaintDetailsData,
+  DepartmentAssignment,
+} from "@/features/complaint-detail/types";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -15,7 +22,94 @@ export interface AnalyzeResponse {
   recurrenceMatches: RecurrenceMatch[];
 }
 
+function toAssignment(entry: ApiComplaintDepartment): DepartmentAssignment {
+  return {
+    id: entry.id,
+    assignmentIndex: entry.assignmentIndex,
+    departmentId: entry.department.id,
+    departmentName: entry.department.name,
+    departmentSubAuthority: entry.department.subAuthority ?? null,
+    outgoingLetterNumber: entry.outgoingLetterNumber ?? null,
+    outgoingLetterDate: entry.outgoingLetterDate ?? null,
+    responseDeadlineDays: entry.responseDeadlineDays ?? null,
+    responseText: entry.responseText ?? null,
+    responseNumber: entry.responseNumber ?? null,
+    responseDate: entry.responseDate ?? null,
+    importDate: entry.importDate ?? null,
+    examinationStatusName: entry.examinationStatus?.name ?? null,
+    examinationResult: entry.examinationResult ?? null,
+    respondedAt: entry.respondedAt ?? null,
+    createdAt: entry.createdAt,
+    endedAt: entry.endedAt ?? null,
+    status: entry.assignmentStatus,
+  };
+}
+
+function toDepartmentSummaries(history: DepartmentAssignment[]) {
+  const latestByDepartment = new Map<string, DepartmentAssignment>();
+  for (const assignment of history) {
+    const current = latestByDepartment.get(assignment.departmentId);
+    if (
+      !current ||
+      assignment.assignmentIndex > current.assignmentIndex ||
+      (assignment.assignmentIndex === current.assignmentIndex &&
+        assignment.createdAt > current.createdAt)
+    ) {
+      latestByDepartment.set(assignment.departmentId, assignment);
+    }
+  }
+  return [...latestByDepartment.values()].map((assignment) => ({
+    id: assignment.departmentId,
+    name: assignment.departmentName,
+    assignmentStatus: assignment.status,
+    assignmentId: assignment.id,
+    assignmentIndex: assignment.assignmentIndex,
+    responseText: assignment.responseText,
+    responseNumber: assignment.responseNumber,
+    responseDate: assignment.responseDate,
+    importDate: assignment.importDate,
+    examinationStatusName: assignment.examinationStatusName,
+    examinationResult: assignment.examinationResult,
+    respondedAt: assignment.respondedAt,
+    outgoingLetterNumber: assignment.outgoingLetterNumber,
+    outgoingLetterDate: assignment.outgoingLetterDate,
+    responseDeadlineDays: assignment.responseDeadlineDays,
+    endedAt: assignment.endedAt,
+  }));
+}
+
+function fallbackAssignment(api: ApiComplaint): DepartmentAssignment {
+  const departmentName = api.department?.name ?? null;
+  return {
+    id: `synthetic-${api.department?.id ?? "unknown"}`,
+    assignmentIndex: 1,
+    departmentId: api.department?.id ?? "",
+    departmentName: departmentName ?? "—",
+    departmentSubAuthority: api.department?.subAuthority ?? null,
+    outgoingLetterNumber: null,
+    outgoingLetterDate: null,
+    responseDeadlineDays: null,
+    responseText: null,
+    responseNumber: null,
+    responseDate: null,
+    importDate: null,
+    examinationStatusName: null,
+    examinationResult: null,
+    respondedAt: null,
+    createdAt: api.createdAt,
+    endedAt: null,
+    status: "ACTIVE",
+  };
+}
+
 function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
+  const assignmentHistory =
+    api.departments?.length > 0
+      ? api.departments.map(toAssignment)
+      : api.department
+        ? [fallbackAssignment(api)]
+        : [];
+
   return {
     id: api.id,
     displayId: `#${api.complaintNumber}-${api.statementYear}`,
@@ -38,40 +132,8 @@ function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
     citizenAddress: api.citizen.address || null,
     citizenVillage: api.citizen.village || null,
     citizenDistrict: api.citizen.district || null,
-    departments:
-      api.departments?.length > 0
-        ? api.departments.map((entry) => ({
-            id: entry.department.id,
-            name: entry.department.name,
-            responseText: entry.responseText ?? null,
-            responseNumber: entry.responseNumber ?? null,
-            responseDate: entry.responseDate ?? null,
-            importDate: entry.importDate ?? null,
-            examinationStatusName: entry.examinationStatus?.name ?? null,
-            examinationResult: entry.examinationResult ?? null,
-            respondedAt: entry.respondedAt ?? null,
-            outgoingLetterNumber: entry.outgoingLetterNumber ?? null,
-            outgoingLetterDate: entry.outgoingLetterDate ?? null,
-            responseDeadlineDays: entry.responseDeadlineDays ?? null,
-          }))
-        : api.department
-          ? [
-              {
-                id: api.department.id,
-                name: api.department.name,
-                responseText: null,
-                responseNumber: null,
-                responseDate: null,
-                importDate: null,
-                examinationStatusName: null,
-                examinationResult: null,
-                respondedAt: null,
-                outgoingLetterNumber: null,
-                outgoingLetterDate: null,
-                responseDeadlineDays: null,
-              },
-            ]
-          : [],
+    departments: toDepartmentSummaries(assignmentHistory),
+    assignmentHistory,
     complaintTypeName: api.complaintType?.name ?? null,
     complaintTypeId: api.complaintType?.id ?? null,
     receptionMethodName: api.receptionMethod?.name ?? null,

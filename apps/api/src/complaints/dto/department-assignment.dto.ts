@@ -22,13 +22,27 @@ export class DepartmentAssignmentDto {
 
 export type DepartmentAssignmentData = DepartmentAssignmentDto;
 
+export type AssignmentLetterData = {
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: Date | null;
+  responseDeadlineDays: number | null;
+};
+
+export function toAssignmentLetterData(
+  item: Pick<DepartmentAssignmentDto, "outgoingLetterNumber" | "outgoingLetterDate" | "responseDeadlineDays">,
+): AssignmentLetterData {
+  return {
+    outgoingLetterNumber: item.outgoingLetterNumber ?? null,
+    outgoingLetterDate: item.outgoingLetterDate ? new Date(item.outgoingLetterDate) : null,
+    responseDeadlineDays: item.responseDeadlineDays ?? null,
+  };
+}
+
 export function toDepartmentAssignmentPrisma(
   item: DepartmentAssignmentDto,
 ): Record<string, unknown> {
   return {
     departmentId: item.departmentId,
-    outgoingLetterNumber: item.outgoingLetterNumber ?? null,
-    outgoingLetterDate: item.outgoingLetterDate ? new Date(item.outgoingLetterDate) : null,
-    responseDeadlineDays: item.responseDeadlineDays ?? null,
+    ...toAssignmentLetterData(item),
   };
 }
