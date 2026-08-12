@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
@@ -33,39 +33,15 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
   const [responseText, setResponseText] = useState("");
   const [responseDate, setResponseDate] = useState("");
   const [responseNumber, setResponseNumber] = useState("");
-  const [importDate, setImportDate] = useState("");
   const [examinationStatusId, setExaminationStatusId] = useState("");
   const [examinationResult, setExaminationResult] = useState("");
   const [departmentId, setDepartmentId] = useState("");
-  const [outgoingLetterNumber, setOutgoingLetterNumber] = useState("");
-  const [outgoingLetterDate, setOutgoingLetterDate] = useState("");
-  const [responseDeadlineDays, setResponseDeadlineDays] = useState("");
 
   const { data: complaint, isLoading, isError, refetch } = useComplaint(complaintId);
   const { data: examinationStatuses } = useExaminationStatuses();
 
   const departments = complaint?.departments.filter((department) => !department.responseText) ?? [];
   const selectedDepartmentId = departmentId || departments[0]?.id || "";
-  const selectedDepartment = complaint?.departments.find(
-    (department) => department.id === selectedDepartmentId,
-  );
-
-  useEffect(() => {
-    if (!selectedDepartment) return;
-    setOutgoingLetterNumber((previous) => previous || selectedDepartment.outgoingLetterNumber || "");
-    setOutgoingLetterDate((previous) =>
-      previous ||
-      (selectedDepartment.outgoingLetterDate
-        ? selectedDepartment.outgoingLetterDate.slice(0, 10)
-        : ""),
-    );
-    setResponseDeadlineDays((previous) =>
-      previous ||
-      (selectedDepartment.responseDeadlineDays
-        ? String(selectedDepartment.responseDeadlineDays)
-        : ""),
-    );
-  }, [selectedDepartment]);
 
   if (!complaint) {
     return (
@@ -83,10 +59,6 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
     responseText.trim().length > 0 &&
     responseDate.trim().length > 0 &&
     responseNumber.trim().length > 0 &&
-    outgoingLetterNumber.trim().length > 0 &&
-    outgoingLetterDate.trim().length > 0 &&
-    /^\d+$/.test(responseDeadlineDays) &&
-    Number(responseDeadlineDays) >= 1 &&
     !!selectedDepartmentId;
 
   const handleSubmit = async () => {
@@ -99,12 +71,9 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
           responseText: responseText.trim(),
           responseDate,
           responseNumber: responseNumber.trim(),
-          importDate: importDate || undefined,
+          importDate: responseDate || undefined,
           examinationStatusId: examinationStatusId ? Number(examinationStatusId) : undefined,
           examinationResult: examinationResult.trim() || undefined,
-          outgoingLetterNumber: outgoingLetterNumber.trim(),
-          outgoingLetterDate,
-          responseDeadlineDays: responseDeadlineDays ? Number(responseDeadlineDays) : undefined,
         },
       });
       toast.success("تم إضافة الرد بنجاح");
@@ -149,41 +118,6 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
           </div>
 
           <div className="border-t border-border pt-6">
-            <p className="font-heading text-headline-md text-foreground mb-4">بيانات الصادر</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>رقم الصادر <span className="text-destructive">*</span></Label>
-                <Input
-                  value={outgoingLetterNumber}
-                  onChange={(e) => setOutgoingLetterNumber(e.target.value)}
-                  placeholder="رقم خطاب الصادر"
-                  className="h-11"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>تاريخ الصادر <span className="text-destructive">*</span></Label>
-                <Input
-                  type="date"
-                  value={outgoingLetterDate}
-                  onChange={(e) => setOutgoingLetterDate(e.target.value)}
-                  className="h-11"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>مدة الرد (أيام) <span className="text-destructive">*</span></Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={responseDeadlineDays}
-                  onChange={(e) => setResponseDeadlineDays(e.target.value)}
-                  placeholder="مثال: 30"
-                  className="h-11"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-6">
             <p className="font-heading text-headline-md text-foreground mb-4">بيانات الوارد (الرد)</p>
             <div className="flex flex-col gap-2 mb-4">
               <Label>نص الرد <span className="text-destructive">*</span></Label>
@@ -212,15 +146,6 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
                   value={responseNumber}
                   onChange={(e) => setResponseNumber(e.target.value)}
                   placeholder="رقم الرد الوارد"
-                  className="h-11"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>تاريخ الرد الوارد</Label>
-                <Input
-                  type="date"
-                  value={importDate}
-                  onChange={(e) => setImportDate(e.target.value)}
                   className="h-11"
                 />
               </div>
