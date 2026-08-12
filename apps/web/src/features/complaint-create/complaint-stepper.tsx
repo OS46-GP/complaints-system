@@ -1,21 +1,27 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STEPS = [
-  { label: "بيانات الشكوى", shortLabel: "تفاصيل" },
+export interface StepperStep {
+  label: string;
+  shortLabel: string;
+}
+
+const DEFAULT_STEPS: StepperStep[] = [
   { label: "بيانات المواطن", shortLabel: "مواطن" },
+  { label: "بيانات الشكوى", shortLabel: "تفاصيل" },
   { label: "المرفقات", shortLabel: "مرفقات" },
   { label: "المراجعة", shortLabel: "مراجعة" },
 ];
 
 interface ComplaintStepperProps {
   currentStep: number;
+  steps?: StepperStep[];
 }
 
-export function ComplaintStepper({ currentStep }: ComplaintStepperProps) {
+export function ComplaintStepper({ currentStep, steps = DEFAULT_STEPS }: ComplaintStepperProps) {
   return (
     <div className="flex items-center justify-between w-full gap-0 md:gap-1">
-      {STEPS.map((step, index) => {
+      {steps.map((step, index) => {
         const stepNumber = index + 1;
         const isCompleted = stepNumber < currentStep;
         const isActive = stepNumber === currentStep;

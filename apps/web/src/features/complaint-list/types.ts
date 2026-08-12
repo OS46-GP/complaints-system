@@ -6,6 +6,7 @@ export interface ApiCitizen {
   address: string;
   village: string | null;
   district: string | null;
+  locationCode: string | null;
 }
 
 export interface ApiDepartment {
@@ -55,6 +56,7 @@ export interface ApiComplaint {
   createdAt: string;
   citizen: ApiCitizen;
   department: ApiDepartment | null;
+  departments: { department: ApiDepartment }[];
   complaintType: ApiComplaintType | null;
   receptionMethod: ApiReferenceItem | null;
   examinationStatus: ApiExaminationStatus | null;

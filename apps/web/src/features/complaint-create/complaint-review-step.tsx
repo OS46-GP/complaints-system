@@ -12,6 +12,7 @@ import {
 import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
 import type { RecurrenceMatch } from "@/features/complaint-list/types";
 import { complaintsApi } from "@/features/complaint-list/api";
+import { useDepartments } from "@/features/complaint-list/hooks";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -42,11 +43,13 @@ const SEVERITY_OPTIONS: { value: "High" | "Medium" | "Low"; label: string }[] = 
 function ReviewRow({
   label,
   value,
+  items,
   onEdit,
   isOcr,
 }: {
   label: string;
-  value: string;
+  value?: string;
+  items?: string[];
   onEdit: () => void;
   isOcr?: boolean;
 }) {
@@ -69,7 +72,23 @@ function ReviewRow({
             </span>
           )}
         </span>
-        <p className="font-body text-body-md text-foreground break-words">{value || "—"}</p>
+        {items && items.length > 0 ? (
+          <ul className="space-y-1">
+            {items.map((item) => (
+              <li
+                key={item}
+                className="font-body text-body-md text-foreground break-words flex items-start gap-2"
+              >
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="font-body text-body-md text-foreground break-words">
+            {value || "—"}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -77,13 +96,18 @@ function ReviewRow({
 
 export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewStepProps) {
   const form = useFormContext<ComplaintCreateFormValues>();
+  const { data: departments } = useDepartments();
   const subject = useWatch({ control: form.control, name: "subject" });
   const severity = useWatch({ control: form.control, name: "severity" });
   const citizenFullName = useWatch({ control: form.control, name: "citizen.fullName" });
   const citizenNationalId = useWatch({ control: form.control, name: "citizen.nationalId" });
   const citizenMobileNumber = useWatch({ control: form.control, name: "citizen.mobileNumber" });
   const annotation = useWatch({ control: form.control, name: "annotation" });
+  const departmentIds = useWatch({ control: form.control, name: "departmentIds" }) ?? [];
   const fileItems = useWatch({ control: form.control, name: "files" }) ?? [];
+  const departmentNames = departmentIds
+    .map((id) => departments?.find((department) => department.id === id)?.name)
+    .filter((name): name is string => Boolean(name));
   const isOcr = (field: string) => ocrFields?.has(field) ?? false;
   const fileNames = fileItems.map((f) => f.file.name);
   const [checkState, setCheckState] = useState<{
@@ -100,7 +124,7 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
       const result = await complaintsApi.checkDuplicates({
         subject: values.subject,
         annotation: values.annotation || undefined,
-        departmentId: values.departmentId || undefined,
+        departmentId: values.departmentIds[0] || undefined,
         arrivalDate: new Date().toISOString(),
         citizen: {
           nationalId: values.citizen.nationalId || undefined,
@@ -137,30 +161,36 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           label="الموضوع"
           value={subject || "لم يتم إدخال عنوان"}
           isOcr={isOcr("subject")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="المواطن"
           value={citizenFullName || "—"}          isOcr={isOcr("citizen.fullName")}
-          onEdit={() => onGoToStep(2)}
+          onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="الرقم القومي"
           value={citizenNationalId || "—"}
           isOcr={isOcr("citizen.nationalId")}
-          onEdit={() => onGoToStep(2)}
+          onEdit={() => onGoToStep(1)}
         />
         <ReviewRow
           label="رقم الجوال"
           value={citizenMobileNumber || "—"}
           isOcr={isOcr("citizen.mobileNumber")}
+          onEdit={() => onGoToStep(1)}
+        />
+        <ReviewRow
+          label="الجهات المعنية"
+          items={departmentNames}
+          isOcr={isOcr("departmentId")}
           onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="وصف الشكوى"
           value={annotation || "لا يوجد وصف متاح"}
           isOcr={isOcr("annotation")}
-          onEdit={() => onGoToStep(1)}
+          onEdit={() => onGoToStep(2)}
         />
         <ReviewRow
           label="المرفقات"

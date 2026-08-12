@@ -1,8 +1,10 @@
 import { useFormContext } from "react-hook-form";
+import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
 import { OcrFieldIcon } from "@/features/complaint-create/ocr-field-icon";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   FormControl,
@@ -34,6 +36,42 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
   const { data: departments } = useDepartments();
   const { data: complaintTypes } = useComplaintTypes();
   const { data: receptionMethods } = useReceptionMethods();
+  const departmentIds = form.watch("departmentIds");
+  const availableDepartments = (departments ?? []).filter(
+    (department) => !departmentIds.includes(department.id),
+  );
+
+  const departmentsForRow = (index: number) =>
+    (departments ?? []).filter(
+      (department) =>
+        !departmentIds.some(
+          (id, rowIndex) => rowIndex !== index && id === department.id,
+        ),
+    );
+
+  const setDepartmentId = (index: number, value: string) => {
+    const next = [...departmentIds];
+    next[index] = value;
+    form.setValue("departmentIds", next, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
+
+  const removeDepartment = (index: number) => {
+    form.setValue(
+      "departmentIds",
+      departmentIds.filter((_, i) => i !== index),
+      { shouldValidate: true, shouldDirty: true },
+    );
+  };
+
+  const addDepartment = () => {
+    form.setValue("departmentIds", [...departmentIds, ""], {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -115,30 +153,72 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="departmentId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>الجهة المعنية</FormLabel>
-              <Select dir="rtl" value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="w-full data-[size=default]:h-11">
-                    {isOcr("departmentId") && <OcrFieldIcon />}
-                    <SelectValue placeholder="اختر الجهة" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {departments?.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div className="border-t border-border pt-6">
+        <div className="mb-4">
+          <FormLabel className="mb-1 block">
+            الجهات المعنية <span className="text-destructive">*</span>
+          </FormLabel>
+          <p className="font-body text-body-sm text-muted-foreground">
+            يمكنك اختيار أكثر من جهة لتتولى الرد على الشكوى.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {departmentIds.map((_value, index) => (
+            <div key={index} className="flex items-start gap-2">
+              <div className="flex-1">
+                <Select
+                  dir="rtl"
+                  value={departmentIds[index] || ""}
+                  onValueChange={(value) => setDepartmentId(index, value)}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full data-[size=default]:h-11">
+                      {index === 0 && isOcr("departmentId") && <OcrFieldIcon />}
+                      <SelectValue placeholder={`اختر الجهة ${index + 1}`} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {departmentsForRow(index).map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeDepartment(index)}
+                disabled={departmentIds.length <= 1}
+                title="إزالة الجهة"
+                className="h-11 w-11 shrink-0 rounded-md text-muted-foreground hover:text-destructive disabled:opacity-40"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {availableDepartments.length > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addDepartment}
+            className="mt-3 gap-2"
+          >
+            <Plus className="size-4" />
+            إضافة جهة أخرى
+          </Button>
+        )}
+        {form.formState.errors.departmentIds?.root?.message && (
+          <p className="text-sm text-destructive mt-2">
+            {form.formState.errors.departmentIds.root.message}
+          </p>
+        )}
       </div>
 
       <div className="border-t border-border pt-6">

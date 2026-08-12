@@ -44,7 +44,9 @@ function ocrFieldsToFormData(fields: Record<string, FieldResult>): Partial<Compl
     subject: get("complaint_subject") || undefined,
     severity: (get("severity") as "Low" | "Medium" | "High") || undefined,
     complaintTypeId: get("complaint_typeId") || undefined,
-    departmentId: get("complaint_departmentId") || undefined,
+    departmentIds: get("complaint_departmentId")
+      ? [get("complaint_departmentId")]
+      : undefined,
     annotation: get("complaint_annotation") || undefined,
     citizen: {
       fullName: get("citizen_fullName") || "",
@@ -170,7 +172,7 @@ const OCR_KEY_TO_FIELD: Record<string, string> = {
   complaint_subject: "subject",
   severity: "severity",
   complaint_typeId: "complaintTypeId",
-  complaint_departmentId: "departmentId",
+  complaint_departmentId: "departmentIds",
   complaint_annotation: "annotation",
   citizen_fullName: "citizen.fullName",
   citizen_nationalId: "citizen.nationalId",
@@ -186,6 +188,7 @@ const getNestedValue = (obj: Record<string, unknown>, path: string): string => {
     if (current === null || typeof current !== "object") return "";
     current = (current as Record<string, unknown>)[part];
   }
+  if (Array.isArray(current)) return current.length > 0 && typeof current[0] === "string" ? current[0] : "";
   return typeof current === "string" ? current : "";
 };
 
@@ -198,7 +201,7 @@ function draftHasContent(draft: ComplaintDraft): boolean {
     v.subject !== "" ||
     v.complaintTypeId !== "" ||
     v.receptionMethodId !== "" ||
-    v.departmentId !== "" ||
+    v.departmentIds.length > 0 ||
     v.annotation !== "" ||
     v.files.length > 0 ||
     Object.values(v.citizen).some((value) => value !== "")
@@ -499,8 +502,8 @@ export function ComplaintCreateForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
-              {step === 1 && <ComplaintBasicInfoStep ocrFields={ocrFields} />}
-              {step === 2 && <ComplaintCitizenStep ocrFields={ocrFields} />}
+              {step === 1 && <ComplaintCitizenStep ocrFields={ocrFields} />}
+              {step === 2 && <ComplaintBasicInfoStep ocrFields={ocrFields} />}
               {step === 3 && <ComplaintAttachmentStep />}
               {step === 4 && <ComplaintReviewStep ocrFields={ocrFields} onGoToStep={setStep} />}
 

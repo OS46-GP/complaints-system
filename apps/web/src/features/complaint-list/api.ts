@@ -5,6 +5,7 @@ export interface ListComplaintsParams {
   page?: number;
   limit?: number;
   departmentId?: string;
+  citizenNationalId?: string;
   name?: string;
   complaintNumber?: number;
   statementYear?: number;
@@ -29,6 +30,7 @@ export interface CreateComplaintPayload {
   subject: string;
   respondentName?: string;
   departmentId?: string;
+  departmentIds?: string[];
   annotation?: string;
   examinationStatusId?: number;
   examinationResult?: string;

@@ -9,7 +9,7 @@ import type { ComplaintCreateFormData } from "@/features/complaint-create/types"
 import {
   complaintEditSchema,
   emptyFormValues,
-  STEP_FIELDS,
+  EDIT_STEP_FIELDS,
   type ComplaintCreateFormValues,
 } from "@/features/complaint-create/validations";
 import { mapDetailsToForm } from "@/features/complaint-edit/api";
@@ -27,10 +27,10 @@ import { ComplaintReviewStep } from "@/features/complaint-create/complaint-revie
 
 const TOTAL_STEPS = 3;
 
-const EDIT_STEP_FIELDS: (typeof STEP_FIELDS)[number][] = [
-  STEP_FIELDS[0],
-  STEP_FIELDS[1],
-  [],
+const EDIT_STEPS = [
+  { label: "بيانات الشكوى", shortLabel: "تفاصيل" },
+  { label: "بيانات المواطن", shortLabel: "مواطن" },
+  { label: "المراجعة", shortLabel: "مراجعة" },
 ];
 
 interface ComplaintEditFormProps {
@@ -130,7 +130,7 @@ export function ComplaintEditForm({ complaintId }: ComplaintEditFormProps) {
         </div>
 
         <div className="mb-6 md:mb-8">
-          <ComplaintStepper currentStep={step} />
+          <ComplaintStepper currentStep={step} steps={EDIT_STEPS} />
         </div>
 
         <Form {...form}>

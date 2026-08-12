@@ -27,7 +27,9 @@ const complaintFields = {
   complaintTypeId: z.string().min(1, "يرجى اختيار الفئة"),
   severity: z.enum(["Low", "Medium", "High"]).optional(),
   receptionMethodId: z.string(),
-  departmentId: z.string(),
+  departmentIds: z
+    .array(z.string().min(1, "يرجى اختيار الجهة"))
+    .min(1, "يرجى اختيار جهة واحدة على الأقل"),
   citizen: citizenSchema,
   files: z.array(fileItemSchema).max(5, "يمكن إرفاق 5 ملفات كحد أقصى"),
 } as const;
@@ -52,7 +54,7 @@ export const emptyFormValues: ComplaintCreateFormValues = {
   subject: "",
   complaintTypeId: "",
   receptionMethodId: "",
-  departmentId: "",
+  departmentIds: [],
   annotation: "",
   citizen: {
     fullName: "",
@@ -65,22 +67,36 @@ export const emptyFormValues: ComplaintCreateFormValues = {
   files: [],
 };
 
+export const CITIZEN_STEP_FIELDS: FieldPath<ComplaintCreateFormValues>[] = [
+  "citizen.fullName",
+  "citizen.nationalId",
+  "citizen.mobileNumber",
+  "citizen.address",
+  "citizen.village",
+  "citizen.district",
+];
+
+export const BASIC_INFO_STEP_FIELDS: FieldPath<ComplaintCreateFormValues>[] = [
+  "subject",
+  "complaintTypeId",
+  "receptionMethodId",
+  "departmentIds",
+  "annotation",
+];
+
+export const ATTACHMENT_STEP_FIELDS: FieldPath<ComplaintCreateFormValues>[] = [
+  "files",
+];
+
 export const STEP_FIELDS: FieldPath<ComplaintCreateFormValues>[][] = [
-  [
-    "subject",
-    "complaintTypeId",
-    "receptionMethodId",
-    "departmentId",
-    "annotation",
-  ],
-  [
-    "citizen.fullName",
-    "citizen.nationalId",
-    "citizen.mobileNumber",
-    "citizen.address",
-    "citizen.village",
-    "citizen.district",
-  ],
-  ["files"],
+  CITIZEN_STEP_FIELDS,
+  BASIC_INFO_STEP_FIELDS,
+  ATTACHMENT_STEP_FIELDS,
+  [],
+];
+
+export const EDIT_STEP_FIELDS: FieldPath<ComplaintCreateFormValues>[][] = [
+  BASIC_INFO_STEP_FIELDS,
+  CITIZEN_STEP_FIELDS,
   [],
 ];

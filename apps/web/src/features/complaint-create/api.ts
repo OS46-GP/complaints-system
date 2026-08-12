@@ -2,6 +2,8 @@ import { complaintsApi, type CreateComplaintPayload } from "@/features/complaint
 import type { ComplaintCreateFormData } from "@/features/complaint-create/types";
 
 export async function createComplaint(data: ComplaintCreateFormData) {
+  const departmentIds = data.departmentIds.filter((id) => id.trim());
+
   const payload: CreateComplaintPayload = {
     statementYear: new Date().getFullYear(),
     arrivalDate: new Date().toISOString(),
@@ -9,7 +11,7 @@ export async function createComplaint(data: ComplaintCreateFormData) {
     severity: data.severity,
     receptionMethodId: data.receptionMethodId ? Number(data.receptionMethodId) : undefined,
     complaintTypeId: data.complaintTypeId ? Number(data.complaintTypeId) : undefined,
-    departmentId: data.departmentId || undefined,
+    departmentIds,
     annotation: data.annotation || undefined,
     citizen: {
       fullName: data.citizen.fullName,
