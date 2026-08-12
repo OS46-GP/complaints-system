@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { Search, Loader2 } from "lucide-react";
+import { ChevronLeft, History, Search, Loader2, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
 import { OcrFieldIcon } from "@/features/complaint-create/ocr-field-icon";
+import { ComplaintPreviewDialog } from "@/features/complaint-create/complaint-preview-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +24,51 @@ import {
 } from "@/components/ui/select";
 import { useLocations } from "@/features/complaint-list/hooks";
 import { complaintsApi } from "@/features/complaint-list/api";
-import type { LocationItem } from "@/features/complaint-list/types";
+import { type ApiComplaint, type LocationItem } from "@/features/complaint-list/types";
 
 interface ComplaintCitizenStepProps {
   ocrFields?: Set<string>;
+}
+
+function caseStatusLabel(complaint: ApiComplaint): string {
+  if (complaint.caseStatus) {
+    return complaint.caseStatus === "FINISHED" ? "تم الفحص" : "قيد الفحص";
+  }
+  return complaint.examinationStatus?.name ?? "—";
+}
+
+function ancestorNameWithLevel(
+  locations: LocationItem[],
+  location: LocationItem,
+  targetLevel: number,
+): string {
+  let current = location;
+  while (current.parentCode) {
+    const parent = locations.find((item) => item.code === current.parentCode);
+    if (!parent) break;
+    current = parent;
+    if (current.level === targetLevel) return current.name;
+  }
+  return "";
+}
+
+function normalizeName(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/^(مركز|محافظة|قرية|مدينة|وحدة محلية)\s+/, "")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function nameMatches(a: string, b: string): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return normalizeName(a) === normalizeName(b);
 }
 
 export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
@@ -50,30 +92,70 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     return map;
   }, [locations]);
 
-  const villagesForCenter = (centerCode: string): LocationItem[] => {
-    const result: LocationItem[] = [];
-    const seenNames = new Set<string>();
-    const visit = (code: string) => {
-      for (const child of childrenByParent.get(code) ?? []) {
-        if (child.level <= 4) {
-          if (!seenNames.has(child.name)) {
-            seenNames.add(child.name);
-            result.push(child);
+  const villagesForCenter = useMemo(
+    () =>
+      (centerCode: string, centerLevelDesc: string | null): LocationItem[] => {
+        const result: LocationItem[] = [];
+        const seenNames = new Set<string>();
+        const maxLevel = centerLevelDesc === "مدينة" ? 5 : 4;
+        const visit = (code: string) => {
+          for (const child of childrenByParent.get(code) ?? []) {
+            if (child.level <= maxLevel) {
+              if (!seenNames.has(child.name)) {
+                seenNames.add(child.name);
+                result.push(child);
+              }
+              if (child.level < maxLevel) visit(child.code);
+            }
           }
-          if (child.level < 4) visit(child.code);
-        }
-      }
-    };
-    visit(centerCode);
-    return result.sort((a, b) => a.name.localeCompare(b.name, "ar"));
-  };
+        };
+        visit(centerCode);
+        return result.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+      },
+    [childrenByParent],
+  );
 
   const district = form.watch("citizen.district");
-  const selectedCenter = centers.find((center) => center.name === district);
-  const villages = selectedCenter ? villagesForCenter(selectedCenter.code) : [];
+  const selectedCenter = centers.find(
+    (center) =>
+      center.name === district ||
+      normalizeName(center.name) === normalizeName(district),
+  );
+  const villages = useMemo(
+    () =>
+      selectedCenter
+        ? villagesForCenter(selectedCenter.code, selectedCenter.levelDesc)
+        : [],
+    [villagesForCenter, selectedCenter],
+  );
+
+  const villageName = form.watch("citizen.village");
+  const villageOptions = useMemo(() => {
+    if (!villageName) return villages;
+    const exists = villages.some(
+      (village) => nameMatches(village.name, villageName),
+    );
+    if (exists) return villages;
+    return [
+      ...villages,
+      {
+        code: villageName,
+        name: villageName,
+        parentCode: null,
+        level: 0,
+        levelDesc: null,
+      },
+    ];
+  }, [villages, villageName]);
 
   const [isCitizenLookupLoading, setIsCitizenLookupLoading] = useState(false);
   const lookedUpNationalId = useRef<string>("");
+
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyComplaints, setHistoryComplaints] = useState<ApiComplaint[]>([]);
+  const [hasSearchedHistory, setHasSearchedHistory] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<ApiComplaint | null>(null);
+  const [historyNationalId, setHistoryNationalId] = useState("");
 
   const clearLookedUpCitizen = () => {
     const citizen = form.getValues("citizen");
@@ -96,11 +178,24 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     }
   };
 
+  const resetCitizenHistory = () => {
+    setHistoryComplaints([]);
+    setHasSearchedHistory(false);
+    setSelectedComplaint(null);
+    setHistoryNationalId("");
+  };
+
   const handleNationalIdChange = (value: string, onFieldChange: (value: string) => void) => {
     onFieldChange(value);
-    if (lookedUpNationalId.current && value.trim() !== lookedUpNationalId.current) {
+    if (
+      (lookedUpNationalId.current && value.trim() !== lookedUpNationalId.current) ||
+      (historyNationalId && value.trim() !== historyNationalId)
+    ) {
       lookedUpNationalId.current = "";
       clearLookedUpCitizen();
+      if (value.trim() !== historyNationalId) {
+        resetCitizenHistory();
+      }
     }
   };
 
@@ -113,16 +208,38 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
         form.getValues("citizen.nationalId").trim(),
       );
       if (citizen) {
+        let district = citizen.district ?? "";
+        let village = citizen.village ?? "";
+        const location = citizen.locationCode
+          ? (locations ?? []).find(
+              (item) => item.code === citizen.locationCode,
+            )
+          : (locations ?? []).find(
+              (item) =>
+                item.level > 2 && village && nameMatches(item.name, village),
+            );
+        if (location) {
+          if (!district) {
+            district =
+              location.level === 2
+                ? location.name
+                : ancestorNameWithLevel(locations ?? [], location, 2);
+          }
+          if (!village && (location.level ?? 0) >= 2) {
+            village = location.name;
+          }
+        }
         form.setValue("citizen", {
           ...form.getValues("citizen"),
           fullName: citizen.fullName,
           mobileNumber: citizen.mobileNumber || "",
           address: citizen.address || "",
-          village: citizen.village || "",
-          district: citizen.district || "",
+          village,
+          district,
         });
         lookedUpNationalId.current = form.getValues("citizen.nationalId").trim();
         toast.success("تم العثور على المواطن وإكمال بياناته تلقائياً");
+        void searchCitizenHistory();
       } else {
         toast.error("لم يتم العثور على مواطن بهذا الرقم القومي");
       }
@@ -132,6 +249,42 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
       setIsCitizenLookupLoading(false);
     }
   };
+
+  const searchCitizenHistory = async () => {
+    const nationalId = form.getValues("citizen.nationalId").trim();
+    if (!nationalId) return;
+    if (nationalId !== historyNationalId) {
+      setHistoryComplaints([]);
+      setHasSearchedHistory(false);
+      setHistoryNationalId(nationalId);
+    }
+    setIsHistoryLoading(true);
+    try {
+      const response = await complaintsApi.list({
+        citizenNationalId: nationalId,
+        limit: 10,
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      });
+      setHistoryComplaints(response.data);
+      setHasSearchedHistory(true);
+    } catch {
+      toast.error("تعذر جلب شكاوى المواطن السابقة");
+      setHasSearchedHistory(false);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  const openCitizenHistory = async () => {
+    const nationalId = form.getValues("citizen.nationalId").trim();
+    if (!nationalId) return;
+    if (historyNationalId !== nationalId || !hasSearchedHistory) {
+      await searchCitizenHistory();
+    }
+  };
+
+  const nationalIdValue = form.watch("citizen.nationalId");
 
   return (
     <div className="space-y-6">
@@ -270,7 +423,23 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
                 value={field.value}
                 onValueChange={(value) => {
                   field.onChange(value);
-                  form.setValue("citizen.village", "");
+                  const center = centers.find(
+                    (item) =>
+                      item.name === value ||
+                      normalizeName(item.name) === normalizeName(value),
+                  );
+                  const currentVillage = form.getValues("citizen.village");
+                  const villageStillValid =
+                    !!center &&
+                    (currentVillage
+                      ? villagesForCenter(
+                          center.code,
+                          center.levelDesc,
+                        ).some((v) => nameMatches(v.name, currentVillage))
+                      : false);
+                  if (!villageStillValid) {
+                    form.setValue("citizen.village", "");
+                  }
                 }}
               >
                 <FormControl>
@@ -309,7 +478,7 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {villages.map((village) => (
+                  {villageOptions.map((village) => (
                     <SelectItem key={village.code} value={village.name}>
                       {village.name}
                     </SelectItem>
@@ -319,6 +488,95 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
               <FormMessage />
             </FormItem>
           )}
+        />
+      </div>
+
+      <div className="border-t border-border pt-6">
+        <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+          <div className="text-right">
+            <h3 className="font-heading text-title-sm text-foreground flex items-center gap-1.5">
+              <History className="size-4 text-primary" />
+              شكاوى المواطن السابقة
+            </h3>
+            <p className="font-body text-body-sm text-muted-foreground mt-1">
+              اعرض الشكاوى المسجلة مسبقاً لنفس الرقم القومي لتجنب تكرار التسجيل.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={openCitizenHistory}
+            disabled={isHistoryLoading || !nationalIdValue.trim()}
+            className="gap-2"
+          >
+            {isHistoryLoading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Search className="size-4" />
+            )}
+            البحث عن الشكاوى السابقة
+          </Button>
+        </div>
+
+        {isHistoryLoading && (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            <Loader2 className="size-5 shrink-0 animate-spin text-primary" />
+            <p className="font-body text-body-md text-muted-foreground">
+              جارٍ البحث عن شكاوى المواطن السابقة...
+            </p>
+          </div>
+        )}
+
+        {!isHistoryLoading && hasSearchedHistory && (
+          <>
+            {historyComplaints.length > 0 ? (
+              <ul className="space-y-2">
+                {historyComplaints.map((complaint) => (
+                  <li key={complaint.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedComplaint(complaint)}
+                      className="w-full rounded-lg border border-border bg-surface-container-lowest p-3 flex items-center gap-3 text-start transition-colors hover:bg-surface-container-low cursor-pointer"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-heading text-label-sm text-foreground truncate">
+                          #{complaint.complaintNumber}-{complaint.statementYear} —{" "}
+                          {complaint.subject}
+                        </p>
+                        <p className="text-label-sm text-muted-foreground mt-0.5">
+                          {caseStatusLabel(complaint)} ·{" "}
+                          {new Date(complaint.arrivalDate).toLocaleDateString("ar-SA")}
+                          {complaint.complaintType?.name
+                            ? ` · ${complaint.complaintType.name}`
+                            : ""}
+                        </p>
+                      </div>
+                      <ChevronLeft
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden
+                      />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low text-muted-foreground">
+                <Inbox className="size-5 shrink-0" />
+                <p className="font-body text-body-md">
+                  لا توجد شكاوى سابقة مسجلة لهذا المواطن.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        <ComplaintPreviewDialog
+          open={!!selectedComplaint}
+          onOpenChange={(open) => {
+            if (!open) setSelectedComplaint(null);
+          }}
+          complaint={selectedComplaint}
         />
       </div>
     </div>
