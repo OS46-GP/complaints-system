@@ -22,6 +22,10 @@ export const PATHS = {
     COMPLAINT_TYPES: "/admin/complaint-types",
     RECEPTION_METHODS: "/admin/reception-methods",
     DEPARTMENTS: "/admin/departments",
+    LETTER_TEMPLATES: "/admin/letter-templates",
+    LETTER_TEMPLATE_NEW: "/admin/letter-templates/new",
+    LETTER_TEMPLATE_EDIT: (id: string) => `/admin/letter-templates/${id}/edit`,
+    LETTER_SETTINGS: "/admin/letter-settings",
     SOCIAL_MONITORING: "/admin/social-monitoring",
     SETTINGS: "/admin/settings",
     REPORTS: {

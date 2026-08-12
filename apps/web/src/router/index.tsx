@@ -48,6 +48,18 @@ const AdminComplaintTypesPage = lazy(
 const AdminReceptionMethodsPage = lazy(
   () => import("@/pages/admin/reception-methods"),
 );
+const AdminLetterTemplatesPage = lazy(
+  () => import("@/pages/admin/letter-templates"),
+);
+const AdminLetterTemplateNewPage = lazy(
+  () => import("@/pages/admin/letter-template-new"),
+);
+const AdminLetterTemplateEditPage = lazy(
+  () => import("@/pages/admin/letter-template-edit"),
+);
+const AdminLetterSettingsPage = lazy(
+  () => import("@/pages/admin/letter-settings"),
+);
 const AdminDepartmentsPage = lazy(() => import("@/pages/admin/departments"));
 const AdminCreateUserPage = lazy(() => import("@/pages/admin/create-user"));
 const AdminUserDetailPage = lazy(() => import("@/pages/admin/user-detail"));
@@ -273,6 +285,38 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminReceptionMethodsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.LETTER_TEMPLATES}
+              element={
+                <SuspenseBoundary>
+                  <AdminLetterTemplatesPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.LETTER_TEMPLATE_NEW}
+              element={
+                <SuspenseBoundary>
+                  <AdminLetterTemplateNewPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.LETTER_TEMPLATE_EDIT(":id")}
+              element={
+                <SuspenseBoundary>
+                  <AdminLetterTemplateEditPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.LETTER_SETTINGS}
+              element={
+                <SuspenseBoundary>
+                  <AdminLetterSettingsPage />
                 </SuspenseBoundary>
               }
             />

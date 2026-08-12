@@ -200,6 +200,129 @@ async function main() {
     ),
   });
 
+  await prisma.letterSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      organizationNameAr: "محافظة المنوفية",
+      organizationNameEn: "Menoufia Governorate",
+      organizationAddress: "شارع جمال عبد الناصر، شبين الكوم، المنوفية",
+      organizationPhone: "048-2220000",
+      organizationEmail: "info@menoufia.gov.eg",
+      organizationWebsite: "www.menoufia.gov.eg",
+      managerName: "إبراهيم أبو ليمون",
+      managerTitle: "محافظ المنوفية",
+      responseDefaultDays: 15,
+    },
+  });
+
+  const exampleLetterName = "طلب الاطلاع على الشكوى";
+  const existingLetter = await prisma.letterTemplate.findFirst({
+    where: { name: exampleLetterName },
+  });
+  if (!existingLetter) {
+    await prisma.letterTemplate.create({
+      data: {
+        name: exampleLetterName,
+        description:
+          "خطاب من المحافظ إلى الجهة المختصة يطلب الاطلاع على شكوى المواطن واتخاذ اللازم تجاهها",
+        type: "HTML",
+        isActive: true,
+        isDefault: true,
+        sortOrder: 0,
+        body: `<div class="letter-head">
+  <div class="org-name">{{organizationNameAr}}</div>
+  <div class="org-sub">{{organizationNameEn}}</div>
+</div>
+<hr />
+<div class="meta">
+  الشكوى رقم <b>{{complaintNumber}}</b> لسنة <b>{{statementYear}}</b> &nbsp;|&nbsp; تاريخ الوصول: <b>{{arrivalDate}}</b>
+</div>
+<p class="to">إلى السيد/ مدير {{department}}</p>
+<p class="greeting">تحية طيبة وبعد،</p>
+<p>
+  نحيط سيادتكم علماً بأنه وردت إلينا الشكوى رقم <b>{{complaintNumber}}</b> لسنة
+  <b>{{statementYear}}</b> المقدمة من المواطن/ة <b>{{citizenName}}</b> بخصوص
+  <b>{{subject}}</b>.
+</p>
+<p>
+  برجاء التكرم بالاطلاع على الشكوى المشار إليها واتخاذ ما يلزم بشأنها، وإفادتنا
+  بما يتم بحد أقصى <b>{{responseDefaultDays}}</b> يوماً من تاريخ استلام هذا الخطاب.
+</p>
+<p style="margin-top: 20px;">وتفضلوا بقبول فائق الاحترام،</p>
+<div class="sign">
+  <div>{{managerTitle}}</div>
+  <div>{{managerName}}</div>
+  <img src="{{managerSignature}}" style="max-height: 90px;" alt="توقيع" />
+  <div>{{seal}}</div>
+</div>
+<div class="footer">
+  {{organizationAddress}} &nbsp;|&nbsp; هاتف: {{organizationPhone}} &nbsp;|&nbsp; {{organizationEmail}}
+  <br />
+  تاريخ الإصدار: {{generatedDate}}
+</div>`,
+      },
+    });
+  }
+
+  const noticeName = "إخطار المواطن بحالة الشكوى";
+  const existingNotice = await prisma.letterTemplate.findFirst({
+    where: { name: noticeName },
+  });
+  if (!existingNotice) {
+    await prisma.letterTemplate.create({
+      data: {
+        name: noticeName,
+        description:
+          "خطاب يُرسل إلى المواطن لإخطاره باستلام الشكوى وحالتها الحالية وجهة الفحص المختصة",
+        type: "HTML",
+        isActive: true,
+        isDefault: false,
+        sortOrder: 1,
+        body: `<div class="letter-head">
+  <div class="org-name">{{organizationNameAr}}</div>
+  <div class="org-sub">{{organizationNameEn}}</div>
+</div>
+<hr />
+<div class="meta">
+  شكوى رقم <b>{{complaintNumber}}</b> لسنة <b>{{statementYear}}</b> &nbsp;|&nbsp; تاريخ الوصول: <b>{{arrivalDate}}</b>
+</div>
+<p class="to">السيد/ة {{citizenName}}</p>
+<p>
+  {{citizenAddress}}، {{citizenDistrict}} / {{citizenVillage}} &nbsp;—&nbsp; هاتف: {{citizenMobile}}
+</p>
+<p class="greeting">تحية طيبة وبعد،</p>
+<p>
+  نحيط سيادتكم علماً بأنه قد تم استلام شكواكم رقم <b>{{complaintNumber}}</b> لسنة
+  <b>{{statementYear}}</b> المسجلة بتاريخ <b>{{arrivalDate}}</b> بخصوص
+  <b>{{subject}}</b>، وتمت إحالتها إلى <b>{{department}}</b> لاتخاذ اللازم.
+</p>
+<p>
+  وحالتها الحالية كما يلي:
+  حالة الفحص: <b>{{examinationStatus}}</b> &nbsp;|&nbsp; حالة العرض: <b>{{presentationStatus}}</b>
+  &nbsp;|&nbsp; البت النهائي: <b>{{caseStatus}}</b>.
+</p>
+<p>
+  للمتابعة والاستفسار يرجى التواصل على الهاتف <b>{{organizationPhone}}</b> أو البريد الإلكتروني
+  <b>{{organizationEmail}}</b>، مع إرفاق رقم الشكوى أعلاه.
+</p>
+<p style="margin-top: 20px;">وتفضلوا بقبول وافر التقدير والاحترام،</p>
+<div class="sign">
+  <div>{{managerTitle}}</div>
+  <div>{{managerName}}</div>
+  <img src="{{managerSignature}}" style="max-height: 90px;" alt="توقيع" />
+  <div>{{seal}}</div>
+</div>
+<div class="footer">
+  {{organizationAddress}} &nbsp;|&nbsp; هاتف: {{organizationPhone}} &nbsp;|&nbsp; {{organizationEmail}}
+  <br />
+  تاريخ الإصدار: {{generatedDate}}
+</div>`,
+      },
+    });
+  }
+
   await pruneFakeLocationHierarchy();
 
   await backfillCitizenLocations();

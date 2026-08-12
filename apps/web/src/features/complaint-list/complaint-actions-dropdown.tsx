@@ -11,6 +11,7 @@ import {
   Repeat,
   Zap,
   Trash2,
+  FileStack,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
 import { ComplaintPdfButton } from "@/components/shared/complaint-pdf-button";
+import { GenerateLetterDialog } from "@/features/letter-templates/generate-letter-dialog";
 import { useDeleteComplaint } from "@/features/complaint-list/hooks";
 import { PATHS } from "@/router/paths";
 
@@ -40,6 +42,7 @@ export function ComplaintActionsDropdown({
   const { pathname } = useLocation();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(false);
   const deleteMutation = useDeleteComplaint();
   const isAdmin = pathname.startsWith("/admin");
   const detailPath = isAdmin
@@ -86,6 +89,13 @@ export function ComplaintActionsDropdown({
           <DropdownMenuItem onClick={handleSummary} className="w-full gap-2">
             <Sparkles className="size-4 text-primary" />
             الملخص الذكي
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setLetterOpen(true)}
+            className="w-full gap-2"
+          >
+            <FileStack className="size-4 text-primary" />
+            إصدار خطاب
           </DropdownMenuItem>
           <ComplaintPdfButton
             complaintId={complaintId}
@@ -149,6 +159,12 @@ export function ComplaintActionsDropdown({
         onOpenChange={setSummaryOpen}
         complaintId={complaintId}
         complaintLabel={complaintLabel ?? complaintId}
+      />
+
+      <GenerateLetterDialog
+        complaintId={complaintId}
+        open={letterOpen}
+        onOpenChange={setLetterOpen}
       />
     </>
   );

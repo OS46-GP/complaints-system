@@ -29,6 +29,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   complaints Complaint[]
+  letterGenerations LetterGeneration[]
 }
 
 model Citizen {
@@ -161,6 +162,7 @@ model Complaint {
   socialDrafts SocialDraft[]
   departments  ComplaintDepartment[]
   urgencies    ComplaintUrgency[]
+  letterGenerations LetterGeneration[]
 
   @@unique([complaintNumber, statementYear])
   @@index([citizenId])
@@ -336,4 +338,62 @@ model SocialDraft {
 
   @@index([status])
   @@index([detectedAt])
+}
+
+enum LetterTemplateType {
+  HTML
+  DOCX
+  PDF_LETTERHEAD
+}
+
+model LetterTemplate {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  type        LetterTemplateType @default(HTML)
+  body        String?
+  assetKey    String?
+  isActive    Boolean            @default(true)
+  isDefault   Boolean            @default(false)
+  sortOrder   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  generations LetterGeneration[]
+
+  @@index([isActive])
+}
+
+model LetterSettings {
+  id                     Int      @id @default(1)
+  organizationNameAr     String?
+  organizationNameEn     String?
+  organizationAddress    String?
+  organizationPhone      String?
+  organizationFax        String?
+  organizationEmail      String?
+  organizationWebsite    String?
+  organizationLetterhead String?
+  managerName            String?
+  managerTitle           String?
+  managerSignature       String?
+  seal                   String?
+  responseDefaultDays    Int      @default(15)
+  updatedAt              DateTime @updatedAt
+}
+
+model LetterGeneration {
+  id            String   @id @default(cuid())
+  complaintId   String
+  templateId    String
+  fileKey       String
+  generatedById String
+  createdAt     DateTime @default(now())
+
+  complaint   Complaint      @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  template    LetterTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  generatedBy User           @relation(fields: [generatedById], references: [id])
+
+  @@unique([complaintId, templateId])
+  @@index([templateId])
 }

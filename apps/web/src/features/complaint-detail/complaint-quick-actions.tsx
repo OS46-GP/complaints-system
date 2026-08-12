@@ -10,10 +10,12 @@ import {
   ChevronLeft,
   Repeat,
   Zap,
+  FileStack,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { GenerateLetterDialog } from "@/features/letter-templates/generate-letter-dialog";
 import { useGenerateComplaintPdf } from "@/features/complaint-list/hooks";
 import { useUpdateCaseStatus } from "@/features/complaint-detail/hooks";
 
@@ -39,6 +41,7 @@ export function ComplaintQuickActions({
   const { pathname } = useLocation();
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(false);
   const pdfMutation = useGenerateComplaintPdf();
   const caseStatusMutation = useUpdateCaseStatus(complaintId);
   const isAdmin = pathname.startsWith("/admin");
@@ -66,6 +69,7 @@ export function ComplaintQuickActions({
     { icon: <MessageSquareReply className="size-5" />, label: "إضافة رد", onClick: () => navigate(responsePath) },
     { icon: <Repeat className="size-5" />, label: "إعادة إحالة", onClick: () => navigate(reassignPath) },
     { icon: <Zap className="size-5" />, label: "استعجال", onClick: () => navigate(urgencyPath) },
+    { icon: <FileStack className="size-5" />, label: "إصدار خطاب", onClick: () => setLetterOpen(true) },
     { icon: <Archive className="size-5" />, label: "أرشفة", onClick: () => navigate(archivePath) },
     { icon: <Printer className="size-5" />, label: "طباعة", onClick: () => pdfMutation.mutate(complaintId) },
     {
@@ -125,6 +129,12 @@ export function ComplaintQuickActions({
         onOpenChange={setSummaryOpen}
         complaintId={complaintId}
         complaintLabel={complaintLabel ?? complaintId}
+      />
+
+      <GenerateLetterDialog
+        complaintId={complaintId}
+        open={letterOpen}
+        onOpenChange={setLetterOpen}
       />
 
       <ConfirmDialog

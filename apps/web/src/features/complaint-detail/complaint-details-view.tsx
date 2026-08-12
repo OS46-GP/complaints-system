@@ -1,4 +1,5 @@
-import { MessageSquareReply, FileText } from "lucide-react";
+import { useState } from "react";
+import { MessageSquareReply, FileText, FileStack } from "lucide-react";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 import { ComplaintDescriptionCard } from "@/features/complaint-detail/complaint-description-card";
 import { ComplaintEvidenceGallery } from "@/features/complaint-detail/complaint-evidence-gallery";
@@ -9,7 +10,8 @@ import { ComplaintDepartmentsCard } from "@/features/complaint-detail/complaint-
 import { ComplaintQuickActions } from "@/features/complaint-detail/complaint-quick-actions";
 import { ComplaintLinksPanel } from "@/features/complaint-detail/complaint-links-panel";
 import { useAnalyzeComplaint, useUpdateSeverity } from "@/features/complaint-detail/hooks";
-import { ComplaintPdfButton } from "@/components/shared/complaint-pdf-button";
+import { Button } from "@/components/ui/button";
+import { GenerateLetterDialog } from "@/features/letter-templates/generate-letter-dialog";
 
 interface ComplaintDetailsViewProps {
   complaint: ComplaintDetailsData;
@@ -18,6 +20,7 @@ interface ComplaintDetailsViewProps {
 export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
   const analyzeMutation = useAnalyzeComplaint(complaint.id);
   const severityMutation = useUpdateSeverity(complaint.id);
+  const [letterOpen, setLetterOpen] = useState(false);
 
   return (
     <>
@@ -30,7 +33,10 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
             {complaint.displayId}
           </p>
         </div>
-        <ComplaintPdfButton complaintId={complaint.id} label="طباعة" />
+        <Button className="gap-2" onClick={() => setLetterOpen(true)}>
+          <FileStack className="size-5" />
+          إصدار خطاب
+        </Button>
       </div>
 
       <div className="grid grid-cols-12 gap-4 md:gap-6 w-full">
@@ -90,6 +96,12 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
           />
         </div>
       </div>
+
+      <GenerateLetterDialog
+        complaintId={complaint.id}
+        open={letterOpen}
+        onOpenChange={setLetterOpen}
+      />
     </>
   );
 }
