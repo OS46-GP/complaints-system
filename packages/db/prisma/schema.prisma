@@ -98,7 +98,8 @@ model ExaminationStatus {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  complaints Complaint[]
+  complaints           Complaint[]
+  complaintDepartments ComplaintDepartment[]
 }
 
 model PresentationStatus {
@@ -167,12 +168,26 @@ model Complaint {
 }
 
 model ComplaintDepartment {
-  id           String     @id @default(cuid())
-  complaintId  String
-  complaint    Complaint  @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [id])
-  createdAt    DateTime   @default(now())
+  id                String             @id @default(cuid())
+  complaintId        String
+  complaint          Complaint          @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  departmentId       String
+  department         Department         @relation(fields: [departmentId], references: [id])
+  createdAt          DateTime           @default(now())
+
+  outgoingLetterNumber String?
+  outgoingLetterDate   DateTime?
+  responseDeadlineDays Int?
+
+  responseText       String?
+  responseNumber     String?
+  responseDate       DateTime?
+  importDate         DateTime?
+  examinationStatusId Int?
+  examinationStatus  ExaminationStatus? @relation(fields: [examinationStatusId], references: [id])
+  examinationResult  String?
+  respondedAt        DateTime?
+  updatedAt          DateTime           @updatedAt
 
   @@unique([complaintId, departmentId])
   @@index([departmentId])

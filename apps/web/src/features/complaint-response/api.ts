@@ -1,16 +1,21 @@
 import { complaintsApi } from "@/features/complaint-list/api";
 
 export interface ComplaintResponsePayload {
-  authorityResponseText: string;
-  authorityResponseDate?: string;
-  incomingResponseNumber?: string;
+  responseText: string;
+  responseDate: string;
+  responseNumber: string;
+  importDate?: string;
   examinationStatusId?: number;
   examinationResult?: string;
+  outgoingLetterNumber?: string;
+  outgoingLetterDate?: string;
+  responseDeadlineDays?: number;
 }
 
-export async function submitComplaintResponse(
+export async function submitDepartmentResponse(
   complaintId: string,
+  departmentId: string,
   payload: ComplaintResponsePayload,
 ) {
-  return complaintsApi.update(complaintId, payload);
+  return complaintsApi.submitDepartmentResponse(complaintId, departmentId, payload);
 }

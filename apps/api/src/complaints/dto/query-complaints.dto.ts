@@ -25,6 +25,10 @@ export class QueryComplaintsDto {
 
   @IsOptional()
   @IsString()
+  citizenFullName?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()

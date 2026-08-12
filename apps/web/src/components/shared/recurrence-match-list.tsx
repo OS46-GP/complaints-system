@@ -14,12 +14,16 @@ interface RecurrenceMatchListProps {
   matches: RecurrenceMatch[];
   emptyText?: string;
   onUnlink?: (id: string) => void;
+  onSelect?: (match: RecurrenceMatch) => void;
+  isLoading?: boolean;
 }
 
 export function RecurrenceMatchList({
   matches,
   emptyText = "لا توجد شكاوى مشابهة.",
   onUnlink,
+  onSelect,
+  isLoading = false,
 }: RecurrenceMatchListProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -38,8 +42,9 @@ export function RecurrenceMatchList({
         <li key={match.id}>
           <button
             type="button"
-            onClick={() => navigate(`${basePath}/${match.id}`)}
-            className="w-full text-right px-4 py-3 hover:bg-surface-container-high transition-colors"
+            disabled={isLoading}
+            onClick={() => (onSelect ? onSelect(match) : navigate(`${basePath}/${match.id}`))}
+            className="w-full text-right px-4 py-3 hover:bg-surface-container-high transition-colors disabled:opacity-60 disabled:cursor-wait"
           >
             <span className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-2 font-heading text-label-sm text-foreground">

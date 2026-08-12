@@ -7,7 +7,10 @@ interface ComplaintTimelineProps {
 }
 
 export function ComplaintTimeline({ complaint }: ComplaintTimelineProps) {
-  const hasResponse = !!complaint.authorityResponseText;
+  const departmentResponses = complaint.departments.filter(
+    (department) => !!department.responseText,
+  );
+  const hasResponse = departmentResponses.length > 0;
 
   return (
     <section className="rounded-xl border border-border bg-surface-container-lowest p-stack-lg h-full">
@@ -87,17 +90,29 @@ export function ComplaintTimeline({ complaint }: ComplaintTimelineProps) {
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-heading text-label-sm text-foreground">تم إضافة الرد</h3>
                 </div>
-                <p className="text-body-sm text-muted-foreground mb-2 whitespace-pre-wrap">
-                  {complaint.authorityResponseText}
-                </p>
-                <div className="flex items-center gap-3 text-label-xs text-muted-foreground">
-                  {complaint.incomingResponseNumber && (
-                    <span>رقم الرد: {complaint.incomingResponseNumber}</span>
-                  )}
-                  {complaint.authorityResponseDate && (
-                    <span>{new Date(complaint.authorityResponseDate).toLocaleDateString("ar-SA")}</span>
-                  )}
-                </div>
+                <ul className="space-y-4">
+                  {departmentResponses.map((department) => (
+                    <li key={department.id} className="space-y-1">
+                      <p className="font-heading text-label-sm text-primary">
+                        {department.name}
+                      </p>
+                      <p className="text-body-sm text-muted-foreground mb-2 whitespace-pre-wrap">
+                        {department.responseText}
+                      </p>
+                      <div className="flex items-center gap-3 text-label-xs text-muted-foreground">
+                        {department.examinationStatusName && (
+                          <span>{department.examinationStatusName}</span>
+                        )}
+                        {department.responseNumber && (
+                          <span>رقم الرد: {department.responseNumber}</span>
+                        )}
+                        {department.responseDate && (
+                          <span>{new Date(department.responseDate).toLocaleDateString("ar-SA")}</span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </li>
           )}

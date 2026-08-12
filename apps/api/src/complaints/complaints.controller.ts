@@ -21,6 +21,8 @@ import { ComplaintsService } from "./complaints.service";
 import { ComplaintFilesService } from "./complaint-files.service";
 import { CreateComplaintDto } from "./dto/create-complaint.dto";
 import { UpdateComplaintDto } from "./dto/update-complaint.dto";
+import { CreateDepartmentResponseDto } from "./dto/create-department-response.dto";
+import { ReassignComplaintDto } from "./dto/reassign-complaint.dto";
 import { QueryComplaintsDto } from "./dto/query-complaints.dto";
 
 @Controller("complaints")
@@ -76,6 +78,11 @@ export class ComplaintsController {
     return this.complaintsService.findCitizenByNationalId(nationalId);
   }
 
+  @Get("citizens/by-name/:name")
+  findCitizensByName(@Param("name") name: string) {
+    return this.complaintsService.findCitizensByName(name);
+  }
+
   @Post(":id/files")
   @UseInterceptors(FileInterceptor("file"))
   uploadFile(
@@ -118,6 +125,20 @@ export class ComplaintsController {
     @Body() dto: UpdateComplaintDto,
   ) {
     return this.complaintsService.update(id, dto);
+  }
+
+  @Post(":id/departments/:departmentId/response")
+  addDepartmentResponse(
+    @Param("id") id: string,
+    @Param("departmentId") departmentId: string,
+    @Body() dto: CreateDepartmentResponseDto,
+  ) {
+    return this.complaintsService.addDepartmentResponse(id, departmentId, dto);
+  }
+
+  @Post(":id/reassign")
+  reassign(@Param("id") id: string, @Body() dto: ReassignComplaintDto) {
+    return this.complaintsService.reassignDepartment(id, dto);
   }
 
   @Delete(":id")

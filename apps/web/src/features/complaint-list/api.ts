@@ -6,6 +6,7 @@ export interface ListComplaintsParams {
   limit?: number;
   departmentId?: string;
   citizenNationalId?: string;
+  citizenFullName?: string;
   name?: string;
   complaintNumber?: number;
   statementYear?: number;
@@ -21,6 +22,24 @@ export type UpdateComplaintPayload = Omit<Partial<CreateComplaintPayload>, "citi
   citizen?: Partial<CreateComplaintPayload["citizen"]>;
 };
 
+export interface DepartmentResponsePayload {
+  responseText: string;
+  responseNumber?: string;
+  responseDate?: string;
+  examinationStatusId?: number;
+  examinationResult?: string;
+  outgoingLetterNumber?: string;
+  outgoingLetterDate?: string;
+  responseDeadlineDays?: number;
+}
+
+export interface DepartmentAssignmentPayload {
+  departmentId: string;
+  outgoingLetterNumber?: string;
+  outgoingLetterDate?: string;
+  responseDeadlineDays?: number;
+}
+
 export interface CreateComplaintPayload {
   statementYear: number;
   arrivalDate: string;
@@ -31,6 +50,7 @@ export interface CreateComplaintPayload {
   respondentName?: string;
   departmentId?: string;
   departmentIds?: string[];
+  departments?: DepartmentAssignmentPayload[];
   annotation?: string;
   examinationStatusId?: number;
   examinationResult?: string;
@@ -67,6 +87,29 @@ export const complaintsApi = {
     axiosClient.post("/api/complaints", payload).then((res) => res.data),
   update: (id: string, payload: UpdateComplaintPayload) =>
     axiosClient.patch(`/api/complaints/${id}`, payload).then((res) => res.data),
+  submitDepartmentResponse: (
+    id: string,
+    departmentId: string,
+    payload: DepartmentResponsePayload,
+  ) =>
+    axiosClient
+      .post<ApiComplaint>(`/api/complaints/${id}/departments/${departmentId}/response`, payload)
+      .then((res) => res.data),
+  reassignComplaint: (
+    id: string,
+    departmentId: string,
+    payload?: {
+      outgoingLetterNumber?: string;
+      outgoingLetterDate?: string;
+      responseDeadlineDays?: number;
+    },
+  ) =>
+    axiosClient
+      .post<ApiComplaint>(`/api/complaints/${id}/reassign`, {
+        departmentId,
+        ...(payload ?? {}),
+      })
+      .then((res) => res.data),
   getDepartments: () =>
     axiosClient.get<Department[]>("/api/complaints/departments").then((res) => res.data),
   getComplaintTypes: () =>
@@ -80,6 +123,10 @@ export const complaintsApi = {
   getCitizenByNationalId: (nationalId: string) =>
     axiosClient
       .get<ApiCitizen | null>(`/api/complaints/citizens/${encodeURIComponent(nationalId)}`)
+      .then((res) => res.data),
+  findCitizensByName: (name: string) =>
+    axiosClient
+      .get<ApiCitizen[]>(`/api/complaints/citizens/by-name/${encodeURIComponent(name)}`)
       .then((res) => res.data),
   checkDuplicates: (payload: CheckDuplicatesPayload) =>
     axiosClient

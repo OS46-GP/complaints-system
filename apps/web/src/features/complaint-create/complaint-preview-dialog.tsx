@@ -3,6 +3,8 @@ import {
   SEVERITY_LABELS,
   type ApiComplaint,
 } from "@/features/complaint-list/types";
+import { useLocation, useNavigate } from "react-router";
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PATHS } from "@/router/paths";
+import { BulletList } from "@/components/shared/bullet-list";
 
 interface ComplaintPreviewDialogProps {
   open: boolean;
@@ -19,13 +23,25 @@ interface ComplaintPreviewDialogProps {
   complaint: ApiComplaint | null;
 }
 
-function PreviewRow({ label, value }: { label: string; value: string }) {
+function PreviewRow({
+  label,
+  value,
+  items,
+}: {
+  label: string;
+  value?: string;
+  items?: string[];
+}) {
   return (
     <div className="min-w-0">
       <span className="block font-heading text-label-sm text-muted-foreground mb-0.5">
         {label}
       </span>
-      <p className="font-body text-body-md text-foreground break-words">{value || "—"}</p>
+      {items && items.length > 0 ? (
+        <BulletList items={items} />
+      ) : (
+        <p className="font-body text-body-md text-foreground break-words">{value || "—"}</p>
+      )}
     </div>
   );
 }
@@ -35,7 +51,13 @@ export function ComplaintPreviewDialog({
   onOpenChange,
   complaint,
 }: ComplaintPreviewDialogProps) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   if (!complaint) return null;
+
+  const detailPath = pathname.startsWith("/admin")
+    ? PATHS.ADMIN.COMPLAINT_DETAIL(complaint.id)
+    : PATHS.USER.COMPLAINT_DETAIL(complaint.id);
 
   const departmentNames =
     complaint.departments?.map((entry) => entry.department.name).filter(Boolean) ??
@@ -67,7 +89,8 @@ export function ComplaintPreviewDialog({
             <PreviewRow label="الرقم القومي" value={complaint.citizen?.nationalId ?? "—"} />
             <PreviewRow
               label="الجهات المعنية"
-              value={fullDepartments.length > 0 ? fullDepartments.join("، ") : "—"}
+              items={fullDepartments}
+              value={fullDepartments.length > 0 ? undefined : "—"}
             />
             <PreviewRow label="الفئة" value={complaint.complaintType?.name ?? "—"} />
             <PreviewRow
@@ -93,7 +116,17 @@ export function ComplaintPreviewDialog({
           )}
         </div>
 
-        <DialogFooter showCloseButton={false}>
+        <DialogFooter showCloseButton={false} className="sm:justify-between">
+          <Button
+            onClick={() => {
+              onOpenChange(false);
+              navigate(detailPath);
+            }}
+            className="gap-2"
+          >
+            <ExternalLink className="size-4" />
+            عرض التفاصيل الكاملة
+          </Button>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إغلاق
           </Button>

@@ -38,6 +38,20 @@ export interface ApiComplaintFile {
   uploadedAt: string;
 }
 
+export interface ApiComplaintDepartment {
+  department: ApiDepartment;
+  responseText: string | null;
+  responseNumber: string | null;
+  responseDate: string | null;
+  importDate: string | null;
+  examinationStatus: ApiExaminationStatus | null;
+  examinationResult: string | null;
+  respondedAt: string | null;
+  outgoingLetterNumber: string | null;
+  outgoingLetterDate: string | null;
+  responseDeadlineDays: number | null;
+}
+
 export interface ApiComplaint {
   id: string;
   complaintNumber: number;
@@ -56,7 +70,7 @@ export interface ApiComplaint {
   createdAt: string;
   citizen: ApiCitizen;
   department: ApiDepartment | null;
-  departments: { department: ApiDepartment }[];
+  departments: ApiComplaintDepartment[];
   complaintType: ApiComplaintType | null;
   receptionMethod: ApiReferenceItem | null;
   examinationStatus: ApiExaminationStatus | null;

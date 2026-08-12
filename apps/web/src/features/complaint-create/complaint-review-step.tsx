@@ -10,10 +10,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { ComplaintCreateFormValues } from "@/features/complaint-create/validations";
-import type { RecurrenceMatch } from "@/features/complaint-list/types";
+import type { RecurrenceMatch, ApiComplaint } from "@/features/complaint-list/types";
 import { complaintsApi } from "@/features/complaint-list/api";
 import { useDepartments } from "@/features/complaint-list/hooks";
 import { RecurrenceMatchList } from "@/components/shared/recurrence-match-list";
+import { BulletList } from "@/components/shared/bullet-list";
+import { ComplaintPreviewDialog } from "@/features/complaint-create/complaint-preview-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -73,17 +75,7 @@ function ReviewRow({
           )}
         </span>
         {items && items.length > 0 ? (
-          <ul className="space-y-1">
-            {items.map((item) => (
-              <li
-                key={item}
-                className="font-body text-body-md text-foreground break-words flex items-start gap-2"
-              >
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
-                {item}
-              </li>
-            ))}
-          </ul>
+          <BulletList items={items} />
         ) : (
           <p className="font-body text-body-md text-foreground break-words">
             {value || "—"}
@@ -103,10 +95,13 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
   const citizenNationalId = useWatch({ control: form.control, name: "citizen.nationalId" });
   const citizenMobileNumber = useWatch({ control: form.control, name: "citizen.mobileNumber" });
   const annotation = useWatch({ control: form.control, name: "annotation" });
-  const departmentIds = useWatch({ control: form.control, name: "departmentIds" }) ?? [];
+  const departmentsWatch = useWatch({ control: form.control, name: "departments" }) ?? [];
   const fileItems = useWatch({ control: form.control, name: "files" }) ?? [];
-  const departmentNames = departmentIds
-    .map((id) => departments?.find((department) => department.id === id)?.name)
+  const departmentNames = departmentsWatch
+    .map(
+      (assignment) =>
+        departments?.find((department) => department.id === assignment.departmentId)?.name,
+    )
     .filter((name): name is string => Boolean(name));
   const isOcr = (field: string) => ocrFields?.has(field) ?? false;
   const fileNames = fileItems.map((f) => f.file.name);
@@ -116,6 +111,21 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
     aiSeverity: "LOW" | "MEDIUM" | "HIGH" | null;
   }>({ status: "idle", matches: [], aiSeverity: null });
   const autoChecked = useRef(false);
+  const [selectedForPreview, setSelectedForPreview] = useState<ApiComplaint | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
+
+  const openPreview = async (match: RecurrenceMatch) => {
+    if (previewLoadingId) return;
+    setPreviewLoadingId(match.id);
+    try {
+      const complaint = await complaintsApi.getById(match.id);
+      setSelectedForPreview(complaint);
+    } catch {
+      toast.error("تعذر جلب بيانات الشكوى");
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  };
 
   const runCheck = async () => {
     const values = form.getValues();
@@ -124,7 +134,7 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
       const result = await complaintsApi.checkDuplicates({
         subject: values.subject,
         annotation: values.annotation || undefined,
-        departmentId: values.departmentIds[0] || undefined,
+        departmentId: values.departments[0]?.departmentId || undefined,
         arrivalDate: new Date().toISOString(),
         citizen: {
           nationalId: values.citizen.nationalId || undefined,
@@ -194,7 +204,8 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
         />
         <ReviewRow
           label="المرفقات"
-          value={fileNames.length > 0 ? fileNames.join("، ") : "لا توجد مرفقات"}
+          items={fileNames}
+          value={fileNames.length > 0 ? undefined : "لا توجد مرفقات"}
           onEdit={() => onGoToStep(3)}
         />
       </div>
@@ -286,7 +297,11 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
                     تم العثور على {checkState.matches.length} شكوى مشابهة. راجعها قبل الإرسال.
                   </p>
                 </div>
-                <RecurrenceMatchList matches={checkState.matches} />
+                <RecurrenceMatchList
+                  matches={checkState.matches}
+                  onSelect={openPreview}
+                  isLoading={previewLoadingId !== null}
+                />
               </div>
             ) : (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success">
@@ -299,6 +314,14 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
           </div>
         )}
       </div>
+
+      <ComplaintPreviewDialog
+        open={!!selectedForPreview}
+        onOpenChange={(open) => {
+          if (!open) setSelectedForPreview(null);
+        }}
+        complaint={selectedForPreview}
+      />
     </div>
   );
 }

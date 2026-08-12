@@ -8,8 +8,21 @@ import { PrismaService, Prisma } from "../prisma/prisma.service";
 import { EmbeddingService, buildEmbeddingText } from "../ai-triage/embedding.service";
 import { CreateComplaintDto } from "./dto/create-complaint.dto";
 import { UpdateComplaintDto } from "./dto/update-complaint.dto";
+import { ReassignComplaintDto } from "./dto/reassign-complaint.dto";
+import { CreateDepartmentResponseDto } from "./dto/create-department-response.dto";
 import { QueryComplaintsDto } from "./dto/query-complaints.dto";
 import { computeCaseStatus } from "./case-status.config";
+import {
+  DepartmentAssignmentDto,
+  toDepartmentAssignmentPrisma,
+} from "./dto/department-assignment.dto";
+
+type DepartmentAssignmentInput = {
+  departmentId: string;
+  outgoingLetterNumber?: string | null;
+  outgoingLetterDate?: string | null;
+  responseDeadlineDays?: number | null;
+};
 
 const DATE_FIELDS = [
   "arrivalDate",
@@ -80,15 +93,24 @@ export class ComplaintsService {
   ) {}
 
   async create(dto: CreateComplaintDto, user?: { id: string; role: string }) {
-    const { citizen, departmentIds, ...complaintData } = dto;
+    const { citizen, departmentIds, departments, ...complaintData } = dto;
 
-    const uniqueDepartmentIds = [...new Set((departmentIds ?? []).filter((id) => id?.trim()))];
+    const uniqueDepartmentIds = [
+      ...new Set((departmentIds ?? []).filter((id) => id?.trim())),
+    ];
+
+    const assignments: DepartmentAssignmentInput[] =
+      departments && departments.length > 0
+        ? departments
+        : uniqueDepartmentIds.map((departmentId) => ({ departmentId }));
 
     const data: Record<string, unknown> = toRelationData(complaintData);
-    if (uniqueDepartmentIds.length > 0) {
-      data.department = { connect: { id: uniqueDepartmentIds[0] } };
+    if (assignments.length > 0) {
+      data.department = { connect: { id: assignments[0].departmentId } };
       data.departments = {
-        create: uniqueDepartmentIds.map((departmentId) => ({ departmentId })),
+        create: assignments.map((assignment) =>
+          toDepartmentAssignmentPrisma(assignment as DepartmentAssignmentDto),
+        ),
       };
     }
     parseDates(data);
@@ -173,6 +195,7 @@ export class ComplaintsService {
       sortBy,
       sortOrder = "desc",
       citizenNationalId,
+      citizenFullName,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -183,7 +206,20 @@ export class ComplaintsService {
     }
 
     if (citizenNationalId) {
-      where.citizen = { nationalId: citizenNationalId };
+      where.citizen = {
+        ...(where.citizen as object | undefined),
+        nationalId: citizenNationalId,
+      };
+    }
+
+    if (citizenFullName?.trim()) {
+      where.citizen = {
+        ...(where.citizen as object | undefined),
+        fullName: {
+          equals: citizenFullName.trim(),
+          mode: "insensitive",
+        },
+      };
     }
 
     if (name) {
@@ -291,16 +327,36 @@ export class ComplaintsService {
     });
   }
 
+  async findCitizensByName(name: string) {
+    const trimmed = name?.trim();
+    if (!trimmed) return [];
+    return this.prisma.citizen.findMany({
+      where: {
+        fullName: { equals: trimmed, mode: "insensitive" },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async update(id: string, dto: UpdateComplaintDto) {
     const current = await this.findById(id);
 
-    const { citizen, departmentIds, ...complaintData } = dto;
+    const { citizen, departmentIds, departments, ...complaintData } = dto;
 
     const data: Record<string, unknown> = toRelationData(complaintData);
     parseDates(data);
 
-    const uniqueDepartmentIds = departmentIds
-      ? [...new Set(departmentIds.filter((departmentId) => departmentId?.trim()))]
+    const assignments: DepartmentAssignmentInput[] | null =
+      departments && departments.length > 0
+        ? departments
+        : departmentIds
+          ? [
+              ...new Set(departmentIds.filter((departmentId) => departmentId?.trim())),
+            ].map((departmentId) => ({ departmentId }))
+          : null;
+
+    const uniqueDepartmentIds = assignments
+      ? [...new Set(assignments.map((assignment) => assignment.departmentId))]
       : null;
 
     const currentCitizenId = (current as Record<string, unknown>).citizenId as string | undefined;
@@ -328,16 +384,22 @@ export class ComplaintsService {
     const complaint = await this.prisma.client.$transaction(async (tx) => {
       const txPrisma = tx as typeof this.prisma.client;
 
-      if (uniqueDepartmentIds) {
+      if (uniqueDepartmentIds && assignments) {
         await (txPrisma as any).complaintDepartment.deleteMany({
           where: { complaintId: id },
         });
         if (uniqueDepartmentIds.length > 0) {
+          const byDepartmentId = new Map(
+            assignments.map((assignment) => [assignment.departmentId, assignment]),
+          );
           await (txPrisma as any).complaintDepartment.createMany({
-            data: uniqueDepartmentIds.map((departmentId) => ({
-              complaintId: id,
-              departmentId,
-            })),
+            data: uniqueDepartmentIds.map((departmentId) => {
+              const assignment = byDepartmentId.get(departmentId) ?? { departmentId };
+              return {
+                complaintId: id,
+                ...toDepartmentAssignmentPrisma(assignment as DepartmentAssignmentDto),
+              };
+            }),
           });
         }
         delete data.department;
@@ -354,6 +416,102 @@ export class ComplaintsService {
     });
 
     return this.addCaseStatus(complaint);
+  }
+
+  async addDepartmentResponse(
+    complaintId: string,
+    departmentId: string,
+    dto: CreateDepartmentResponseDto,
+  ) {
+    await this.findById(complaintId);
+
+    const linked = await this.prisma.client.complaintDepartment.findUnique({
+      where: {
+        complaintId_departmentId: { complaintId, departmentId },
+      },
+    });
+
+    if (!linked) {
+      throw new BadRequestException("Department is not linked to this complaint");
+    }
+
+    const data: Prisma.ComplaintDepartmentUpdateInput = {
+      responseText: dto.responseText,
+      responseDate: new Date(dto.responseDate),
+      responseNumber: dto.responseNumber,
+      importDate: dto.importDate ? new Date(dto.importDate) : undefined,
+      examinationResult: dto.examinationResult ?? undefined,
+      respondedAt: new Date(),
+      ...(dto.examinationStatusId !== undefined
+        ? { examinationStatus: { connect: { id: dto.examinationStatusId } } }
+        : {}),
+      ...(dto.outgoingLetterNumber !== undefined
+        ? { outgoingLetterNumber: dto.outgoingLetterNumber }
+        : {}),
+      ...(dto.outgoingLetterDate !== undefined
+        ? { outgoingLetterDate: new Date(dto.outgoingLetterDate) }
+        : {}),
+      ...(dto.responseDeadlineDays !== undefined
+        ? { responseDeadlineDays: dto.responseDeadlineDays }
+        : {}),
+    };
+
+    await this.prisma.client.complaintDepartment.update({
+      where: { complaintId_departmentId: { complaintId, departmentId } },
+      data,
+    });
+
+    const result = await this.prisma.complaint.findUnique({
+      where: { id: complaintId },
+      include: complaintInclude,
+    });
+
+    return this.addCaseStatus(result!);
+  }
+
+  async reassignDepartment(complaintId: string, dto: ReassignComplaintDto) {
+    await this.findById(complaintId);
+
+    const { departmentId, outgoingLetterNumber, outgoingLetterDate, responseDeadlineDays } = dto;
+
+    const department = await this.prisma.department.findUnique({
+      where: { id: departmentId },
+      select: { id: true },
+    });
+
+    if (!department) {
+      throw new BadRequestException("Department not found");
+    }
+
+    const assignmentData = {
+      outgoingLetterNumber: outgoingLetterNumber ?? null,
+      outgoingLetterDate: outgoingLetterDate ? new Date(outgoingLetterDate) : null,
+      responseDeadlineDays: responseDeadlineDays ?? null,
+    };
+
+    await this.prisma.client.complaintDepartment.upsert({
+      where: {
+        complaintId_departmentId: { complaintId, departmentId },
+      },
+      create: { complaintId, departmentId, ...assignmentData },
+      update: {
+        ...assignmentData,
+        responseText: null,
+        responseNumber: null,
+        responseDate: null,
+        importDate: null,
+        examinationStatusId: null,
+        examinationResult: null,
+        respondedAt: null,
+      },
+    });
+
+    const result = await this.prisma.complaint.findUnique({
+      where: { id: complaintId },
+      include: complaintInclude,
+    });
+
+    return this.addCaseStatus(result!);
   }
 
   async getDepartments() {

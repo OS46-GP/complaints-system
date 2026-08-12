@@ -9,6 +9,13 @@ import { ComplaintPreviewDialog } from "@/features/complaint-create/complaint-pr
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   FormControl,
   FormField,
   FormItem,
@@ -24,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { useLocations } from "@/features/complaint-list/hooks";
 import { complaintsApi } from "@/features/complaint-list/api";
-import { type ApiComplaint, type LocationItem } from "@/features/complaint-list/types";
+import { type ApiCitizen, type ApiComplaint, type LocationItem } from "@/features/complaint-list/types";
 
 interface ComplaintCitizenStepProps {
   ocrFields?: Set<string>;
@@ -156,6 +163,10 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
   const [hasSearchedHistory, setHasSearchedHistory] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState<ApiComplaint | null>(null);
   const [historyNationalId, setHistoryNationalId] = useState("");
+  const searchedHistoryName = useRef<string>("");
+  const [isNameCitizenLoading, setIsNameCitizenLoading] = useState(false);
+  const [citizenCandidates, setCitizenCandidates] = useState<ApiCitizen[]>([]);
+  const [candidatesOpen, setCandidatesOpen] = useState(false);
 
   const clearLookedUpCitizen = () => {
     const citizen = form.getValues("citizen");
@@ -199,6 +210,36 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     }
   };
 
+  const applyCitizenToForm = (citizen: ApiCitizen) => {
+    let district = citizen.district ?? "";
+    let village = citizen.village ?? "";
+    const location = citizen.locationCode
+      ? (locations ?? []).find((item) => item.code === citizen.locationCode)
+      : (locations ?? []).find(
+          (item) => item.level > 2 && village && nameMatches(item.name, village),
+        );
+    if (location) {
+      if (!district) {
+        district =
+          location.level === 2
+            ? location.name
+            : ancestorNameWithLevel(locations ?? [], location, 2);
+      }
+      if (!village && (location.level ?? 0) >= 2) {
+        village = location.name;
+      }
+    }
+    form.setValue("citizen", {
+      ...form.getValues("citizen"),
+      fullName: citizen.fullName,
+      nationalId: citizen.nationalId || "",
+      mobileNumber: citizen.mobileNumber || "",
+      address: citizen.address || "",
+      village,
+      district,
+    });
+  };
+
   const lookupCitizen = async () => {
     const isValid = await form.trigger("citizen.nationalId");
     if (!isValid) return;
@@ -208,35 +249,7 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
         form.getValues("citizen.nationalId").trim(),
       );
       if (citizen) {
-        let district = citizen.district ?? "";
-        let village = citizen.village ?? "";
-        const location = citizen.locationCode
-          ? (locations ?? []).find(
-              (item) => item.code === citizen.locationCode,
-            )
-          : (locations ?? []).find(
-              (item) =>
-                item.level > 2 && village && nameMatches(item.name, village),
-            );
-        if (location) {
-          if (!district) {
-            district =
-              location.level === 2
-                ? location.name
-                : ancestorNameWithLevel(locations ?? [], location, 2);
-          }
-          if (!village && (location.level ?? 0) >= 2) {
-            village = location.name;
-          }
-        }
-        form.setValue("citizen", {
-          ...form.getValues("citizen"),
-          fullName: citizen.fullName,
-          mobileNumber: citizen.mobileNumber || "",
-          address: citizen.address || "",
-          village,
-          district,
-        });
+        applyCitizenToForm(citizen);
         lookedUpNationalId.current = form.getValues("citizen.nationalId").trim();
         toast.success("تم العثور على المواطن وإكمال بياناته تلقائياً");
         void searchCitizenHistory();
@@ -281,6 +294,60 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     if (!nationalId) return;
     if (historyNationalId !== nationalId || !hasSearchedHistory) {
       await searchCitizenHistory();
+    }
+  };
+
+  const searchCitizenHistoryByName = async () => {
+    const name = form.getValues("citizen.fullName").trim();
+    if (!name) return;
+    if (name !== searchedHistoryName.current) {
+      setHistoryComplaints([]);
+      setHasSearchedHistory(false);
+      searchedHistoryName.current = name;
+    }
+    setIsHistoryLoading(true);
+    try {
+      const response = await complaintsApi.list({
+        citizenFullName: name,
+        limit: 10,
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      });
+      setHistoryComplaints(response.data);
+      setHasSearchedHistory(true);
+    } catch {
+      toast.error("تعذر جلب شكاوى المواطن السابقة");
+      setHasSearchedHistory(false);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  const applyCitizenCandidate = (citizen: ApiCitizen) => {
+    applyCitizenToForm(citizen);
+    setCandidatesOpen(false);
+    toast.success("تم العثور على المواطن وإكمال بياناته تلقائياً");
+    void searchCitizenHistoryByName();
+  };
+
+  const searchCitizensByName = async () => {
+    const name = form.getValues("citizen.fullName").trim();
+    if (!name) return;
+    setIsNameCitizenLoading(true);
+    try {
+      const citizens = await complaintsApi.findCitizensByName(name);
+      if (citizens.length === 0) {
+        toast.error("لم يتم العثور على مواطن بهذا الاسم");
+      } else if (citizens.length === 1) {
+        applyCitizenCandidate(citizens[0]);
+      } else {
+        setCitizenCandidates(citizens);
+        setCandidatesOpen(true);
+      }
+    } catch {
+      toast.error("تعذر جلب بيانات المواطن");
+    } finally {
+      setIsNameCitizenLoading(false);
     }
   };
 
@@ -362,30 +429,46 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
       </div>
 
       <FormField
-        control={form.control}
-        name="citizen.fullName"
-        render={({ field, fieldState }) => (
-          <FormItem>
-            <FormLabel>
-              الاسم الكامل <span className="text-destructive">*</span>
-            </FormLabel>
-            <FormControl>
-              <div className="relative">
-                <Input
-                  {...field}
-                  aria-invalid={fieldState.invalid}
-                  placeholder="الاسم الكامل للمواطن"
-                  className={cn("h-11", isOcr("citizen.fullName") && "pe-10")}
-                />
-                {isOcr("citizen.fullName") && (
-                  <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
-                )}
-              </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+          control={form.control}
+          name="citizen.fullName"
+          render={({ field, fieldState }) => (
+            <FormItem>
+              <FormLabel>
+                الاسم الكامل <span className="text-destructive">*</span>
+              </FormLabel>
+              <FormControl>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="الاسم الكامل للمواطن"
+                      className={cn("h-11", isOcr("citizen.fullName") && "pe-10")}
+                    />
+                    {isOcr("citizen.fullName") && (
+                      <OcrFieldIcon className="absolute end-3 top-1/2 -translate-y-1/2" />
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    onClick={searchCitizensByName}
+                    disabled={isNameCitizenLoading || !field.value.trim()}
+                    title="البحث عن بيانات المواطن بالاسم"
+                    className="h-11 w-11 shrink-0 rounded-md active:not-aria-[haspopup]:translate-y-0"
+                  >
+                    {isNameCitizenLoading ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Search className="size-4" />
+                    )}
+                  </Button>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
       <FormField
         control={form.control}
@@ -499,7 +582,7 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
               شكاوى المواطن السابقة
             </h3>
             <p className="font-body text-body-sm text-muted-foreground mt-1">
-              اعرض الشكاوى المسجلة مسبقاً لنفس الرقم القومي لتجنب تكرار التسجيل.
+              اعرض الشكاوى المسجلة مسبقاً لنفس الرقم القومي أو بنفس الاسم لتجنب تكرار التسجيل.
             </p>
           </div>
           <Button
@@ -551,6 +634,12 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
                             ? ` · ${complaint.complaintType.name}`
                             : ""}
                         </p>
+                        <p className="text-label-xs text-muted-foreground mt-0.5">
+                          {complaint.citizen?.fullName}
+                          {complaint.citizen?.nationalId
+                            ? ` · ${complaint.citizen.nationalId}`
+                            : ""}
+                        </p>
                       </div>
                       <ChevronLeft
                         className="size-4 shrink-0 text-muted-foreground"
@@ -570,6 +659,42 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
             )}
           </>
         )}
+
+        <Dialog open={candidatesOpen} onOpenChange={setCandidatesOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>اختر المواطن</DialogTitle>
+              <DialogDescription>
+                يوجد أكثر من مواطن بنفس الاسم، اختر السجل الصحيح لإكمال بياناته تلقائياً.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[50vh] space-y-2 overflow-y-auto">
+              {citizenCandidates.map((citizen) => (
+                <button
+                  key={citizen.id}
+                  type="button"
+                  onClick={() => applyCitizenCandidate(citizen)}
+                  className="w-full rounded-lg border border-border bg-surface-container-lowest p-3 text-start transition-colors hover:bg-surface-container-low cursor-pointer"
+                >
+                  <p className="font-heading text-label-sm text-foreground">
+                    {citizen.fullName}
+                  </p>
+                  <p className="text-label-xs text-muted-foreground mt-0.5">
+                    {citizen.nationalId ? `${citizen.nationalId} · ` : ""}
+                    {citizen.mobileNumber || "بدون رقم جوال"}
+                  </p>
+                  {(citizen.address || citizen.district || citizen.village) && (
+                    <p className="text-label-xs text-muted-foreground mt-0.5 truncate">
+                      {[citizen.district, citizen.village, citizen.address]
+                        .filter(Boolean)
+                        .join(" — ")}
+                    </p>
+                  )}
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <ComplaintPreviewDialog
           open={!!selectedComplaint}
