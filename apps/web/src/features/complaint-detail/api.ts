@@ -2,11 +2,13 @@ import { complaintsApi } from "@/features/complaint-list/api";
 import type {
   ApiComplaint,
   ApiComplaintDepartment,
+  ApiComplaintUrgency,
   RecurrenceMatch,
 } from "@/features/complaint-list/types";
 import type {
   ComplaintDetailsData,
   DepartmentAssignment,
+  UrgencyEntry,
 } from "@/features/complaint-detail/types";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -78,6 +80,19 @@ function toDepartmentSummaries(history: DepartmentAssignment[]) {
   }));
 }
 
+function toUrgency(entry: ApiComplaintUrgency): UrgencyEntry {
+  return {
+    id: entry.id,
+    departmentId: entry.department.id,
+    departmentName: entry.department.name,
+    departmentSubAuthority: entry.department.subAuthority ?? null,
+    assignmentId: entry.assignmentId ?? null,
+    outgoingLetterNumber: entry.outgoingLetterNumber,
+    outgoingLetterDate: entry.outgoingLetterDate,
+    createdAt: entry.createdAt,
+  };
+}
+
 function fallbackAssignment(api: ApiComplaint): DepartmentAssignment {
   const departmentName = api.department?.name ?? null;
   return {
@@ -134,6 +149,7 @@ function mapToDetails(api: ApiComplaint): ComplaintDetailsData {
     citizenDistrict: api.citizen.district || null,
     departments: toDepartmentSummaries(assignmentHistory),
     assignmentHistory,
+    urgencies: (api.urgencies ?? []).map(toUrgency),
     complaintTypeName: api.complaintType?.name ?? null,
     complaintTypeId: api.complaintType?.id ?? null,
     receptionMethodName: api.receptionMethod?.name ?? null,

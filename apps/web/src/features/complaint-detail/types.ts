@@ -45,6 +45,17 @@ export interface DepartmentSummary {
   endedAt: string | null;
 }
 
+export interface UrgencyEntry {
+  id: string;
+  departmentId: string;
+  departmentName: string;
+  departmentSubAuthority: string | null;
+  assignmentId: string | null;
+  outgoingLetterNumber: string;
+  outgoingLetterDate: string;
+  createdAt: string;
+}
+
 export interface ComplaintDetailsData {
   id: string;
   displayId: string;
@@ -69,6 +80,7 @@ export interface ComplaintDetailsData {
   citizenDistrict: string | null;
   departments: DepartmentSummary[];
   assignmentHistory: DepartmentAssignment[];
+  urgencies: UrgencyEntry[];
   complaintTypeName: string | null;
   complaintTypeId: number | null;
   receptionMethodName: string | null;

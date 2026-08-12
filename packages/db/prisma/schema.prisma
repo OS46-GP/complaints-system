@@ -1,6 +1,6 @@
 generator client {
-  provider        = "prisma-client-js"
-  driverAdapters  = ["pg"]
+  provider       = "prisma-client-js"
+  driverAdapters = ["pg"]
 }
 
 datasource db {
@@ -70,14 +70,15 @@ model Location {
 }
 
 model Department {
-  id           String      @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String
   subAuthority String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   complaints           Complaint[]
   complaintDepartments ComplaintDepartment[]
+  urgencies            ComplaintUrgency[]
 }
 
 model ReceptionMethod {
@@ -110,24 +111,24 @@ model PresentationStatus {
 }
 
 model Complaint {
-  id                     String               @id @default(cuid())
+  id                     String              @id @default(cuid())
   complaintNumber        Int
   statementYear          Int
   arrivalDate            DateTime
-  severity               Severity              @default(Low)
+  severity               Severity            @default(Low)
   receptionMethodId      Int?
-  receptionMethod        ReceptionMethod?     @relation(fields: [receptionMethodId], references: [id])
+  receptionMethod        ReceptionMethod?    @relation(fields: [receptionMethodId], references: [id])
   complaintTypeId        Int?
-  complaintType          ComplaintType?       @relation(fields: [complaintTypeId], references: [id])
+  complaintType          ComplaintType?      @relation(fields: [complaintTypeId], references: [id])
   subject                String
   respondentName         String?
   departmentId           String?
-  department             Department?          @relation(fields: [departmentId], references: [id])
+  department             Department?         @relation(fields: [departmentId], references: [id])
   presentationStatusId   Int?
-  presentationStatus     PresentationStatus?  @relation(fields: [presentationStatusId], references: [id])
+  presentationStatus     PresentationStatus? @relation(fields: [presentationStatusId], references: [id])
   annotation             String?
   examinationStatusId    Int?
-  examinationStatus      ExaminationStatus?   @relation(fields: [examinationStatusId], references: [id])
+  examinationStatus      ExaminationStatus?  @relation(fields: [examinationStatusId], references: [id])
   examinationResult      String?
   authorityResponseText  String?
   authorityResponseDate  DateTime?
@@ -143,22 +144,23 @@ model Complaint {
   weeklyMeeting          Int?
   finalDecisionDate      DateTime?
   endDate                DateTime?
-  attachmentCount        Int?                 @default(0)
+  attachmentCount        Int?                @default(0)
   createdByUserId        String?
-  createdBy              User?                @relation(fields: [createdByUserId], references: [id])
-  createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
+  createdBy              User?               @relation(fields: [createdByUserId], references: [id])
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
 
-  citizenId   String
-  citizen     Citizen @relation(fields: [citizenId], references: [id])
+  citizenId String
+  citizen   Citizen @relation(fields: [citizenId], references: [id])
 
-  actions          ComplaintAction[]
-  escalations      ComplaintEscalation[]
-  files            ComplaintFile[]
-  linksFrom        ComplaintLink[] @relation("LinkedFrom")
-  linksTo          ComplaintLink[] @relation("LinkedTo")
-  socialDrafts     SocialDraft[]
-  departments      ComplaintDepartment[]
+  actions      ComplaintAction[]
+  escalations  ComplaintEscalation[]
+  files        ComplaintFile[]
+  linksFrom    ComplaintLink[]       @relation("LinkedFrom")
+  linksTo      ComplaintLink[]       @relation("LinkedTo")
+  socialDrafts SocialDraft[]
+  departments  ComplaintDepartment[]
+  urgencies    ComplaintUrgency[]
 
   @@unique([complaintNumber, statementYear])
   @@index([citizenId])
@@ -168,31 +170,51 @@ model Complaint {
 }
 
 model ComplaintDepartment {
-  id                String             @id @default(cuid())
-  complaintId        String
-  complaint          Complaint          @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  departmentId       String
-  department         Department         @relation(fields: [departmentId], references: [id])
-  createdAt          DateTime           @default(now())
-  endedAt            DateTime?
-  assignmentIndex    Int                @default(1)
+  id              String     @id @default(cuid())
+  complaintId     String
+  complaint       Complaint  @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  departmentId    String
+  department      Department @relation(fields: [departmentId], references: [id])
+  createdAt       DateTime   @default(now())
+  endedAt         DateTime?
+  assignmentIndex Int        @default(1)
 
   outgoingLetterNumber String?
   outgoingLetterDate   DateTime?
   responseDeadlineDays Int?
 
-  responseText       String?
-  responseNumber     String?
-  responseDate       DateTime?
-  importDate         DateTime?
+  responseText        String?
+  responseNumber      String?
+  responseDate        DateTime?
+  importDate          DateTime?
   examinationStatusId Int?
-  examinationStatus  ExaminationStatus? @relation(fields: [examinationStatusId], references: [id])
-  examinationResult  String?
-  respondedAt        DateTime?
-  updatedAt          DateTime           @updatedAt
+  examinationStatus   ExaminationStatus? @relation(fields: [examinationStatusId], references: [id])
+  examinationResult   String?
+  respondedAt         DateTime?
+  updatedAt           DateTime           @updatedAt
+
+  urgencies ComplaintUrgency[]
 
   @@index([complaintId, departmentId])
   @@index([departmentId])
+}
+
+model ComplaintUrgency {
+  id                   String               @id @default(cuid())
+  complaintId          String
+  complaint            Complaint            @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  departmentId         String
+  department           Department           @relation(fields: [departmentId], references: [id])
+  assignmentId         String?
+  assignment           ComplaintDepartment? @relation(fields: [assignmentId], references: [id])
+  outgoingLetterNumber String
+  outgoingLetterDate   DateTime
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@index([complaintId])
+  @@index([departmentId])
+  @@index([assignmentId])
 }
 
 model ComplaintAction {
@@ -231,12 +253,12 @@ model ComplaintFile {
 }
 
 model ComplaintLink {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   sourceId  String
   source    Complaint @relation("LinkedFrom", fields: [sourceId], references: [id], onDelete: Cascade)
   targetId  String
   target    Complaint @relation("LinkedTo", fields: [targetId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@unique([sourceId, targetId])
   @@index([sourceId])
@@ -244,8 +266,8 @@ model ComplaintLink {
 }
 
 model ComplaintYearCounter {
-  year          Int   @id
-  currentNumber Int   @default(0)
+  year          Int @id
+  currentNumber Int @default(0)
 }
 
 model GeneratedReport {
@@ -295,22 +317,22 @@ model MonitoredGroup {
 }
 
 model SocialDraft {
-  id           String           @id @default(cuid())
-  sourcePostId String           @unique
-  sourceLink   String
-  postText     String
-  authorName   String?
-  postedAt     DateTime
-  detectedAt   DateTime         @default(now())
-  status       SocialDraftStatus @default(Pending)
-  groupId      String?
-  groupName    String?
-  notes        String?
+  id              String            @id @default(cuid())
+  sourcePostId    String            @unique
+  sourceLink      String
+  postText        String
+  authorName      String?
+  postedAt        DateTime
+  detectedAt      DateTime          @default(now())
+  status          SocialDraftStatus @default(Pending)
+  groupId         String?
+  groupName       String?
+  notes           String?
   extractedFields Json?
-  complaintId  String?
-  complaint    Complaint?       @relation(fields: [complaintId], references: [id], onDelete: SetNull)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  complaintId     String?
+  complaint       Complaint?        @relation(fields: [complaintId], references: [id], onDelete: SetNull)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@index([status])
   @@index([detectedAt])

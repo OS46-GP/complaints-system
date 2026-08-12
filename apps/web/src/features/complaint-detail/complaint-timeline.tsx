@@ -6,6 +6,7 @@ import {
   MessageSquareReply,
   User,
   AlertTriangle,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssignmentStatusBadge } from "@/features/complaint-detail/assignment-status-badge";
@@ -30,7 +31,7 @@ interface TimelineEvent {
   meta: string[];
   badge: AssignmentStatus | null;
   warning: boolean;
-  icon: "registered" | "assignment" | "response" | "warning";
+  icon: "registered" | "assignment" | "response" | "urgency" | "warning";
 }
 
 function buildEvents(complaint: ComplaintDetailsData): TimelineEvent[] {
@@ -138,6 +139,30 @@ function buildEvents(complaint: ComplaintDetailsData): TimelineEvent[] {
     }
   }
 
+  for (const urgency of complaint.urgencies) {
+    const atTime = urgency.createdAt ? new Date(urgency.createdAt).getTime() : registeredAt;
+    events.push({
+      id: `urgency-${urgency.id}`,
+      atTime,
+      order: 2,
+      assignmentId: null,
+      title: `استعجال إلى ${urgency.departmentName}`,
+      description: null,
+      meta: [
+        urgency.outgoingLetterNumber
+          ? `رقم الصادر: ${urgency.outgoingLetterNumber}`
+          : "",
+        urgency.outgoingLetterDate
+          ? `تاريخ الصادر: ${formatDate(urgency.outgoingLetterDate)}`
+          : "",
+        formatDate(urgency.createdAt),
+      ].filter(Boolean),
+      badge: null,
+      warning: false,
+      icon: "urgency",
+    });
+  }
+
   events.sort((a, b) => a.atTime - b.atTime || a.order - b.order);
   return events;
 }
@@ -161,6 +186,13 @@ function EventIcon({ kind, warning }: { kind: TimelineEvent["icon"]; warning: bo
     return (
       <div className="size-6 rounded-full bg-surface-container-high flex items-center justify-center">
         <MessageSquareReply className="size-3.5 text-primary" />
+      </div>
+    );
+  }
+  if (kind === "urgency") {
+    return (
+      <div className="size-6 rounded-full bg-warning/15 flex items-center justify-center">
+        <Zap className="size-3.5 text-warning" />
       </div>
     );
   }
@@ -258,6 +290,12 @@ export function ComplaintTimeline({ complaint }: ComplaintTimelineProps) {
                     <span>
                       {event.meta.join(" · ") ||
                         formatDate(new Date(event.atTime).toISOString())}
+                    </span>
+                  )}
+                  {event.icon === "urgency" && (
+                    <span className="flex items-center gap-1">
+                      <Zap className="size-3 text-warning" />
+                      {event.meta.join(" · ")}
                     </span>
                   )}
                 </div>

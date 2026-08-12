@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   Repeat,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ComplaintSummaryDialog } from "@/components/shared/complaint-summary-dialog";
@@ -50,6 +51,9 @@ export function ComplaintQuickActions({
   const reassignPath = isAdmin
     ? `/admin/complaints/${complaintId}/reassign`
     : `/user/complaints/${complaintId}/reassign`;
+  const urgencyPath = isAdmin
+    ? `/admin/complaints/${complaintId}/urgency`
+    : `/user/complaints/${complaintId}/urgency`;
   const archivePath = isAdmin
     ? `/admin/complaints/${complaintId}/archive`
     : `/user/complaints/${complaintId}/archive`;
@@ -61,6 +65,7 @@ export function ComplaintQuickActions({
     { icon: <Pencil className="size-5" />, label: "تعديل الشكوى", onClick: () => navigate(editPath) },
     { icon: <MessageSquareReply className="size-5" />, label: "إضافة رد", onClick: () => navigate(responsePath) },
     { icon: <Repeat className="size-5" />, label: "إعادة إحالة", onClick: () => navigate(reassignPath) },
+    { icon: <Zap className="size-5" />, label: "استعجال", onClick: () => navigate(urgencyPath) },
     { icon: <Archive className="size-5" />, label: "أرشفة", onClick: () => navigate(archivePath) },
     { icon: <Printer className="size-5" />, label: "طباعة", onClick: () => pdfMutation.mutate(complaintId) },
     {

@@ -66,6 +66,17 @@ export interface ApiComplaintDepartment {
   responseDeadlineDays: number | null;
 }
 
+export interface ApiComplaintUrgency {
+  id: string;
+  complaintId: string;
+  departmentId: string;
+  department: ApiDepartment;
+  assignmentId: string | null;
+  outgoingLetterNumber: string;
+  outgoingLetterDate: string;
+  createdAt: string;
+}
+
 export interface ApiComplaint {
   id: string;
   complaintNumber: number;
@@ -85,6 +96,7 @@ export interface ApiComplaint {
   citizen: ApiCitizen;
   department: ApiDepartment | null;
   departments: ApiComplaintDepartment[];
+  urgencies: ApiComplaintUrgency[];
   complaintType: ApiComplaintType | null;
   receptionMethod: ApiReferenceItem | null;
   examinationStatus: ApiExaminationStatus | null;

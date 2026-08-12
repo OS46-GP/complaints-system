@@ -5,6 +5,7 @@ import {
   FileUp,
   History,
   MessageSquareReply,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AssignmentStatusBadge } from "@/features/complaint-detail/assignment-status-badge";
@@ -43,6 +44,11 @@ export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCard
             const missedDeadline =
               department.assignmentStatus === "OVERDUE" ||
               department.assignmentStatus === "ENDED_WITHOUT_RESPONSE";
+            const departmentUrgencies = complaint.urgencies.filter(
+              (urgency) => urgency.departmentId === department.id,
+            );
+            const lastUrgency =
+              departmentUrgencies[departmentUrgencies.length - 1] ?? null;
             return (
               <li key={department.id} className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
@@ -81,6 +87,15 @@ export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCard
                     {department.responseDeadlineDays && (
                       <span>المهلة: {department.responseDeadlineDays} يوم</span>
                     )}
+                  </div>
+                )}
+
+                {departmentUrgencies.length > 0 && lastUrgency && (
+                  <div className="ms-4 flex items-center gap-1.5 text-label-sm text-warning font-heading">
+                    <Zap className="size-3.5" />
+                    <span>
+                      استعجال ({departmentUrgencies.length}) — {formatDate(lastUrgency.outgoingLetterDate)}
+                    </span>
                   </div>
                 )}
 

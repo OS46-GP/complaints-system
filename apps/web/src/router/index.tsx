@@ -32,6 +32,9 @@ const AdminComplaintResponsePage = lazy(
 const AdminComplaintReassignPage = lazy(
   () => import("@/pages/admin/complaint-reassign"),
 );
+const AdminComplaintUrgencyPage = lazy(
+  () => import("@/pages/admin/complaint-urgency"),
+);
 const AdminComplaintArchivePage = lazy(
   () => import("@/pages/admin/complaint-archive"),
 );
@@ -75,6 +78,9 @@ const UserComplaintResponsePage = lazy(
 );
 const UserComplaintReassignPage = lazy(
   () => import("@/pages/user/complaint-reassign"),
+);
+const UserComplaintUrgencyPage = lazy(
+  () => import("@/pages/user/complaint-urgency"),
 );
 const UserComplaintArchivePage = lazy(
   () => import("@/pages/user/complaint-archive"),
@@ -213,6 +219,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminComplaintReassignPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.COMPLAINT_URGENCY(":id")}
+              element={
+                <SuspenseBoundary>
+                  <AdminComplaintUrgencyPage />
                 </SuspenseBoundary>
               }
             />
@@ -402,6 +416,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserComplaintReassignPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.USER.COMPLAINT_URGENCY(":id")}
+              element={
+                <SuspenseBoundary>
+                  <UserComplaintUrgencyPage />
                 </SuspenseBoundary>
               }
             />

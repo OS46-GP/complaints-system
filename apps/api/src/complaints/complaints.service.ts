@@ -10,6 +10,7 @@ import { CreateComplaintDto } from "./dto/create-complaint.dto";
 import { UpdateComplaintDto } from "./dto/update-complaint.dto";
 import { ReassignComplaintDto } from "./dto/reassign-complaint.dto";
 import { CreateDepartmentResponseDto } from "./dto/create-department-response.dto";
+import { CreateUrgencyDto } from "./dto/create-urgency.dto";
 import { QueryComplaintsDto } from "./dto/query-complaints.dto";
 import { computeCaseStatus } from "./case-status.config";
 import {
@@ -81,6 +82,10 @@ const complaintInclude = {
   departments: {
     include: { department: true },
     orderBy: [{ assignmentIndex: "asc" }, { createdAt: "asc" }],
+  },
+  urgencies: {
+    include: { department: true },
+    orderBy: { createdAt: "asc" },
   },
   receptionMethod: true,
   complaintType: true,
@@ -582,6 +587,46 @@ export class ComplaintsService {
           ...toAssignmentLetterData(dto as DepartmentAssignmentDto),
         },
       });
+    });
+
+    const result = await this.prisma.complaint.findUnique({
+      where: { id: complaintId },
+      include: complaintInclude,
+    });
+
+    return this.addCaseStatus(result!);
+  }
+
+  async sendUrgency(complaintId: string, dto: CreateUrgencyDto) {
+    await this.findById(complaintId);
+
+    const { departmentId } = dto;
+
+    const target = await this.prisma.client.complaintDepartment.findFirst({
+      where: { complaintId, departmentId },
+      orderBy: [{ assignmentIndex: "desc" }, { createdAt: "desc" }],
+      select: { id: true, endedAt: true, responseText: true, respondedAt: true, outgoingLetterDate: true, responseDeadlineDays: true },
+    });
+
+    if (!target) {
+      throw new BadRequestException("Department is not linked to this complaint");
+    }
+
+    const status = computeAssignmentStatus(target);
+    if (status !== "ACTIVE") {
+      throw new BadRequestException(
+        "Cannot send an urgency request: the assignment reached its deadline or is no longer active",
+      );
+    }
+
+    await this.prisma.client.complaintUrgency.create({
+      data: {
+        complaintId,
+        departmentId,
+        assignmentId: target.id,
+        outgoingLetterNumber: dto.outgoingLetterNumber,
+        outgoingLetterDate: new Date(dto.outgoingLetterDate),
+      },
     });
 
     const result = await this.prisma.complaint.findUnique({

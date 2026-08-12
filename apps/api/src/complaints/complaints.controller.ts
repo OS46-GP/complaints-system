@@ -23,6 +23,7 @@ import { CreateComplaintDto } from "./dto/create-complaint.dto";
 import { UpdateComplaintDto } from "./dto/update-complaint.dto";
 import { CreateDepartmentResponseDto } from "./dto/create-department-response.dto";
 import { ReassignComplaintDto } from "./dto/reassign-complaint.dto";
+import { CreateUrgencyDto } from "./dto/create-urgency.dto";
 import { QueryComplaintsDto } from "./dto/query-complaints.dto";
 
 @Controller("complaints")
@@ -139,6 +140,11 @@ export class ComplaintsController {
   @Post(":id/reassign")
   reassign(@Param("id") id: string, @Body() dto: ReassignComplaintDto) {
     return this.complaintsService.reassignDepartment(id, dto);
+  }
+
+  @Post(":id/urgency")
+  sendUrgency(@Param("id") id: string, @Body() dto: CreateUrgencyDto) {
+    return this.complaintsService.sendUrgency(id, dto);
   }
 
   @Delete(":id")

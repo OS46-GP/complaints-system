@@ -110,6 +110,20 @@ export const complaintsApi = {
         ...(payload ?? {}),
       })
       .then((res) => res.data),
+  sendUrgency: (
+    id: string,
+    departmentId: string,
+    payload: {
+      outgoingLetterNumber: string;
+      outgoingLetterDate: string;
+    },
+  ) =>
+    axiosClient
+      .post<ApiComplaint>(`/api/complaints/${id}/urgency`, {
+        departmentId,
+        ...payload,
+      })
+      .then((res) => res.data),
   getDepartments: () =>
     axiosClient.get<Department[]>("/api/complaints/departments").then((res) => res.data),
   getComplaintTypes: () =>
