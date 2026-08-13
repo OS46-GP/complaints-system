@@ -158,6 +158,10 @@
   text-align: start !important;
   justify-content: flex-start;
 }
+[dir="rtl"] [data-collapsible="icon"] [data-slot="sidebar-menu-button"] {
+  text-align: center !important;
+  justify-content: center;
+}
 [dir="rtl"] [data-slot="sidebar-menu-button"] > span:last-child {
   text-align: start;
 }
@@ -201,4 +205,13 @@
 .letter-wysiwyg.rounded-md > .jodit-container {
   border-radius: var(--radius-md);
   overflow: hidden;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

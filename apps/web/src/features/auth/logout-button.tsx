@@ -21,12 +21,13 @@ export function LogoutButton({ className }: { className?: string }) {
       className={cn(
         "gap-2 w-full justify-start text-sidebar-foreground",
         "hover:bg-transparent! hover:text-destructive active:bg-transparent!",
+        "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:rounded-lg",
         className,
       )}
       onClick={handleLogout}
     >
       <LogOut className="size-5" />
-      <span>تسجيل الخروج</span>
+      <span className="group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
     </Button>
   );
 }
