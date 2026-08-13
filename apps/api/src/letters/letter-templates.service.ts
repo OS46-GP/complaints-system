@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -9,6 +10,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import { uploadRoot } from "./letter-context";
 import { CreateLetterTemplateDto } from "./dto/create-letter-template.dto";
 import { UpdateLetterTemplateDto } from "./dto/update-letter-template.dto";
+
+const ALLOWED_ASSET_EXTENSIONS = [".docx"];
+const MAX_ASSET_SIZE = 10 * 1024 * 1024;
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9_\-\u0600-\u06FF.]/g, "_");
@@ -100,7 +104,18 @@ export class LetterTemplatesService {
   }
 
   async setAsset(id: string, file: Express.Multer.File) {
-    await this.findById(id);
+    const template = await this.findById(id);
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowed = ALLOWED_ASSET_EXTENSIONS;
+    if (!allowed.includes(ext)) {
+      throw new BadRequestException(
+        "امتداد الملف غير مدعوم (يُقبل .docx فقط)",
+      );
+    }
+    if (file.size > MAX_ASSET_SIZE) {
+      throw new BadRequestException("حجم الملف يتجاوز 10 ميجابايت");
+    }
 
     const safeName = sanitizeFilename(file.originalname);
     const storageKey = `letter-templates/${id}_${Date.now()}_${safeName}`;

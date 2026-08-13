@@ -1,0 +1,18 @@
+meta {
+  name: Delete DOCX Letter Template (Cleanup)
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/letter-templates/{{docxTemplateId}}
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(200)
+  res.body.success: eq(true)
+}

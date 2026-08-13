@@ -9,7 +9,7 @@ import {
   Min,
 } from "class-validator";
 
-export const LETTER_TEMPLATE_TYPES = ["HTML", "DOCX", "PDF_LETTERHEAD"] as const;
+export const LETTER_TEMPLATE_TYPES = ["HTML", "DOCX"] as const;
 export type LetterTemplateTypeValue = (typeof LETTER_TEMPLATE_TYPES)[number];
 
 export class CreateLetterTemplateDto {

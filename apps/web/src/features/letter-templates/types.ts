@@ -1,9 +1,8 @@
-export type LetterTemplateType = "HTML" | "DOCX" | "PDF_LETTERHEAD";
+export type LetterTemplateType = "HTML" | "DOCX";
 
 export const LETTER_TYPE_LABELS: Record<LetterTemplateType, string> = {
   HTML: "HTML",
   DOCX: "DOCX",
-  PDF_LETTERHEAD: "ترويسة PDF",
 };
 
 export interface LetterTemplate {

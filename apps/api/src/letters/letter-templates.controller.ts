@@ -38,6 +38,24 @@ export class LetterTemplatesController {
     return PLACEHOLDER_GROUPS;
   }
 
+  @Roles(UserRole.Admin)
+  @Post("preview-draft")
+  @UseInterceptors(FileInterceptor("file"))
+  async previewDraft(
+    @Body() body: { type?: string; body?: string },
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.lettersService.previewDraft(
+      body.type ?? "HTML",
+      body.body,
+      file,
+    );
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=preview.pdf");
+    res.send(buffer);
+  }
+
   @Get()
   findAll(
     @CurrentUser() user: CurrentUserPayload,
