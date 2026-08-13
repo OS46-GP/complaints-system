@@ -81,10 +81,31 @@ export function useDeleteLetterTemplate() {
   });
 }
 
+export function useUploadLetterTemplateAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      letterTemplatesApi.uploadAsset(id, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LETTER_QUERY_KEYS.templates });
+      toast.success("تم رفع ملف النموذج بنجاح");
+    },
+    onError: () => toast.error("تعذر رفع الملف. تأكد أنه ملف DOCX أقل من 10MB."),
+  });
+}
+
 export function usePreviewLetterTemplate() {
   return useMutation({
     mutationFn: (id: string) => letterTemplatesApi.preview(id),
     onError: () => toast.error("تعذر معاينة النموذج."),
+  });
+}
+
+export function usePreviewLetterTemplateDraft() {
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof letterTemplatesApi.previewDraft>[0]) =>
+      letterTemplatesApi.previewDraft(payload),
+    onError: () => toast.error("تعذر معاينة الخطاب. تحقق من المحتوى وأعد المحاولة."),
   });
 }
 

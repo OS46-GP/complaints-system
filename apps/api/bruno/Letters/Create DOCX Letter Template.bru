@@ -1,0 +1,38 @@
+meta {
+  name: Create DOCX Letter Template
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/letter-templates
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "name": "خطاب DOCX برونو تجريبي",
+    "description": "نموذج DOCX تجريبي أنشأته اختبارات برونو",
+    "type": "DOCX",
+    "isActive": true,
+    "sortOrder": 98
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.id: $notNull
+  res.body.type: eq("DOCX")
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.id) {
+    bru.setVar("docxTemplateId", data.id);
+  }
+}

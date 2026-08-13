@@ -1,9 +1,16 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowRight, Eye, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  Eye,
+  FileText,
+  ImagePlus,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,7 +31,9 @@ import {
   useCreateLetterTemplate,
   useLetterPlaceholders,
   usePreviewLetterTemplate,
+  usePreviewLetterTemplateDraft,
   useUpdateLetterTemplate,
+  useUploadLetterTemplateAsset,
 } from "@/features/letter-templates/hooks";
 import type { LetterTemplate } from "@/features/letter-templates/types";
 import { renderLetterPreview } from "@/features/letter-templates/live-preview";
@@ -36,7 +45,7 @@ interface LetterTemplateFormProps {
 const schema = z.object({
   name: z.string().min(1, "اسم النموذج مطلوب").max(200),
   description: z.string().max(2000).optional(),
-  type: z.enum(["HTML", "DOCX", "PDF_LETTERHEAD"]),
+  type: z.enum(["HTML", "DOCX"]),
   body: z.string().optional(),
   isActive: z.boolean(),
   isDefault: z.boolean(),
@@ -48,14 +57,20 @@ type FormValues = z.infer<typeof schema>;
 export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
   const isEdit = !!template;
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
   const createMutation = useCreateLetterTemplate();
   const updateMutation = useUpdateLetterTemplate();
-  const previewMutation = usePreviewLetterTemplate();
+  const previewMutation = usePreviewLetterTemplateDraft();
+  const savedPreviewMutation = usePreviewLetterTemplate();
+  const uploadAssetMutation = useUploadLetterTemplateAsset();
   const { data: placeholderGroups } = useLetterPlaceholders();
   const isPending =
     createMutation.isPending ||
     updateMutation.isPending ||
-    previewMutation.isPending;
+    previewMutation.isPending ||
+    savedPreviewMutation.isPending ||
+    uploadAssetMutation.isPending;
 
   const {
     register,
@@ -79,6 +94,7 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
   });
 
   useEffect(() => {
+    setStagedFile(null);
     reset({
       name: template?.name ?? "",
       description: template?.description ?? "",
@@ -90,6 +106,9 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
     });
   }, [template, reset]);
 
+  const selectedType = watch("type");
+  const isDocx = selectedType === "DOCX";
+
   const insertPlaceholder = (key: string) => {
     const value = getValues("body") ?? "";
     setValue("body", `${value} {{${key}}}`, { shouldDirty: true });
@@ -97,11 +116,42 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
 
   const bodyValue = watch("body") ?? "";
   const livePreviewHtml = useMemo(
-    () => renderLetterPreview(bodyValue),
-    [bodyValue],
+    () => (isDocx ? "" : renderLetterPreview(bodyValue)),
+    [bodyValue, isDocx],
   );
 
+  const handleAssetFile = (file?: File) => {
+    if (!file) return;
+    if (isEdit && template) {
+      uploadAssetMutation.mutate({ id: template.id, file });
+    } else {
+      setStagedFile(file);
+    }
+  };
+
+  const assetName = template?.assetKey
+    ? template.assetKey.split("/").pop()
+    : null;
+
   const goBack = () => navigate(PATHS.ADMIN.LETTER_TEMPLATES);
+
+  const handlePreview = () => {
+    if (selectedType === "DOCX") {
+      if (stagedFile) {
+        previewMutation.mutate({ type: "DOCX", file: stagedFile });
+      } else if (isEdit && template?.assetKey) {
+        savedPreviewMutation.mutate(template.id);
+      }
+      return;
+    }
+    previewMutation.mutate({ type: "HTML", body: bodyValue });
+  };
+
+  const previewBusy =
+    previewMutation.isPending || savedPreviewMutation.isPending;
+  const canPreview = isDocx
+    ? !!(stagedFile || (isEdit && template?.assetKey))
+    : !!bodyValue.trim();
 
   const onSubmit = (values: FormValues) => {
     if (isEdit) {
@@ -111,7 +161,18 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
       );
       return;
     }
-    createMutation.mutate(values, { onSuccess: goBack });
+    createMutation.mutate(values, {
+      onSuccess: (created) => {
+        if (stagedFile) {
+          uploadAssetMutation.mutate(
+            { id: created.id, file: stagedFile },
+            { onSuccess: goBack },
+          );
+        } else {
+          goBack();
+        }
+      },
+    });
   };
 
   return (
@@ -152,22 +213,18 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
             <div className="space-y-2">
               <Label htmlFor="lt-type">نوع النموذج</Label>
               <Select
-                value="HTML"
+                value={selectedType}
                 onValueChange={(v) =>
                   setValue("type", v as FormValues["type"])
                 }
-                disabled
               >
                 <SelectTrigger id="lt-type">
                   <SelectValue placeholder="اختر النوع" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="HTML">HTML (مدعوم حالياً)</SelectItem>
-                  <SelectItem value="DOCX" disabled>
-                    DOCX (قريباً)
-                  </SelectItem>
-                  <SelectItem value="PDF_LETTERHEAD" disabled>
-                    ترويسة PDF (قريباً)
+                  <SelectItem value="HTML">HTML (محرر مباشر)</SelectItem>
+                  <SelectItem value="DOCX">
+                    DOCX (مستند Word مع متغيرات)
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -186,45 +243,106 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="lt-body">محتوى الخطاب (HTML)</Label>
+              <Label htmlFor="lt-body">
+                {isDocx ? "ملف النموذج (DOCX)" : "محتوى الخطاب (HTML)"}
+              </Label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={() => isEdit && previewMutation.mutate(template!.id)}
-                disabled={!isEdit || previewMutation.isPending}
+                onClick={handlePreview}
+                disabled={!canPreview || previewBusy}
               >
                 <Eye className="size-4" />
-                {previewMutation.isPending
+                {previewBusy
                   ? "جارٍ إنشاء PDF..."
-                  : "معاينة النموذج كـ PDF"}
+                  : "معاينة الخطاب كـ PDF"}
               </Button>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <Textarea
-                id="lt-body"
-                dir="rtl"
-                rows={18}
-                className="min-h-[440px] resize-y font-mono"
-                placeholder={`<div class="letter-head">... بشكل HTML، مع إدراج المتغيرات مثل: {{citizenName}} {{subject}}`}
-                {...register("body")}
-              />
-              <div className="flex flex-col rounded-xl border border-border overflow-hidden bg-white">
-                <div className="border-b border-border bg-surface-container-lowest px-3 py-2 text-label-sm font-bold text-muted-foreground flex items-center justify-between">
-                  <span>معاينة مباشرة</span>
-                  <span className="text-label-xs font-normal text-muted-foreground/70">
-                    بيانات تجريبية — تُستبدل ببيانات الشكوى الفعلية عند الإصدار
-                  </span>
-                </div>
-                <iframe
-                  title="معاينة مباشرة لنموذج الخطاب"
-                  sandbox=""
-                  srcDoc={livePreviewHtml}
-                  className="w-full flex-1 min-h-[440px] bg-white"
+
+            {isDocx ? (
+              <div className="flex flex-col gap-3 border border-border rounded-xl p-4 bg-surface-container-lowest">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="hidden"
+                  onChange={(e) => {
+                    handleAssetFile(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
                 />
+                {assetName || stagedFile ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-label-sm">
+                    <FileText className="size-4 text-primary shrink-0" />
+                    <span className="truncate" dir="ltr">
+                      {stagedFile?.name ?? assetName}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="h-24 rounded-lg border border-dashed border-border flex items-center justify-center text-muted-foreground text-label-sm">
+                    لا يوجد ملف بعد — ارفع ملف .docx يحتوي على{" "}
+                    {"{{variables}}"}
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 self-start"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadAssetMutation.isPending}
+                >
+                  {uploadAssetMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : assetName || stagedFile ? (
+                    <RefreshCw className="size-4" />
+                  ) : (
+                    <ImagePlus className="size-4" />
+                  )}
+                  {uploadAssetMutation.isPending
+                    ? "جارٍ الرفع..."
+                    : assetName || stagedFile
+                      ? "استبدال الملف"
+                      : "اختيار ملف DOCX"}
+                </Button>
+                <p className="text-label-sm text-muted-foreground">
+                  اصنع المستند في Word وضع المتغيرات النصية مثل{" "}
+                  {"{{citizenName}}"} داخل النص — تُستبدل تلقائياً عند الإصدار.
+                  الصور تُحفظ داخل المستند مباشرة ولا تُحقن تلقائياً.
+                  {!isEdit &&
+                    (stagedFile
+                      ? " سيُرفع الملف تلقائياً بعد إنشاء النموذج."
+                      : " اختر ملف DOCX وسيُرفع بعد إنشاء النموذج.")}
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <Textarea
+                  id="lt-body"
+                  dir="rtl"
+                  rows={18}
+                  className="min-h-[440px] resize-y font-mono"
+                  placeholder={`<div class="letter-head">... بشكل HTML، مع إدراج المتغيرات مثل: {{citizenName}} {{subject}}`}
+                  {...register("body")}
+                />
+                <div className="flex flex-col rounded-xl border border-border overflow-hidden bg-white">
+                  <div className="border-b border-border bg-surface-container-lowest px-3 py-2 text-label-sm font-bold text-muted-foreground flex items-center justify-between">
+                    <span>معاينة مباشرة</span>
+                    <span className="text-label-xs font-normal text-muted-foreground/70">
+                      بيانات تجريبية — تُستبدل ببيانات الشكوى الفعلية عند الإصدار
+                    </span>
+                  </div>
+                  <iframe
+                    title="معاينة مباشرة لنموذج الخطاب"
+                    sandbox=""
+                    srcDoc={livePreviewHtml}
+                    className="w-full flex-1 min-h-[440px] bg-white"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -254,6 +372,11 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
                   ))
                 : null}
             </div>
+            {isDocx && (
+              <p className="text-label-sm text-muted-foreground">
+                انسخ أي متغير من القائمة والصقه داخل مستند Word.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-6">

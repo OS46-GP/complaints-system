@@ -1,9 +1,10 @@
 import {
+  BadRequestException,
   Injectable,
-  NotImplementedException,
   NotFoundException,
 } from "@nestjs/common";
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { PrismaService } from "../prisma/prisma.service";
 import { LetterSettingsService } from "./letter-settings.service";
@@ -13,6 +14,7 @@ import {
   type LetterComplaintSource,
 } from "./letter-context";
 import { renderLetterHtml } from "./renderers/html.renderer";
+import { renderLetterDocx } from "./renderers/docx.renderer";
 
 const COMPLAINT_INCLUDE = {
   citizen: true,
@@ -72,7 +74,7 @@ export class LettersService {
   }
 
   private async renderTemplate(
-    template: { type: string; body: string | null },
+    template: { type: string; body: string | null; assetKey: string | null },
     source: LetterComplaintSource,
   ): Promise<Buffer> {
     const settings = await this.settingsService.getOrCreate();
@@ -80,13 +82,26 @@ export class LettersService {
 
     if (template.type === "HTML") {
       if (!template.body) {
-        throw new NotImplementedException("محتوى النموذج فارغ");
+        throw new BadRequestException("محتوى النموذج فارغ");
       }
       return renderLetterHtml(template.body, context);
     }
 
-    throw new NotImplementedException(
-      "نوع النموذج غير مدعوم حالياً، يرجى استخدام نموذج HTML",
+    if (template.type === "DOCX") {
+      if (!template.assetKey) {
+        throw new BadRequestException(
+          "يجب رفع ملف DOCX لهذا النموذج قبل الإصدار",
+        );
+      }
+      const assetPath = path.resolve(uploadRoot(), template.assetKey);
+      if (!fs.existsSync(assetPath)) {
+        throw new NotFoundException("ملف النموذج غير موجود على الخادم");
+      }
+      return renderLetterDocx(assetPath, context);
+    }
+
+    throw new BadRequestException(
+      "نوع النموذج غير مدعوم حالياً، يرجى استخدام نموذج HTML أو DOCX",
     );
   }
 
@@ -98,6 +113,41 @@ export class LettersService {
 
     const source = await this.sampleSource();
     return this.renderTemplate(template, source);
+  }
+
+  async previewDraft(
+    type: string,
+    body: string | undefined,
+    file: Express.Multer.File | undefined,
+  ): Promise<Buffer> {
+    const settings = await this.settingsService.getOrCreate();
+    const source = await this.sampleSource();
+    const context = buildLetterContext(source, settings);
+
+    if (type === "HTML") {
+      if (!body) {
+        throw new BadRequestException("اكتب محتوى النموذج أولاً للمعاينة");
+      }
+      return renderLetterHtml(body, context);
+    }
+
+    if (type === "DOCX") {
+      if (!file?.buffer?.length) {
+        throw new BadRequestException("اختر ملف DOCX أولاً للمعاينة");
+      }
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "letters-draft-"));
+      try {
+        const docxPath = path.join(tmpDir, "draft.docx");
+        fs.writeFileSync(docxPath, file.buffer);
+        return await renderLetterDocx(docxPath, context);
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+    }
+
+    throw new BadRequestException(
+      "نوع النموذج غير مدعوم للمعاينة، يرجى استخدام HTML أو DOCX",
+    );
   }
 
   async generate(complaintId: string, templateId: string, userId: string) {

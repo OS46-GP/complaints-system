@@ -34,6 +34,16 @@ export const letterTemplatesApi = {
       .then((res) => res.data),
   remove: (id: string) =>
     axiosClient.delete(`/api/letter-templates/${id}`).then((res) => res.data),
+  uploadAsset: async (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await axiosClient.post<{
+      id: string;
+      assetKey: string;
+      downloadUrl: string;
+    }>(`/api/letter-templates/${id}/asset`, formData);
+    return res.data;
+  },
   placeholders: () =>
     axiosClient
       .get<PlaceholderGroup[]>("/api/letter-templates/placeholders")
@@ -42,6 +52,25 @@ export const letterTemplatesApi = {
     const res = await axiosClient.post(
       `/api/letter-templates/${id}/preview`,
       null,
+      { responseType: "blob" },
+    );
+    if (res.data && res.data.size > 0) {
+      const url = URL.createObjectURL(res.data);
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  },
+  previewDraft: async (payload: {
+    type: "HTML" | "DOCX";
+    body?: string;
+    file?: File;
+  }) => {
+    const formData = new FormData();
+    formData.append("type", payload.type);
+    if (payload.body !== undefined) formData.append("body", payload.body);
+    if (payload.file) formData.append("file", payload.file);
+    const res = await axiosClient.post(
+      "/api/letter-templates/preview-draft",
+      formData,
       { responseType: "blob" },
     );
     if (res.data && res.data.size > 0) {
