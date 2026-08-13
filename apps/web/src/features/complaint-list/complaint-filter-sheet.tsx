@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Filter, RotateCcw, Search, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -89,7 +90,7 @@ function FilterPanel({
     };
   }, [open, onClose]);
 
-  return (
+  return createPortal(
     <>
       {open && (
         <div
@@ -101,14 +102,16 @@ function FilterPanel({
         ref={panelRef}
         role="dialog"
         aria-modal={open}
-        className={`fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-popover text-sm text-popover-foreground shadow-lg transition-transform duration-200 sm:max-w-md data-[side=right]:border-s ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-popover text-sm text-popover-foreground shadow-lg transition-[transform,visibility] duration-200 sm:max-w-md data-[side=right]:border-s ${
+          open ? "visible translate-x-0 pointer-events-auto" : "invisible translate-x-full pointer-events-none"
         }`}
         data-side="right"
+        aria-hidden={!open}
       >
         {children}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
