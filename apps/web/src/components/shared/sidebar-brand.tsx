@@ -15,7 +15,7 @@ export function SidebarBrand({
         <Icon className="size-5 text-white" />
       </div>
       <div className="grid group-data-[collapsible=icon]:hidden">
-        <span className="font-heading text-xl font-bold leading-tight text-primary-fixed">
+        <span className="font-heading text-xl font-bold leading-tight text-sidebar-primary">
           {title}
         </span>
         <span className="text-xs font-medium text-sidebar-foreground/70">
