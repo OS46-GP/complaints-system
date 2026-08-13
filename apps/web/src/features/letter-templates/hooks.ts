@@ -81,16 +81,10 @@ export function useDeleteLetterTemplate() {
   });
 }
 
-export function useUploadLetterTemplateAsset() {
-  const queryClient = useQueryClient();
+export function useImportLetterTemplateDocx() {
   return useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) =>
-      letterTemplatesApi.uploadAsset(id, file),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LETTER_QUERY_KEYS.templates });
-      toast.success("تم رفع ملف النموذج بنجاح");
-    },
-    onError: () => toast.error("تعذر رفع الملف. تأكد أنه ملف DOCX أقل من 10MB."),
+    mutationFn: (file: File) => letterTemplatesApi.importDocx(file),
+    onError: () => toast.error("تعذر استيراد ملف Word. تأكد أنه ملف DOCX صالح."),
   });
 }
 
@@ -101,26 +95,29 @@ export function usePreviewLetterTemplate() {
   });
 }
 
-export function usePreviewLetterTemplateDraft() {
-  return useMutation({
-    mutationFn: (payload: Parameters<typeof letterTemplatesApi.previewDraft>[0]) =>
-      letterTemplatesApi.previewDraft(payload),
-    onError: () => toast.error("تعذر معاينة الخطاب. تحقق من المحتوى وأعد المحاولة."),
-  });
-}
-
 export function useGenerateLetter(complaintId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (templateId: string) =>
-      letterTemplatesApi.generate(complaintId, templateId),
+    mutationFn: (args: {
+      templateId: string;
+      variableValues?: Record<string, string>;
+    }) => letterTemplatesApi.generate(
+      complaintId,
+      args.templateId,
+      args.variableValues,
+    ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: LETTER_QUERY_KEYS.generated(complaintId),
       });
       toast.success("تم إصدار الخطاب بنجاح");
     },
-    onError: () => toast.error("تعذر إصدار الخطاب. حاول مرة أخرى."),
+    onError: (e) => {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message;
+      toast.error(msg || "تعذر إصدار الخطاب. حاول مرة أخرى.");
+    },
   });
 }
 

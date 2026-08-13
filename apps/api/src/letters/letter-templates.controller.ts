@@ -21,7 +21,7 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser, CurrentUserPayload } from "../auth/decorators/current-user.decorator";
 import { LetterTemplatesService } from "./letter-templates.service";
 import { LettersService } from "./letters.service";
-import { PLACEHOLDER_GROUPS } from "./letter-context";
+import { PLACEHOLDER_GROUPS, type TemplateVariable } from "./letter-context";
 import { CreateLetterTemplateDto } from "./dto/create-letter-template.dto";
 import { UpdateLetterTemplateDto } from "./dto/update-letter-template.dto";
 
@@ -39,18 +39,27 @@ export class LetterTemplatesController {
   }
 
   @Roles(UserRole.Admin)
-  @Post("preview-draft")
+  @Post("import-docx")
   @UseInterceptors(FileInterceptor("file"))
+  importDocx(@UploadedFile() file: Express.Multer.File) {
+    return this.templatesService.importDocx(file);
+  }
+
+  @Roles(UserRole.Admin)
+  @Post("preview-draft")
   async previewDraft(
-    @Body() body: { type?: string; body?: string },
-    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() body: { body?: string; variables?: string },
     @Res() res: Response,
   ) {
-    const buffer = await this.lettersService.previewDraft(
-      body.type ?? "HTML",
-      body.body,
-      file,
-    );
+    let variables: TemplateVariable[] | null = null;
+    if (body.variables) {
+      try {
+        variables = JSON.parse(body.variables) as TemplateVariable[];
+      } catch {
+        variables = null;
+      }
+    }
+    const buffer = await this.lettersService.previewDraft(body.body, variables);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "inline; filename=preview.pdf");
     res.send(buffer);
@@ -91,13 +100,6 @@ export class LetterTemplatesController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.templatesService.remove(id);
-  }
-
-  @Roles(UserRole.Admin)
-  @Post(":id/asset")
-  @UseInterceptors(FileInterceptor("file"))
-  uploadAsset(@Param("id") id: string, @UploadedFile() file: Express.Multer.File) {
-    return this.templatesService.setAsset(id, file);
   }
 
   @Roles(UserRole.Admin)

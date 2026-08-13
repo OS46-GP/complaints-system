@@ -1,4 +1,4 @@
-import { FileText, FileType2, Layers } from "lucide-react";
+import { FileType2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -12,15 +12,6 @@ export function LetterTemplateTypeBadge({
   type: LetterTemplateType;
   className?: string;
 }) {
-  const icon =
-    type === "HTML" ? (
-      <FileType2 className="size-3" />
-    ) : type === "DOCX" ? (
-      <FileText className="size-3" />
-    ) : (
-      <Layers className="size-3" />
-    );
-
   return (
     <Badge
       variant="outline"
@@ -29,7 +20,7 @@ export function LetterTemplateTypeBadge({
         className,
       )}
     >
-      {icon}
+      <FileType2 className="size-3" />
       {LETTER_TYPE_LABELS[type]}
     </Badge>
   );
