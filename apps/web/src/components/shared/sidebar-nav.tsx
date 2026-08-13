@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
+import { cn, resolveActiveUrls } from "@/lib/utils";
 
 export interface NavItem {
   title: string;
@@ -29,8 +29,11 @@ export function SidebarNav({ groups }: { groups: NavGroup[] }) {
   const { setOpenMobile } = useSidebar();
   const { pathname } = useLocation();
 
+  const allUrls = groups.flatMap((group) => group.items.map((i) => i.url));
+  const activeUrls = resolveActiveUrls(pathname, allUrls);
+
   const isItemActive = (item: NavItem) =>
-    item.isActive ?? (item.url !== "#" && pathname.startsWith(item.url));
+    item.isActive ?? activeUrls.has(item.url);
 
   return (
     <SidebarContent className="my-10">
