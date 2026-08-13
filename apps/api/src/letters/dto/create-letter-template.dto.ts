@@ -1,16 +1,48 @@
 import {
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   MaxLength,
   Min,
 } from "class-validator";
+import { Type } from "class-transformer";
+import type { TemplateVariable } from "../letter-context";
 
-export const LETTER_TEMPLATE_TYPES = ["HTML", "DOCX"] as const;
+export const LETTER_TEMPLATE_TYPES = ["HTML"] as const;
 export type LetterTemplateTypeValue = (typeof LETTER_TEMPLATE_TYPES)[number];
+
+export class LetterTemplateVariableDto {
+  @IsString()
+  @IsNotEmpty({ message: "مفتاح المتغير مطلوب" })
+  key!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: "اسم المتغير مطلوب" })
+  label!: string;
+
+  @IsBoolean()
+  @IsOptional()
+  required?: boolean;
+
+  @IsString()
+  @IsOptional()
+  placeholder?: string;
+
+  @IsIn(["text", "textarea", "date"], {
+    message: "نوع المتغير غير صالح",
+  })
+  @IsOptional()
+  type?: "text" | "textarea" | "date";
+
+  @IsString()
+  @IsOptional()
+  group?: string;
+}
 
 export class CreateLetterTemplateDto {
   @IsString()
@@ -24,11 +56,17 @@ export class CreateLetterTemplateDto {
   description?: string;
 
   @IsIn(LETTER_TEMPLATE_TYPES, { message: "نوع النموذج غير صالح" })
-  type!: LetterTemplateTypeValue;
+  @IsOptional()
+  type?: LetterTemplateTypeValue;
 
   @IsString()
   @IsOptional()
   body?: string;
+
+  @IsArray()
+  @Type(() => LetterTemplateVariableDto)
+  @IsOptional()
+  variables?: LetterTemplateVariableDto[];
 
   @IsBoolean()
   @IsOptional()

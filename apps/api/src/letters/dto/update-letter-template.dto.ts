@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
@@ -7,7 +8,9 @@ import {
   MaxLength,
   Min,
 } from "class-validator";
+import { Type } from "class-transformer";
 import { LETTER_TEMPLATE_TYPES } from "./create-letter-template.dto";
+import { LetterTemplateVariableDto } from "./create-letter-template.dto";
 
 export class UpdateLetterTemplateDto {
   @IsString()
@@ -27,6 +30,11 @@ export class UpdateLetterTemplateDto {
   @IsString()
   @IsOptional()
   body?: string;
+
+  @IsArray()
+  @Type(() => LetterTemplateVariableDto)
+  @IsOptional()
+  variables?: LetterTemplateVariableDto[];
 
   @IsBoolean()
   @IsOptional()

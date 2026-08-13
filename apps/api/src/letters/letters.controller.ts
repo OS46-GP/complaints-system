@@ -22,7 +22,12 @@ export class LettersController {
     @Body() dto: GenerateLetterDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
-    return this.lettersService.generate(id, dto.templateId, user.id);
+    return this.lettersService.generate(
+      id,
+      dto.templateId,
+      user.id,
+      dto.variableValues,
+    );
   }
 
   @Get(":id/letters")

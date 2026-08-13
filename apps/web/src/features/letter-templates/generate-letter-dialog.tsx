@@ -18,6 +18,10 @@ import {
   useComplaintLetters,
   useGenerateLetter,
 } from "@/features/letter-templates/hooks";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import type { LetterTemplate } from "@/features/letter-templates/types";
 import { resolveDownloadUrl } from "@/features/reporting/api";
 import { cn } from "@/lib/utils";
 
@@ -38,8 +42,18 @@ export function GenerateLetterDialog({
   const { data: generated } = useComplaintLetters(complaintId);
   const generateMutation = useGenerateLetter(complaintId);
   const [selected, setSelected] = useState<string | null>(null);
+  const [fillingVariables, setFillingVariables] = useState(false);
+  const [variableValues, setVariableValues] = useState<
+    Record<string, string>
+  >({});
   const selectedId =
     selected ?? generated?.[0]?.templateId ?? templates?.[0]?.id ?? null;
+  const selectedTemplate =
+    templates?.find((t) => t.id === (selected ?? selectedId)) ??
+    null;
+  const activeVariables = selectedTemplate?.variables?.length
+    ? selectedTemplate.variables
+    : [];
 
   const [preview, setPreview] = useState<{
     url: string;
@@ -49,6 +63,8 @@ export function GenerateLetterDialog({
   const handleOpenChange = (next: boolean) => {
     if (!next) {
       setSelected(null);
+      setFillingVariables(false);
+      setVariableValues({});
       setPreview(null);
     }
     onOpenChange(next);
@@ -58,32 +74,60 @@ export function GenerateLetterDialog({
     setPreview({ url, title });
   };
 
-  const generateAndPreview = (templateId: string) => {
+  const generateAndPreview = (
+    templateId: string,
+    values?: Record<string, string>,
+  ) => {
     if (generateMutation.isPending) return;
-    setSelected(templateId);
-    generateMutation.mutate(templateId, {
-      onSuccess: (result) => {
-        openPreview(
-          resolveDownloadUrl(result.downloadUrl),
-          `معاينة: ${result.templateName}`,
-        );
-      },
-    });
-  };
-
-  useEffect(() => {
-    if (!open || !direct || generateMutation.isPending || preview) return;
-    if (selectedId) {
-      generateMutation.mutate(selectedId, {
+    generateMutation.mutate(
+      { templateId, variableValues: values },
+      {
         onSuccess: (result) => {
           openPreview(
             resolveDownloadUrl(result.downloadUrl),
             `معاينة: ${result.templateName}`,
           );
         },
-      });
+      },
+    );
+  };
+
+  const handleConfirmValues = () => {
+    if (!selectedTemplate) return;
+    if (selectedTemplate.variables?.some((v) => v.required && !(variableValues[v.key]?.trim()))) {
+      return;
     }
-  }, [open, direct, selectedId, preview, generateMutation]);
+    setFillingVariables(false);
+    generateAndPreview(selectedTemplate.id, variableValues);
+  };
+
+  const selectTemplate = (template: LetterTemplate) => {
+    setSelected(template.id);
+    setFillingVariables(false);
+    setVariableValues({});
+    if (template.variables?.length) {
+      setFillingVariables(true);
+      return;
+    }
+    generateAndPreview(template.id);
+  };
+
+  useEffect(() => {
+    if (!open || !direct || generateMutation.isPending || preview) return;
+    const defaultTemplate =
+      templates?.find((t) => t.isDefault) ??
+      templates?.find((t) => t.id === selectedId) ??
+      templates?.[0];
+    if (!defaultTemplate) return;
+    setSelected(defaultTemplate.id);
+    if (defaultTemplate.variables?.length) {
+      setFillingVariables(true);
+      setVariableValues({});
+      return;
+    }
+    generateAndPreview(defaultTemplate.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, direct, selectedId, preview, generateMutation, templates]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -107,6 +151,107 @@ export function GenerateLetterDialog({
                 : "جارٍ إصدار الخطاب وفتح المعاينة..."}
             </p>
           </div>
+        ) : fillingVariables && selectedTemplate ? (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <div className="font-bold text-foreground">
+                {selectedTemplate.name}
+              </div>
+              <p className="text-label-sm text-muted-foreground">
+                أعد تعبئة المتغيرات الخاصة بهذا النموذج قبل الإصدار:
+              </p>
+            </div>
+            <div className="space-y-3">
+              {activeVariables.map((v) => {
+                const value = variableValues[v.key] ?? "";
+                const missing = v.required && !value.trim();
+                return (
+                  <div key={v.key} className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-label-sm">
+                        {v.label}
+                      </Label>
+                      {v.required && (
+                        <span className="text-label-xs rounded-full bg-destructive/10 px-2 py-0.5 text-destructive">
+                          مطلوب
+                        </span>
+                      )}
+                      <code
+                        dir="ltr"
+                        className="ms-auto font-mono text-label-xs text-muted-foreground"
+                      >
+                        {`{{${v.key}}}`}
+                      </code>
+                    </div>
+                    {v.type === "textarea" ? (
+                      <Textarea
+                        rows={3}
+                        placeholder={v.placeholder || "أدخل القيمة..."}
+                        value={value}
+                        onChange={(e) =>
+                          setVariableValues((prev) => ({
+                            ...prev,
+                            [v.key]: e.target.value,
+                          }))
+                        }
+                      />
+                    ) : v.type === "date" ? (
+                      <Input
+                        type="date"
+                        value={value}
+                        onChange={(e) =>
+                          setVariableValues((prev) => ({
+                            ...prev,
+                            [v.key]: e.target.value,
+                          }))
+                        }
+                      />
+                    ) : (
+                      <Input
+                        placeholder={v.placeholder || "أدخل القيمة..."}
+                        value={value}
+                        onChange={(e) =>
+                          setVariableValues((prev) => ({
+                            ...prev,
+                            [v.key]: e.target.value,
+                          }))
+                        }
+                      />
+                    )}
+                    {missing && (
+                      <p className="text-label-xs text-destructive">
+                        هذه القيمة مطلوبة.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFillingVariables(false)}
+              >
+                رجوع
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmValues}
+                disabled={
+                  generateMutation.isPending ||
+                  selectedTemplate.variables?.some(
+                    (v) => v.required && !variableValues[v.key]?.trim(),
+                  )
+                }
+              >
+                {generateMutation.isPending && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
+                تأكيد وإصدار
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="space-y-3">
             {isLoading ? (
@@ -120,7 +265,7 @@ export function GenerateLetterDialog({
                   <button
                     key={template.id}
                     type="button"
-                    onClick={() => generateAndPreview(template.id)}
+                    onClick={() => selectTemplate(template)}
                     className={cn(
                       "w-full text-start rounded-xl border p-3 transition-colors",
                       selectedId === template.id
@@ -137,6 +282,11 @@ export function GenerateLetterDialog({
                     {template.description && (
                       <p className="text-label-sm text-muted-foreground mt-1 line-clamp-2">
                         {template.description}
+                      </p>
+                    )}
+                    {!!template.variables?.length && (
+                      <p className="mt-1 text-label-xs text-primary">
+                        يتطلب تعبئة {template.variables.length} متغير قبل الإصدار
                       </p>
                     )}
                   </button>
