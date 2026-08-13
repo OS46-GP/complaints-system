@@ -2,13 +2,16 @@ import { Outlet } from "react-router";
 
 import { AuthHeader } from "@/features/auth/auth-header";
 import { AuthFooter } from "@/features/auth/auth-footer";
+import { PageTransition } from "@/components/shared/page-transition";
 
 export default function AuthLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AuthHeader />
       <main className="px-4 flex flex-1 items-center justify-center overflow-hidden py-stack-lg">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
       <AuthFooter />
     </div>

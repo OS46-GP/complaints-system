@@ -74,8 +74,14 @@ export function AsyncLoader({
   }
 
   if (error) {
-    return <ErrorState text={errorText} onRetry={onRetry} className={className} />;
+    return (
+      <ErrorState text={errorText} onRetry={onRetry} className={className} />
+    );
   }
 
-  return <>{children}</>;
+  return (
+    <div className="animate-in fade-in duration-300 ease-out fill-mode-both">
+      {children}
+    </div>
+  );
 }
