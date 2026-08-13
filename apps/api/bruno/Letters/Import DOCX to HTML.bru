@@ -1,0 +1,23 @@
+meta {
+  name: Import DOCX to HTML
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/letter-templates/import-docx
+  body: multipart-form
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:multipart-form {
+  file: @file("_files/sample.docx")
+}
+
+assert {
+  res.status: eq(201)
+  res.body.html: $notNull
+}

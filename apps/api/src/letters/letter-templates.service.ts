@@ -4,19 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import * as fs from "node:fs";
+import * as mammoth from "mammoth";
 import * as path from "node:path";
 import { PrismaService } from "../prisma/prisma.service";
-import { uploadRoot } from "./letter-context";
 import { CreateLetterTemplateDto } from "./dto/create-letter-template.dto";
 import { UpdateLetterTemplateDto } from "./dto/update-letter-template.dto";
-
-const ALLOWED_ASSET_EXTENSIONS = [".docx"];
-const MAX_ASSET_SIZE = 10 * 1024 * 1024;
-
-function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_\-\u0600-\u06FF.]/g, "_");
-}
 
 @Injectable()
 export class LetterTemplatesService {
@@ -29,7 +21,15 @@ export class LetterTemplatesService {
     if (existing) {
       throw new ConflictException("اسم النموذج موجود مسبقاً");
     }
-    return this.prisma.client.letterTemplate.create({ data: dto });
+    const { variables, ...rest } = dto;
+    return this.prisma.client.letterTemplate.create({
+      data: {
+        ...rest,
+        ...(variables
+          ? { variables: variables.map((v) => ({ ...v })) }
+          : {}),
+      },
+    });
   }
 
   async findAll(
@@ -72,9 +72,15 @@ export class LetterTemplatesService {
 
   async update(id: string, dto: UpdateLetterTemplateDto) {
     await this.findById(id);
+    const { variables, ...rest } = dto;
     return this.prisma.client.letterTemplate.update({
       where: { id },
-      data: dto,
+      data: {
+        ...rest,
+        ...(variables
+          ? { variables: variables.map((v) => ({ ...v })) }
+          : {}),
+      },
     });
   }
 
@@ -93,55 +99,33 @@ export class LetterTemplatesService {
     const template = await this.prisma.client.letterTemplate.delete({
       where: { id },
     });
-    if (template.assetKey) {
-      try {
-        fs.unlinkSync(path.resolve(uploadRoot(), template.assetKey));
-      } catch {
-        // ignore missing asset file
-      }
-    }
     return { success: true };
   }
 
-  async setAsset(id: string, file: Express.Multer.File) {
-    const template = await this.findById(id);
-
+  async importDocx(file: Express.Multer.File) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException("اختر ملف DOCX أولاً");
+    }
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowed = ALLOWED_ASSET_EXTENSIONS;
-    if (!allowed.includes(ext)) {
+    if (ext !== ".docx") {
       throw new BadRequestException(
         "امتداد الملف غير مدعوم (يُقبل .docx فقط)",
       );
     }
-    if (file.size > MAX_ASSET_SIZE) {
-      throw new BadRequestException("حجم الملف يتجاوز 10 ميجابايت");
+    const result = await mammoth.convertToHtml(
+      { buffer: file.buffer },
+      {
+        convertImage: mammoth.images.imgElement((image) =>
+          image.read("base64").then((base64) => {
+            const mime = image.contentType ?? "image/png";
+            return { src: `data:${mime};base64,${base64}` };
+          }),
+        ),
+      },
+    );
+    if (result.messages.some((m) => m.type === "error")) {
+      throw new BadRequestException("تعذر قراءة ملف DOCX");
     }
-
-    const safeName = sanitizeFilename(file.originalname);
-    const storageKey = `letter-templates/${id}_${Date.now()}_${safeName}`;
-    const dir = path.resolve(uploadRoot(), "letter-templates");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.resolve(uploadRoot(), storageKey), file.buffer);
-
-    const old = await this.prisma.client.letterTemplate.findUnique({
-      where: { id },
-    });
-    if (old?.assetKey) {
-      try {
-        fs.unlinkSync(path.resolve(uploadRoot(), old.assetKey));
-      } catch {
-        // ignore missing old asset
-      }
-    }
-
-    const updated = await this.prisma.client.letterTemplate.update({
-      where: { id },
-      data: { assetKey: storageKey },
-    });
-    return {
-      id: updated.id,
-      assetKey: updated.assetKey,
-      downloadUrl: `/uploads/${storageKey}`,
-    };
+    return { html: result.value };
   }
 }

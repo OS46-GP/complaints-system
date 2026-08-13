@@ -5,37 +5,34 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
   Eye,
-  FileText,
-  ImagePlus,
+  FileUp,
   Loader2,
-  RefreshCw,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  WysiwygEditor,
+  type WysiwygEditorHandle,
+} from "@/components/shared/wysiwyg-editor";
 import { PageHeader } from "@/components/shared/page-header";
 import { PATHS } from "@/router/paths";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   useCreateLetterTemplate,
+  useImportLetterTemplateDocx,
   useLetterPlaceholders,
-  usePreviewLetterTemplate,
-  usePreviewLetterTemplateDraft,
   useUpdateLetterTemplate,
-  useUploadLetterTemplateAsset,
 } from "@/features/letter-templates/hooks";
 import type { LetterTemplate } from "@/features/letter-templates/types";
+import type { TemplateVariable } from "@/features/letter-templates/types";
 import { renderLetterPreview } from "@/features/letter-templates/live-preview";
 
 interface LetterTemplateFormProps {
@@ -45,8 +42,17 @@ interface LetterTemplateFormProps {
 const schema = z.object({
   name: z.string().min(1, "اسم النموذج مطلوب").max(200),
   description: z.string().max(2000).optional(),
-  type: z.enum(["HTML", "DOCX"]),
   body: z.string().optional(),
+  variables: z.array(
+    z.object({
+      key: z.string().min(1, "المفتاح مطلوب"),
+      label: z.string().min(1, "الاسم مطلوب"),
+      required: z.boolean().optional(),
+      placeholder: z.string().optional(),
+      type: z.enum(["text", "textarea", "date"]).optional(),
+      group: z.string().optional(),
+    }),
+  ),
   isActive: z.boolean(),
   isDefault: z.boolean(),
   sortOrder: z.number().int().min(0),
@@ -57,20 +63,23 @@ type FormValues = z.infer<typeof schema>;
 export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
   const isEdit = !!template;
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [stagedFile, setStagedFile] = useState<File | null>(null);
+  const docxInputRef = useRef<HTMLInputElement>(null);
+  const wysiwygRef = useRef<WysiwygEditorHandle>(null);
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const [draftVariable, setDraftVariable] = useState<TemplateVariable>({
+    key: "",
+    label: "",
+    required: false,
+    type: "text",
+  });
   const createMutation = useCreateLetterTemplate();
   const updateMutation = useUpdateLetterTemplate();
-  const previewMutation = usePreviewLetterTemplateDraft();
-  const savedPreviewMutation = usePreviewLetterTemplate();
-  const uploadAssetMutation = useUploadLetterTemplateAsset();
+  const importMutation = useImportLetterTemplateDocx();
   const { data: placeholderGroups } = useLetterPlaceholders();
   const isPending =
     createMutation.isPending ||
     updateMutation.isPending ||
-    previewMutation.isPending ||
-    savedPreviewMutation.isPending ||
-    uploadAssetMutation.isPending;
+    importMutation.isPending;
 
   const {
     register,
@@ -83,75 +92,55 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
-      description: "",
-      type: "HTML",
-      body: "",
-      isActive: true,
-      isDefault: false,
-      sortOrder: 0,
+      name: template?.name ?? "",
+      description: template?.description ?? "",
+      body: template?.body ?? "",
+      variables: template?.variables ?? [],
+      isActive: template?.isActive ?? true,
+      isDefault: template?.isDefault ?? false,
+      sortOrder: template?.sortOrder ?? 0,
     },
   });
 
   useEffect(() => {
-    setStagedFile(null);
     reset({
       name: template?.name ?? "",
       description: template?.description ?? "",
-      type: template?.type ?? "HTML",
       body: template?.body ?? "",
+      variables: template?.variables ?? [],
       isActive: template?.isActive ?? true,
       isDefault: template?.isDefault ?? false,
       sortOrder: template?.sortOrder ?? 0,
     });
   }, [template, reset]);
 
-  const selectedType = watch("type");
-  const isDocx = selectedType === "DOCX";
+  const templateVariables = (watch("variables") ?? []) as TemplateVariable[];
 
   const insertPlaceholder = (key: string) => {
+    if (wysiwygRef.current) {
+      wysiwygRef.current.insertHtml(` {{${key}}} `);
+      return;
+    }
     const value = getValues("body") ?? "";
     setValue("body", `${value} {{${key}}}`, { shouldDirty: true });
   };
 
   const bodyValue = watch("body") ?? "";
   const livePreviewHtml = useMemo(
-    () => (isDocx ? "" : renderLetterPreview(bodyValue)),
-    [bodyValue, isDocx],
+    () => renderLetterPreview(bodyValue, templateVariables),
+    [bodyValue, templateVariables],
   );
 
-  const handleAssetFile = (file?: File) => {
+  const handleImportFile = (file?: File) => {
     if (!file) return;
-    if (isEdit && template) {
-      uploadAssetMutation.mutate({ id: template.id, file });
-    } else {
-      setStagedFile(file);
-    }
+    importMutation.mutate(file, {
+      onSuccess: (result) => {
+        setValue("body", result.html, { shouldDirty: true });
+      },
+    });
   };
-
-  const assetName = template?.assetKey
-    ? template.assetKey.split("/").pop()
-    : null;
 
   const goBack = () => navigate(PATHS.ADMIN.LETTER_TEMPLATES);
-
-  const handlePreview = () => {
-    if (selectedType === "DOCX") {
-      if (stagedFile) {
-        previewMutation.mutate({ type: "DOCX", file: stagedFile });
-      } else if (isEdit && template?.assetKey) {
-        savedPreviewMutation.mutate(template.id);
-      }
-      return;
-    }
-    previewMutation.mutate({ type: "HTML", body: bodyValue });
-  };
-
-  const previewBusy =
-    previewMutation.isPending || savedPreviewMutation.isPending;
-  const canPreview = isDocx
-    ? !!(stagedFile || (isEdit && template?.assetKey))
-    : !!bodyValue.trim();
 
   const onSubmit = (values: FormValues) => {
     if (isEdit) {
@@ -161,18 +150,7 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
       );
       return;
     }
-    createMutation.mutate(values, {
-      onSuccess: (created) => {
-        if (stagedFile) {
-          uploadAssetMutation.mutate(
-            { id: created.id, file: stagedFile },
-            { onSuccess: goBack },
-          );
-        } else {
-          goBack();
-        }
-      },
-    });
+    createMutation.mutate(values, { onSuccess: goBack });
   };
 
   return (
@@ -193,163 +171,134 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
       </PageHeader>
 
       <Card className="p-5 md:p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="lt-name">اسم النموذج</Label>
-              <Input
-                id="lt-name"
-                dir="rtl"
-                placeholder="مثال: خطاب طلب الاطلاع على الشكوى"
-                {...register("name")}
-                aria-invalid={!!errors.name}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <section className="space-y-3">
+            <div className="border-b border-border pb-2">
+              <h2 className="text-label-md font-bold text-foreground">
+                المعلومات الأساسية
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="lt-name">اسم النموذج</Label>
+                <Input
+                  id="lt-name"
+                  dir="rtl"
+                  placeholder="مثال: خطاب طلب الاطلاع على الشكوى"
+                  {...register("name")}
+                  aria-invalid={!!errors.name}
+                />
+                {errors.name && (
+                  <p className="text-destructive text-label-sm">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lt-desc">وصف مختصر</Label>
+                <Input
+                  id="lt-desc"
+                  dir="rtl"
+                  placeholder="وصف يوضح الغرض من النموذج ووقت استخدامه"
+                  {...register("description")}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+              <h2 className="text-label-md font-bold text-foreground">
+                محتوى الخطاب
+              </h2>
+              <input
+                ref={docxInputRef}
+                type="file"
+                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => {
+                  handleImportFile(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
               />
-              {errors.name && (
-                <p className="text-destructive text-label-sm">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lt-type">نوع النموذج</Label>
-              <Select
-                value={selectedType}
-                onValueChange={(v) =>
-                  setValue("type", v as FormValues["type"])
-                }
-              >
-                <SelectTrigger id="lt-type">
-                  <SelectValue placeholder="اختر النوع" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HTML">HTML (محرر مباشر)</SelectItem>
-                  <SelectItem value="DOCX">
-                    DOCX (مستند Word مع متغيرات)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="lt-desc">وصف مختصر</Label>
-            <Input
-              id="lt-desc"
-              dir="rtl"
-              placeholder="وصف يوضح الغرض من النموذج ووقت استخدامه"
-              {...register("description")}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="lt-body">
-                {isDocx ? "ملف النموذج (DOCX)" : "محتوى الخطاب (HTML)"}
-              </Label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={handlePreview}
-                disabled={!canPreview || previewBusy}
+                onClick={() => docxInputRef.current?.click()}
+                disabled={importMutation.isPending}
               >
-                <Eye className="size-4" />
-                {previewBusy
-                  ? "جارٍ إنشاء PDF..."
-                  : "معاينة الخطاب كـ PDF"}
+                {importMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <FileUp className="size-4" />
+                )}
+                {importMutation.isPending
+                  ? "جارٍ التحويل..."
+                  : "استيراد من ملف Word"}
               </Button>
             </div>
 
-            {isDocx ? (
-              <div className="flex flex-col gap-3 border border-border rounded-xl p-4 bg-surface-container-lowest">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  className="hidden"
-                  onChange={(e) => {
-                    handleAssetFile(e.target.files?.[0]);
-                    e.target.value = "";
-                  }}
-                />
-                {assetName || stagedFile ? (
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-label-sm">
-                    <FileText className="size-4 text-primary shrink-0" />
-                    <span className="truncate" dir="ltr">
-                      {stagedFile?.name ?? assetName}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="h-24 rounded-lg border border-dashed border-border flex items-center justify-center text-muted-foreground text-label-sm">
-                    لا يوجد ملف بعد — ارفع ملف .docx يحتوي على{" "}
-                    {"{{variables}}"}
-                  </div>
-                )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 self-start"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadAssetMutation.isPending}
-                >
-                  {uploadAssetMutation.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : assetName || stagedFile ? (
-                    <RefreshCw className="size-4" />
-                  ) : (
-                    <ImagePlus className="size-4" />
-                  )}
-                  {uploadAssetMutation.isPending
-                    ? "جارٍ الرفع..."
-                    : assetName || stagedFile
-                      ? "استبدال الملف"
-                      : "اختيار ملف DOCX"}
-                </Button>
-                <p className="text-label-sm text-muted-foreground">
-                  اصنع المستند في Word وضع المتغيرات النصية مثل{" "}
-                  {"{{citizenName}}"} داخل النص — تُستبدل تلقائياً عند الإصدار.
-                  الصور تُحفظ داخل المستند مباشرة ولا تُحقن تلقائياً.
-                  {!isEdit &&
-                    (stagedFile
-                      ? " سيُرفع الملف تلقائياً بعد إنشاء النموذج."
-                      : " اختر ملف DOCX وسيُرفع بعد إنشاء النموذج.")}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <Textarea
-                  id="lt-body"
-                  dir="rtl"
-                  rows={18}
-                  className="min-h-[440px] resize-y font-mono"
-                  placeholder={`<div class="letter-head">... بشكل HTML، مع إدراج المتغيرات مثل: {{citizenName}} {{subject}}`}
-                  {...register("body")}
-                />
-                <div className="flex flex-col rounded-xl border border-border overflow-hidden bg-white">
-                  <div className="border-b border-border bg-surface-container-lowest px-3 py-2 text-label-sm font-bold text-muted-foreground flex items-center justify-between">
-                    <span>معاينة مباشرة</span>
-                    <span className="text-label-xs font-normal text-muted-foreground/70">
-                      بيانات تجريبية — تُستبدل ببيانات الشكوى الفعلية عند الإصدار
-                    </span>
-                  </div>
-                  <iframe
-                    title="معاينة مباشرة لنموذج الخطاب"
-                    sandbox=""
-                    srcDoc={livePreviewHtml}
-                    className="w-full flex-1 min-h-[440px] bg-white"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+            <WysiwygEditor
+              ref={wysiwygRef}
+              value={bodyValue}
+              height={600}
+              className="letter-wysiwyg rounded-md"
+              onChange={(v) =>
+                setValue("body", v, {
+                  shouldDirty: true,
+                  shouldValidate: false,
+                })
+              }
+            />
 
-          <div className="space-y-2">
-            <Label>المتغيرات المتاحة (اضغط للإدراج)</Label>
-            <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto border border-border rounded-xl p-3 bg-surface-container-lowest">
-              {placeholderGroups?.length
-                ? placeholderGroups.map((group) => (
+            <div className="flex flex-col rounded-xl border border-border overflow-hidden bg-white">
+              <button
+                type="button"
+                onClick={() => setPreviewOpen((o) => !o)}
+                className="flex items-center justify-between w-full border-b border-border bg-surface-container-lowest px-3 py-2 text-label-sm font-bold text-muted-foreground hover:bg-accent transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Eye className="size-4" />
+                  معاينة مباشرة
+                  {!previewOpen && (
+                    <span className="rounded-full bg-primary/10 text-primary text-label-xs px-2 py-0.5">
+                      تُستبدل البيانات التجريبية ببيانات الشكوى عند الإصدار
+                    </span>
+                  )}
+                </span>
+                {previewOpen ? (
+                  <ChevronUp className="size-4" />
+                ) : (
+                  <ChevronDown className="size-4" />
+                )}
+              </button>
+              {previewOpen && (
+                <iframe
+                  title="معاينة مباشرة لنموذج الخطاب"
+                  sandbox=""
+                  srcDoc={livePreviewHtml}
+                  className="w-full min-h-[600px] bg-white"
+                />
+              )}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="border-b border-border pb-2">
+              <h2 className="text-label-md font-bold text-foreground">
+                المتغيرات
+              </h2>
+            </div>
+
+            <div className="rounded-xl border border-border bg-surface-container-lowest p-3 space-y-2">
+              <p className="text-label-sm font-bold text-muted-foreground">
+                المتغيرات العامة المتاحة (اضغط للإدراج)
+              </p>
+              {placeholderGroups?.length ? (
+                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                  {placeholderGroups.map((group) => (
                     <div
                       key={group.group}
                       className="flex flex-wrap gap-1.5 items-baseline"
@@ -369,43 +318,210 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
                         </button>
                       ))}
                     </div>
-                  ))
-                : null}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-label-sm text-muted-foreground">
+                  لا توجد متغيرات عامة متاحة.
+                </p>
+              )}
             </div>
-            {isDocx && (
-              <p className="text-label-sm text-muted-foreground">
-                انسخ أي متغير من القائمة والصقه داخل مستند Word.
-              </p>
-            )}
-          </div>
 
-          <div className="flex flex-wrap items-center gap-6">
-            <label className="flex items-center gap-2 text-label-sm">
-              <Switch
-                checked={watch("isActive")}
-                onCheckedChange={(v) => setValue("isActive", v)}
-              />
-              مفعّل
-            </label>
-            <label className="flex items-center gap-2 text-label-sm">
-              <Switch
-                checked={watch("isDefault")}
-                onCheckedChange={(v) => setValue("isDefault", v)}
-              />
-              النموذج الافتراضي
-            </label>
-            <label className="flex items-center gap-2 text-label-sm">
-              <span>ترتيب العرض:</span>
-              <Input
-                type="number"
-                className="w-24"
-                min={0}
-                {...register("sortOrder", { valueAsNumber: true })}
-              />
-            </label>
-          </div>
+            <div className="rounded-xl border border-border bg-surface-container-lowest p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="text-label-sm font-bold text-muted-foreground">
+                  متغيرات خاصة بهذا النموذج
+                </p>
+                {templateVariables.length > 0 && (
+                  <span className="rounded-full bg-primary/10 text-primary text-label-xs px-2 py-0.5">
+                    {templateVariables.length}
+                  </span>
+                )}
+              </div>
 
-          <div className="flex items-center justify-start gap-2 pt-2 border-t border-border">
+              {templateVariables.length === 0 ? (
+                <p className="text-label-sm text-muted-foreground">
+                  لا توجد متغيرات خاصة بعد. أضف متغيرات يحددها المستخدم عند
+                  إصدار الخطاب (مثل رقم القرار، اسم المأمورية، الرقم القانوني...).
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {templateVariables.map((v, idx) => (
+                    <div
+                      key={idx}
+                      className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-white px-3 py-2"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="font-mono text-label-sm text-primary"
+                          dir="ltr"
+                        >
+                          {"{{"}{v.key}{"}}"}
+                        </span>
+                        <span className="text-label-sm font-medium">
+                          {v.label}
+                        </span>
+                        {v.required && (
+                          <span className="rounded-full bg-destructive/10 text-destructive text-label-xs px-2 py-0.5">
+                            مطلوب
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="ms-auto size-6 text-destructive"
+                        onClick={() => {
+                          const next = templateVariables.filter(
+                            (_, i) => i !== idx,
+                          );
+                          setValue("variables", next, { shouldDirty: true });
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex flex-wrap gap-1.5 items-baseline">
+                    <span className="text-label-sm font-bold text-muted-foreground">
+                      إدراج في المحتوى:
+                    </span>
+                    {templateVariables.map((v) => (
+                      <button
+                        key={v.key}
+                        type="button"
+                        onClick={() => insertPlaceholder(v.key)}
+                        className="rounded-full border border-pink-300 bg-pink-50 px-2.5 py-0.5 font-mono text-mono-data text-label-sm text-pink-700 hover:bg-pink-100 transition-colors"
+                        title={v.label}
+                      >
+                        {`{{${v.key}}}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t border-border pt-3 space-y-2">
+                <p className="text-label-sm font-bold text-muted-foreground">
+                  إضافة متغير جديد
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    dir="ltr"
+                    className="w-44 font-mono text-label-sm"
+                    placeholder="id: variableName"
+                    value={draftVariable.key}
+                    aria-label="مفتاح المتغير"
+                    onChange={(e) =>
+                      setDraftVariable((d) => ({
+                        ...d,
+                        key: e.target.value.replace(/[^a-zA-Z0-9_.]/g, ""),
+                      }))
+                    }
+                  />
+                  <Input
+                    className="w-52 text-label-sm"
+                    placeholder="اسم المتغير الظاهر للمستخدم"
+                    value={draftVariable.label}
+                    aria-label="اسم المتغير"
+                    onChange={(e) =>
+                      setDraftVariable((d) => ({
+                        ...d,
+                        label: e.target.value,
+                      }))
+                    }
+                  />
+                  <label className="flex items-center gap-1.5 text-label-sm">
+                    <Switch
+                      checked={draftVariable.required}
+                      onCheckedChange={(v) =>
+                        setDraftVariable((d) => ({ ...d, required: v }))
+                      }
+                    />
+                    مطلوب
+                  </label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                    disabled={
+                      !draftVariable.key.trim() || !draftVariable.label.trim()
+                    }
+                    onClick={() => {
+                      if (
+                        templateVariables.some(
+                          (v) => v.key === draftVariable.key,
+                        )
+                      ) {
+                        return;
+                      }
+                      setValue(
+                        "variables",
+                        [
+                          ...templateVariables,
+                          {
+                            ...draftVariable,
+                            key: draftVariable.key.trim(),
+                          },
+                        ],
+                        { shouldDirty: true },
+                      );
+                      setDraftVariable({
+                        key: "",
+                        label: "",
+                        required: false,
+                        type: "text",
+                      });
+                    }}
+                  >
+                    <Plus className="size-4" />
+                    إضافة
+                  </Button>
+                </div>
+                <p className="text-label-xs text-muted-foreground">
+                  المفتاح يبدأ بحرف إنجليزي ويمكن أن يحتوي أرقاماً ونقاطاً
+                  وأسفل سطر فقط — يُستخدم داخل {"{{}}"} في المحتوى.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="border-b border-border pb-2">
+              <h2 className="text-label-md font-bold text-foreground">
+                إعدادات العرض
+              </h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-xl border border-border bg-surface-container-lowest p-3">
+              <label className="flex items-center gap-2 text-label-sm">
+                <Switch
+                  checked={watch("isActive")}
+                  onCheckedChange={(v) => setValue("isActive", v)}
+                />
+                مفعّل
+              </label>
+              <label className="flex items-center gap-2 text-label-sm">
+                <Switch
+                  checked={watch("isDefault")}
+                  onCheckedChange={(v) => setValue("isDefault", v)}
+                />
+                النموذج الافتراضي
+              </label>
+              <label className="flex items-center gap-2 text-label-sm">
+                <span className="text-muted-foreground">ترتيب العرض:</span>
+                <Input
+                  type="number"
+                  className="w-24"
+                  min={0}
+                  {...register("sortOrder", { valueAsNumber: true })}
+                />
+              </label>
+            </div>
+          </section>
+
+          <div className="flex items-center justify-start gap-2 pt-4 border-t border-border">
             <Button type="submit" disabled={isPending} className="gap-2">
               {isPending && <Loader2 className="size-4 animate-spin" />}
               {isPending

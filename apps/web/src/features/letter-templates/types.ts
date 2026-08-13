@@ -1,9 +1,17 @@
-export type LetterTemplateType = "HTML" | "DOCX";
+export type LetterTemplateType = "HTML";
 
 export const LETTER_TYPE_LABELS: Record<LetterTemplateType, string> = {
   HTML: "HTML",
-  DOCX: "DOCX",
 };
+
+export interface TemplateVariable {
+  key: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  type?: "text" | "textarea" | "date";
+  group?: string;
+}
 
 export interface LetterTemplate {
   id: string;
@@ -11,7 +19,7 @@ export interface LetterTemplate {
   description: string | null;
   type: LetterTemplateType;
   body: string | null;
-  assetKey: string | null;
+  variables: TemplateVariable[] | null;
   isActive: boolean;
   isDefault: boolean;
   sortOrder: number;
@@ -22,8 +30,9 @@ export interface LetterTemplate {
 export interface CreateLetterTemplatePayload {
   name: string;
   description?: string;
-  type: LetterTemplateType;
+  type?: LetterTemplateType;
   body?: string;
+  variables?: TemplateVariable[];
   isActive?: boolean;
   isDefault?: boolean;
   sortOrder?: number;
@@ -48,6 +57,7 @@ export interface GeneratedLetter {
   templateName: string;
   type: LetterTemplateType;
   downloadUrl: string;
+  variableValues: Record<string, string> | null;
   generatedAt: string;
 }
 

@@ -353,6 +353,7 @@ model LetterTemplate {
   type        LetterTemplateType @default(HTML)
   body        String?
   assetKey    String?
+  variables   Json?
   isActive    Boolean            @default(true)
   isDefault   Boolean            @default(false)
   sortOrder   Int                @default(0)
@@ -387,6 +388,7 @@ model LetterGeneration {
   complaintId   String
   templateId    String
   fileKey       String
+  variableValues Json?
   generatedById String
   createdAt     DateTime @default(now())
 

@@ -6,16 +6,18 @@ meta {
 
 post {
   url: {{baseUrl}}/letter-templates/preview-draft
-  body: multipart-form
+  body: json
 }
 
 headers {
+  Content-Type: application/json
   Authorization: Bearer {{token}}
 }
 
-body:multipart-form {
-  type: HTML
-  body: <div class="letter-head"><div class="org-name">{{organizationNameAr}}</div></div><p class="to">إلى السيد/ مدير {{department}}</p><p>{{subject}}</p><div class="sign">{{managerName}}</div>
+body:json {
+  {
+    "body": "<div class=\"letter-head\"><div class=\"org-name\">{{organizationNameAr}}</div></div><p class=\"to\">إلى السيد/ مدير {{department}}</p><p>{{subject}}</p><div class=\"sign\">{{managerName}}</div>"
+  }
 }
 
 assert {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,10 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { useDeleteLetterTemplate } from "@/features/letter-templates/hooks";
+import {
+  useDeleteLetterTemplate,
+  usePreviewLetterTemplate,
+} from "@/features/letter-templates/hooks";
 import type { LetterTemplate } from "@/features/letter-templates/types";
 
 interface LetterTemplateActionsDropdownProps {
@@ -24,6 +27,8 @@ export function LetterTemplateActionsDropdown({
 }: LetterTemplateActionsDropdownProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const deleteMutation = useDeleteLetterTemplate();
+  const previewMutation = usePreviewLetterTemplate();
+  const isPending = deleteMutation.isPending || previewMutation.isPending;
 
   return (
     <>
@@ -34,6 +39,14 @@ export function LetterTemplateActionsDropdown({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-44">
+          <DropdownMenuItem
+            onClick={() => previewMutation.mutate(template.id)}
+            disabled={isPending}
+            className="w-full gap-2"
+          >
+            <Eye className="size-4" />
+            {previewMutation.isPending ? "جارٍ المعاينة..." : "معاينة"}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onEdit} className="w-full gap-2">
             <Pencil className="size-4" />
             تعديل

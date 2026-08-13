@@ -24,6 +24,15 @@ export interface PlaceholderItem {
   label: string;
 }
 
+export interface TemplateVariable {
+  key: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  type?: "text" | "textarea" | "date";
+  group?: string;
+}
+
 export interface PlaceholderGroup {
   group: string;
   label: string;
@@ -112,6 +121,28 @@ export function replacePlaceholders(
     result = result.replaceAll(`{{${key}}}`, value);
   }
   return result;
+}
+
+export function mergeVariableValues(
+  data: Record<string, string>,
+  values?: Record<string, string> | null,
+): Record<string, string> {
+  if (!values) return data;
+  const merged = { ...data };
+  for (const [key, value] of Object.entries(values)) {
+    merged[key] = value ?? "";
+  }
+  return merged;
+}
+
+export function missingRequiredVariables(
+  templateVariables: TemplateVariable[] | null | undefined,
+  values?: Record<string, string> | null,
+): string[] {
+  if (!templateVariables?.length) return [];
+  return templateVariables
+    .filter((v) => v.required && !(values?.[v.key] ?? "").trim())
+    .map((v) => v.label);
 }
 
 export function uploadRoot(): string {

@@ -65,21 +65,50 @@ body {
 .sign img { max-height: 90px; max-width: 180px; }
 .footer { margin-top: 30px; font-size: 12px; border-top: 1px solid #ccc; padding-top: 8px; text-align: center; color: #555; }
 .image-sample { display: inline-block; border: 1px dashed #c084fc; color: #a21caf; background: #faf5ff; padding: 2px 10px; border-radius: 6px; font-size: 13px; }
+.variable-sample { display: inline-block; border: 1px dashed #0ea5e9; color: #0369a1; background: #f0f9ff; padding: 0 8px; border-radius: 6px; font-size: 13px; }
 .unknown-ph { color: #b91c1c; background: #fef2f2; padding: 0 4px; border-radius: 4px; }
+.empty-preview { display: flex; align-items: center; justify-content: center; min-height: 420px; color: #94a3b8; font-size: 14px; text-align: center; line-height: 1.8; }
 `;
 
-export function renderLetterPreview(body: string): string {
+const EMPTY_PREVIEW = `<div class="empty-preview">لا يوجد محتوى بعد<br/>ابدأ بكتابة محتوى الخطاب في المحرر، وستظهر المعاينة هنا مباشرة.</div>`;
+
+export interface PreviewVariable {
+  key: string;
+  label: string;
+}
+
+export function renderLetterPreview(
+  body: string,
+  variables?: PreviewVariable[],
+): string {
   let html = body ?? "";
+
+  if (!html.replace(/<[^>]*>/g, "").trim()) {
+    html = EMPTY_PREVIEW;
+  }
+
+  const variableMap = new Map(
+    (variables ?? []).map((v) => [
+      v.key,
+      `<span class="variable-sample">[${v.label}]</span>`,
+    ]),
+  );
 
   for (const [key, label] of Object.entries(IMAGE_SAMPLES)) {
     html = html.replaceAll(
       `{{${key}}}`,
       `<span class="image-sample">${label}</span>`,
     );
+    variableMap.delete(key);
   }
 
   for (const [key, value] of Object.entries(SAMPLE_VALUES)) {
     html = html.replaceAll(`{{${key}}}`, value);
+    variableMap.delete(key);
+  }
+
+  for (const [key, sample] of variableMap.entries()) {
+    html = html.replaceAll(`{{${key}}}`, sample);
   }
 
   html = html.replace(

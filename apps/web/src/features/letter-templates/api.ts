@@ -34,14 +34,13 @@ export const letterTemplatesApi = {
       .then((res) => res.data),
   remove: (id: string) =>
     axiosClient.delete(`/api/letter-templates/${id}`).then((res) => res.data),
-  uploadAsset: async (id: string, file: File) => {
+  importDocx: async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await axiosClient.post<{
-      id: string;
-      assetKey: string;
-      downloadUrl: string;
-    }>(`/api/letter-templates/${id}/asset`, formData);
+    const res = await axiosClient.post<{ html: string }>(
+      "/api/letter-templates/import-docx",
+      formData,
+    );
     return res.data;
   },
   placeholders: () =>
@@ -59,29 +58,13 @@ export const letterTemplatesApi = {
       window.open(url, "_blank", "noopener,noreferrer");
     }
   },
-  previewDraft: async (payload: {
-    type: "HTML" | "DOCX";
-    body?: string;
-    file?: File;
-  }) => {
-    const formData = new FormData();
-    formData.append("type", payload.type);
-    if (payload.body !== undefined) formData.append("body", payload.body);
-    if (payload.file) formData.append("file", payload.file);
-    const res = await axiosClient.post(
-      "/api/letter-templates/preview-draft",
-      formData,
-      { responseType: "blob" },
-    );
-    if (res.data && res.data.size > 0) {
-      const url = URL.createObjectURL(res.data);
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
-  },
-  generate: (complaintId: string, templateId: string) =>
+  generate: (complaintId: string, templateId: string, variableValues?: Record<string, string>) =>
     axiosClient
       .post<GenerateLetterResult>(`/api/complaints/${complaintId}/letters`, {
         templateId,
+        ...(variableValues && Object.keys(variableValues).length
+          ? { variableValues }
+          : {}),
       })
       .then((res) => res.data),
   listGenerated: (complaintId: string) =>

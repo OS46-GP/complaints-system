@@ -197,3 +197,8 @@
   text-shadow: 2px 0 var(--primary), -2px 0 var(--destructive);
   letter-spacing: -2px;
 }
+
+.letter-wysiwyg.rounded-md > .jodit-container {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}

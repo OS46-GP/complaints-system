@@ -4,17 +4,18 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import * as fs from "node:fs";
-import * as os from "node:os";
 import * as path from "node:path";
 import { PrismaService } from "../prisma/prisma.service";
 import { LetterSettingsService } from "./letter-settings.service";
 import {
   buildLetterContext,
+  mergeVariableValues,
+  missingRequiredVariables,
   uploadRoot,
   type LetterComplaintSource,
+  type TemplateVariable,
 } from "./letter-context";
 import { renderLetterHtml } from "./renderers/html.renderer";
-import { renderLetterDocx } from "./renderers/docx.renderer";
 
 const COMPLAINT_INCLUDE = {
   citizen: true,
@@ -74,35 +75,34 @@ export class LettersService {
   }
 
   private async renderTemplate(
-    template: { type: string; body: string | null; assetKey: string | null },
+    template: {
+      body: string | null;
+      variables?: TemplateVariable[] | null;
+    },
     source: LetterComplaintSource,
+    variableValues?: Record<string, string> | null,
   ): Promise<Buffer> {
     const settings = await this.settingsService.getOrCreate();
     const context = buildLetterContext(source, settings);
-
-    if (template.type === "HTML") {
-      if (!template.body) {
-        throw new BadRequestException("محتوى النموذج فارغ");
-      }
-      return renderLetterHtml(template.body, context);
+    if (variableValues) {
+      context.data = mergeVariableValues(context.data, variableValues);
     }
 
-    if (template.type === "DOCX") {
-      if (!template.assetKey) {
-        throw new BadRequestException(
-          "يجب رفع ملف DOCX لهذا النموذج قبل الإصدار",
-        );
-      }
-      const assetPath = path.resolve(uploadRoot(), template.assetKey);
-      if (!fs.existsSync(assetPath)) {
-        throw new NotFoundException("ملف النموذج غير موجود على الخادم");
-      }
-      return renderLetterDocx(assetPath, context);
+    if (!template.body) {
+      throw new BadRequestException("محتوى النموذج فارغ");
     }
+    return renderLetterHtml(template.body, context);
+  }
 
-    throw new BadRequestException(
-      "نوع النموذج غير مدعوم حالياً، يرجى استخدام نموذج HTML أو DOCX",
-    );
+  private static sampleVariableValues(
+    templateVariables?: TemplateVariable[] | null,
+  ): Record<string, string> | null {
+    if (!templateVariables?.length) return null;
+    const samples: Record<string, string> = {};
+    for (const v of templateVariables) {
+      samples[v.key] = `[${v.label}]`;
+    }
+    return samples;
   }
 
   async preview(templateId: string): Promise<Buffer> {
@@ -112,45 +112,43 @@ export class LettersService {
     if (!template) throw new NotFoundException("النموذج غير موجود");
 
     const source = await this.sampleSource();
-    return this.renderTemplate(template, source);
+    const templateVariables = (template as {
+      variables?: TemplateVariable[] | null;
+    }).variables;
+    return this.renderTemplate(
+      template as {
+        body: string | null;
+        variables?: TemplateVariable[] | null;
+      },
+      source,
+      LettersService.sampleVariableValues(templateVariables),
+    );
   }
 
   async previewDraft(
-    type: string,
     body: string | undefined,
-    file: Express.Multer.File | undefined,
+    variables?: TemplateVariable[] | null,
   ): Promise<Buffer> {
     const settings = await this.settingsService.getOrCreate();
     const source = await this.sampleSource();
     const context = buildLetterContext(source, settings);
-
-    if (type === "HTML") {
-      if (!body) {
-        throw new BadRequestException("اكتب محتوى النموذج أولاً للمعاينة");
-      }
-      return renderLetterHtml(body, context);
+    const sampleValues = LettersService.sampleVariableValues(variables);
+    if (sampleValues) {
+      context.data = mergeVariableValues(context.data, sampleValues);
     }
 
-    if (type === "DOCX") {
-      if (!file?.buffer?.length) {
-        throw new BadRequestException("اختر ملف DOCX أولاً للمعاينة");
-      }
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "letters-draft-"));
-      try {
-        const docxPath = path.join(tmpDir, "draft.docx");
-        fs.writeFileSync(docxPath, file.buffer);
-        return await renderLetterDocx(docxPath, context);
-      } finally {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-      }
+    if (!body) {
+      throw new BadRequestException("اكتب محتوى النموذج أولاً للمعاينة");
     }
-
-    throw new BadRequestException(
-      "نوع النموذج غير مدعوم للمعاينة، يرجى استخدام HTML أو DOCX",
-    );
+    return renderLetterHtml(body, context);
   }
 
-  async generate(complaintId: string, templateId: string, userId: string) {
+  async generate(
+    complaintId: string,
+    templateId: string,
+    userId: string,
+    variableValues?: Record<string, string> | null,
+  ) {
     const complaint = await this.prisma.client.complaint.findUnique({
       where: { id: complaintId },
       include: { ...COMPLAINT_INCLUDE },
@@ -167,9 +165,26 @@ export class LettersService {
       throw new NotFoundException("النموذج غير مفعّل حالياً");
     }
 
+    const templateVariables = (template as {
+      variables?: TemplateVariable[] | null;
+    }).variables;
+    const missing = missingRequiredVariables(
+      templateVariables,
+      variableValues,
+    );
+    if (missing.length) {
+      throw new BadRequestException(
+        `لم يتم توفير المتغيرات المطلوبة: ${missing.join("، ")}`,
+      );
+    }
+
     const buffer = await this.renderTemplate(
-      template,
+      template as {
+        body: string | null;
+        variables?: TemplateVariable[] | null;
+      },
       complaint as unknown as LetterComplaintSource,
+      variableValues,
     );
 
     const fileKey = `letters/${complaint.id}_${template.id}.pdf`;
@@ -183,6 +198,7 @@ export class LettersService {
       },
       update: {
         fileKey,
+        variableValues: variableValues ?? undefined,
         generatedById: userId,
         createdAt: new Date(),
       },
@@ -190,6 +206,7 @@ export class LettersService {
         complaintId,
         templateId,
         fileKey,
+        variableValues: variableValues ?? undefined,
         generatedById: userId,
       },
     });
@@ -217,6 +234,9 @@ export class LettersService {
       type: row.template.type,
       fileKey: row.fileKey,
       downloadUrl: `/uploads/${row.fileKey}`,
+      variableValues:
+        (row as { variableValues?: Record<string, string> | null })
+          .variableValues ?? null,
       generatedAt: row.createdAt,
     }));
   }
