@@ -18,7 +18,9 @@ import {
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/shared/app-sidebar";
 import { AppHeader } from "@/components/shared/app-header";
+import { PageTransition } from "@/components/shared/page-transition";
 import { PATHS } from "@/router/paths";
+import { resolveActiveUrls } from "@/lib/utils";
 import type { NavGroup } from "@/components/shared/sidebar-nav";
 
 const navGroups: NavGroup[] = [
@@ -98,12 +100,16 @@ const navGroups: NavGroup[] = [
 export default function UserLayout() {
   const location = useLocation();
 
-  const items = navGroups
-    .flatMap((group) => group.items)
-    .map((item) => ({
-      ...item,
-      isActive: location.pathname.startsWith(item.url),
-    }));
+  const flatItems = navGroups.flatMap((group) => group.items);
+  const activeUrls = resolveActiveUrls(
+    location.pathname,
+    flatItems.map((i) => i.url),
+  );
+
+  const items = flatItems.map((item) => ({
+    ...item,
+    isActive: item.url !== "#" && activeUrls.has(item.url),
+  }));
 
   const currentTitle = items.find((i) => i.isActive)?.title ?? "لوحة المستخدم";
 
@@ -120,7 +126,9 @@ export default function UserLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader title={currentTitle} />
         <main className="flex-1 overflow-auto p-4 md:p-container-padding bg-background">
-          <Outlet />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </main>
       </div>
     </SidebarProvider>

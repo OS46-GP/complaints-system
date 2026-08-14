@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { FileText, Sparkles, X } from "lucide-react";
 import { ListPagination } from "@/components/shared/list-pagination";
+import { Reveal } from "@/components/shared/reveal";
 import { ComplaintCard } from "@/features/complaint-list/complaint-card";
 import { ComplaintTableRow } from "@/features/complaint-list/complaint-table-row";
 import { ComplaintToolbar } from "@/features/complaint-list/complaint-list-toolbar";
@@ -236,13 +237,14 @@ export function ComplaintList({
       ) : (
         <>
           <div className="md:hidden grid grid-cols-1 gap-4">
-            {complaints.map((complaint) => (
-              <ComplaintCard
-                key={complaint.id}
-                complaint={complaint}
-                selected={selectedIds.has(complaint.id)}
-                onToggle={() => toggleSelect(complaint.id)}
-              />
+            {complaints.map((complaint, index) => (
+              <Reveal key={complaint.id} delay={index * 40}>
+                <ComplaintCard
+                  complaint={complaint}
+                  selected={selectedIds.has(complaint.id)}
+                  onToggle={() => toggleSelect(complaint.id)}
+                />
+              </Reveal>
             ))}
           </div>
 

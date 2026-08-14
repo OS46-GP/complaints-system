@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router";
 import { ListPagination } from "@/components/shared/list-pagination";
 import { PaginationInfo } from "@/components/shared/pagination-info";
+import { Reveal } from "@/components/shared/reveal";
 import {
   DataTable,
   DataTableHeader,
@@ -107,12 +108,13 @@ export function DepartmentsList({ departments, onEdit }: DepartmentsListProps) {
       ) : (
         <>
           <div className="lg:hidden grid grid-cols-1 gap-4">
-            {paginatedDepartments.map((department) => (
-              <DepartmentCard
-                key={department.id}
-                department={department}
-                onEdit={() => onEdit(department)}
-              />
+            {paginatedDepartments.map((department, index) => (
+              <Reveal key={department.id} delay={index * 60}>
+                <DepartmentCard
+                  department={department}
+                  onEdit={() => onEdit(department)}
+                />
+              </Reveal>
             ))}
           </div>
 

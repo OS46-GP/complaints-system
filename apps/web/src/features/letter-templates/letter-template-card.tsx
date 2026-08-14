@@ -18,7 +18,7 @@ export function LetterTemplateCard({ template, onEdit }: LetterTemplateCardProps
   const isPending = previewMutation.isPending;
 
   return (
-    <Card className="p-4 md:p-5 flex flex-col gap-3">
+    <Card className="group p-4 md:p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <LetterTemplateTypeBadge type={template.type} />
@@ -35,9 +35,9 @@ export function LetterTemplateCard({ template, onEdit }: LetterTemplateCardProps
       </div>
 
       <div className="flex items-start gap-2">
-        <FileText className="size-5 text-primary mt-0.5 shrink-0" />
+        <FileText className="size-5 text-primary mt-0.5 shrink-0 transition-transform duration-300 group-hover:scale-110" />
         <div className="min-w-0">
-          <p className="font-heading text-body-lg font-bold text-foreground">
+          <p className="font-heading text-body-lg font-bold text-foreground transition-colors duration-300 group-hover:text-primary">
             {template.name}
           </p>
           {template.description && (

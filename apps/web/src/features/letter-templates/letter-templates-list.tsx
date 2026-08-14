@@ -16,6 +16,7 @@ import {
 } from "@/components/shared/data-table";
 import { LetterTemplateCard } from "@/features/letter-templates/letter-template-card";
 import { LetterTemplateActionsDropdown } from "@/features/letter-templates/letter-template-actions-dropdown";
+import { Reveal } from "@/components/shared/reveal";
 import type { LetterTemplate } from "@/features/letter-templates/types";
 
 const columns: DataTableColumn[] = [
@@ -129,12 +130,13 @@ export function LetterTemplatesList({
       ) : (
         <>
           <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((template) => (
-              <LetterTemplateCard
-                key={template.id}
-                template={template}
-                onEdit={() => onEdit(template)}
-              />
+            {filtered.map((template, index) => (
+              <Reveal key={template.id} delay={index * 60}>
+                <LetterTemplateCard
+                  template={template}
+                  onEdit={() => onEdit(template)}
+                />
+              </Reveal>
             ))}
           </div>
 

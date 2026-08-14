@@ -2,6 +2,7 @@ import { Outlet, Link } from "react-router";
 import { HelpCircle } from "lucide-react";
 
 import { ModeToggle } from "@/components/shared/mode-toggle";
+import { PageTransition } from "@/components/shared/page-transition";
 import { Button } from "@/components/ui/button";
 import { PATHS } from "@/router/paths";
 
@@ -23,7 +24,9 @@ export default function DefaultLayout() {
       </header>
 
       <main className="flex flex-1 items-center justify-center overflow-hidden pt-header-height">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
 
       <footer className="flex w-full flex-col items-center justify-between gap-4 border-t border-border bg-surface-container-lowest px-container-padding py-stack-md md:flex-row">
