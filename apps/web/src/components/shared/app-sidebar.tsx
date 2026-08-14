@@ -8,7 +8,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { SidebarBrand } from "@/components/shared/sidebar-brand";
 import {
   SidebarNav,
@@ -41,11 +40,7 @@ export function AppSidebar({
         <Button
           variant="ghost"
           size="icon"
-          className={cn(
-            "size-8 rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/70 shadow-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-            "absolute top-4 z-20",
-            state === "collapsed" ? "-left-4" : "left-4",
-          )}
+          className="absolute top-4 -left-4 z-20 size-8 rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/70 shadow-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           onClick={toggleSidebar}
           aria-label={state === "collapsed" ? "توسيع القائمة" : "طي القائمة"}
         >
