@@ -165,6 +165,9 @@
 [dir="rtl"] [data-slot="sidebar-menu-button"] > span:last-child {
   text-align: start;
 }
+[dir="rtl"] [data-collapsible="icon"] [data-slot="sidebar-menu-button"] > span:last-child {
+  text-align: center !important;
+}
 
 @layer base {
   * {
