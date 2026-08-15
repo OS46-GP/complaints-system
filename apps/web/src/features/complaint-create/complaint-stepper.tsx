@@ -52,7 +52,7 @@ export function ComplaintStepper({ currentStep, steps = DEFAULT_STEPS }: Complai
                 !isActive && "text-on-surface-variant",
               )}>
                 <span className="hidden md:inline text-label-sm">{step.label}</span>
-                <span className="md:hidden text-[10px] leading-none">{step.shortLabel}</span>
+                <span className="md:hidden text-[0.625rem] leading-none">{step.shortLabel}</span>
               </span>
             </div>
           </div>

@@ -30,7 +30,7 @@ export function StatCard({
       />
       <p className="font-heading text-label-sm text-muted-foreground">{label}</p>
       <h3 className="font-heading text-display-lg text-foreground">{value}</h3>
-      <div className={cn("flex items-center gap-1 text-[12px]", trendColor)}>
+      <div className={cn("flex items-center gap-1 text-[0.75rem]", trendColor)}>
         <TrendIcon className="size-3.5" />
         <span>{trendText}</span>
       </div>

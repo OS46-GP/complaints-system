@@ -40,7 +40,7 @@ export function UserNav({
         >
           <div className="hidden md:block">
             <p className="text-xs font-bold text-foreground">{name}</p>
-            <p className="text-[10px] text-muted-foreground">{role}</p>
+            <p className="text-[0.625rem] text-muted-foreground">{role}</p>
           </div>
           <div className="flex size-8 items-center justify-center rounded-full border-2 border-sidebar-primary bg-sidebar-accent md:size-10">
             <User className="size-4 text-sidebar-primary md:size-5" />

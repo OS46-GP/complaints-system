@@ -69,7 +69,7 @@ function ReviewRow({
         <span className="block font-heading text-label-sm text-muted-foreground mb-1">
           {label}
           {isOcr && (
-            <span className="inline-block mr-2 align-middle px-1.5 py-0.5 rounded bg-success/15 text-success text-[10px] leading-none font-semibold">
+            <span className="inline-block mr-2 align-middle px-1.5 py-0.5 rounded bg-success/15 text-success text-[0.625rem] leading-none font-semibold">
               OCR
             </span>
           )}

@@ -16,7 +16,7 @@ export function UserTableRow({ user }: UserTableRowProps) {
             {user.username}
           </p>
           {user.email && (
-            <p className="text-[12px] text-muted-foreground">{user.email}</p>
+            <p className="text-[0.75rem] text-muted-foreground">{user.email}</p>
           )}
         </div>
       </DataTableCell>

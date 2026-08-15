@@ -17,7 +17,7 @@ export default function NotFound() {
     <div className="relative flex w-full max-w-2xl items-center justify-center overflow-hidden px-container-padding">
       <div className="relative z-10 w-full text-center">
         <div className="mb-stack-lg">
-          <span className="block select-none text-[180px] font-bold leading-none tracking-tighter text-primary/10">
+          <span className="block select-none text-[11.25rem] font-bold leading-none tracking-tighter text-primary/10">
             404
           </span>
         </div>
