@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { Search, FileText, ShieldCheck } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
 import { LetterTemplateCard } from "@/features/letter-templates/letter-template-card";
 import { LetterTemplateActionsDropdown } from "@/features/letter-templates/letter-template-actions-dropdown";
 import { Reveal } from "@/components/shared/reveal";
+import { PATHS } from "@/router/paths";
 import type { LetterTemplate } from "@/features/letter-templates/types";
 
 const columns: DataTableColumn[] = [
@@ -168,8 +169,13 @@ function formatDate(date: string): string {
 }
 
 function LetterTemplateRow({ template, onEdit }: LetterTemplateRowProps) {
+  const navigate = useNavigate();
+
   return (
-    <DataTableRow className="group hover:bg-surface-container-low transition-colors">
+    <DataTableRow
+      className="group hover:bg-surface-container-low transition-colors cursor-pointer"
+      onClick={() => navigate(PATHS.ADMIN.LETTER_TEMPLATE_EDIT(template.id))}
+    >
       <DataTableCell className="p-0 px-6 py-4">
         <div className="flex items-center gap-2">
           <FileText className="size-5 text-primary shrink-0" />
@@ -199,7 +205,7 @@ function LetterTemplateRow({ template, onEdit }: LetterTemplateRowProps) {
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data text-muted-foreground">
         {formatDate(template.updatedAt)}
       </DataTableCell>
-      <DataTableCell className="p-0 px-6 py-4 text-center">
+      <DataTableCell className="p-0 px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
         <LetterTemplateActionsDropdown template={template} onEdit={onEdit} />
       </DataTableCell>
     </DataTableRow>
