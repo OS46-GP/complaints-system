@@ -72,7 +72,8 @@ export function computeAssignmentStatus(
   if (row.outgoingLetterDate && row.responseDeadlineDays) {
     const due = new Date(row.outgoingLetterDate);
     due.setDate(due.getDate() + row.responseDeadlineDays);
-    if (due.getTime() < now.getTime()) return "OVERDUE";
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (due.getTime() < startOfToday.getTime()) return "OVERDUE";
   }
   return "ACTIVE";
 }
