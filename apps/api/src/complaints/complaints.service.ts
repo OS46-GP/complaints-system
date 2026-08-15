@@ -789,8 +789,7 @@ export class ComplaintsService {
       due.setDate(due.getDate() + row.responseDeadlineDays);
       const dueTime = due.getTime();
       if (dueTime >= endOfToday.getTime()) continue;
-      const isOverdue = dueTime < startOfToday.getTime();
-      if (bucket === "overdue" ? isOverdue : !isOverdue) {
+      if (bucket === "overdue" || dueTime >= startOfToday.getTime()) {
         ids.add(row.complaintId);
       }
     }
