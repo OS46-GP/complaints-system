@@ -31,6 +31,7 @@ export interface TemplateVariable {
   placeholder?: string;
   type?: "text" | "textarea" | "date";
   group?: string;
+  defaultValue?: string;
 }
 
 export interface PlaceholderGroup {

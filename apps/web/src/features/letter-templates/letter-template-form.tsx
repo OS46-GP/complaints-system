@@ -10,12 +10,21 @@ import {
   Eye,
   FileUp,
   Loader2,
+  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +32,7 @@ import {
   WysiwygEditor,
   type WysiwygEditorHandle,
 } from "@/components/shared/wysiwyg-editor";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PageHeader } from "@/components/shared/page-header";
 import { PATHS } from "@/router/paths";
 import {
@@ -43,20 +53,41 @@ const schema = z.object({
   name: z.string().min(1, "اسم النموذج مطلوب").max(200),
   description: z.string().max(2000).optional(),
   body: z.string().optional(),
-  variables: z.array(
-    z.object({
-      key: z.string().min(1, "المفتاح مطلوب"),
-      label: z.string().min(1, "الاسم مطلوب"),
-      required: z.boolean().optional(),
-      placeholder: z.string().optional(),
-      type: z.enum(["text", "textarea", "date"]).optional(),
-      group: z.string().optional(),
-    }),
-  ),
+  variables: z
+    .array(
+      z.object({
+        key: z
+          .string()
+          .min(1, "المفتاح مطلوب")
+          .max(64, "المفتاح يجب ألا يتجاوز 64 حرفاً")
+          .regex(
+            /^[a-zA-Z][a-zA-Z0-9_.]*$/,
+            "المفتاح يجب أن يبدأ بحرف إنجليزي وأن يحتوي أرقاماً ونقاطاً وأسفل سطر فقط",
+          ),
+        placeholder: z.string().optional(),
+        type: z.enum(["text", "textarea", "date"]).optional(),
+        group: z.string().optional(),
+        defaultValue: z
+          .string()
+          .min(1, "القيمة مطلوبة لأن المتغير إلزامي")
+          .max(500, "القيمة يجب ألا تتجاوز 500 حرف"),
+      }),
+    ),
   isActive: z.boolean(),
   isDefault: z.boolean(),
   sortOrder: z.number().int().min(0),
 });
+
+const EMPTY_DRAFT: TemplateVariable = {
+  key: "",
+  type: "text",
+  defaultValue: "",
+};
+
+interface DraftErrors {
+  key?: string;
+  defaultValue?: string;
+}
 
 type FormValues = z.infer<typeof schema>;
 
@@ -66,12 +97,11 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
   const docxInputRef = useRef<HTMLInputElement>(null);
   const wysiwygRef = useRef<WysiwygEditorHandle>(null);
   const [previewOpen, setPreviewOpen] = useState(true);
-  const [draftVariable, setDraftVariable] = useState<TemplateVariable>({
-    key: "",
-    label: "",
-    required: false,
-    type: "text",
-  });
+  const [draftVariable, setDraftVariable] = useState<TemplateVariable>(EMPTY_DRAFT);
+  const [draftErrors, setDraftErrors] = useState<DraftErrors>({});
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [variableModalOpen, setVariableModalOpen] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const createMutation = useCreateLetterTemplate();
   const updateMutation = useUpdateLetterTemplate();
   const importMutation = useImportLetterTemplateDocx();
@@ -115,6 +145,63 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
   }, [template, reset]);
 
   const templateVariables = (watch("variables") ?? []) as TemplateVariable[];
+
+  const resetDraft = () => {
+    setDraftVariable(EMPTY_DRAFT);
+    setDraftErrors({});
+    setEditingIndex(null);
+    setVariableModalOpen(false);
+  };
+
+  const openAddVariable = () => {
+    setDraftVariable(EMPTY_DRAFT);
+    setDraftErrors({});
+    setEditingIndex(null);
+    setVariableModalOpen(true);
+  };
+
+  const validateDraft = (): DraftErrors => {
+    const errors: DraftErrors = {};
+    const key = draftVariable.key.trim();
+    const value = (draftVariable.defaultValue ?? "").trim();
+
+    if (!key) {
+      errors.key = "مفتاح المتغير مطلوب";
+    } else if (!/^[a-zA-Z][a-zA-Z0-9_.]*$/.test(key)) {
+      errors.key =
+        "يجب أن يبدأ بحرف إنجليزي ويحتوي أرقاماً ونقاطاً وأسفل سطر فقط";
+    } else if (key.length > 64) {
+      errors.key = "المفتاح يجب ألا يتجاوز 64 حرفاً";
+    } else if (
+      editingIndex === null &&
+      templateVariables.some((v) => v.key === key)
+    ) {
+      errors.key = "هذا المفتاح مستخدم بالفعل في النموذج";
+    }
+
+    if (!value) {
+      errors.defaultValue = "القيمة مطلوبة لأن المتغير إلزامي";
+    } else if (value.length > 500) {
+      errors.defaultValue = "القيمة يجب ألا تتجاوز 500 حرف";
+    }
+
+    return errors;
+  };
+
+  const handleDraftChange = (
+    field: keyof DraftErrors,
+    updater: (d: TemplateVariable) => TemplateVariable,
+  ) => {
+    setDraftVariable(updater);
+    setDraftErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
+
+  const startEdit = (idx: number) => {
+    setEditingIndex(idx);
+    setDraftErrors({});
+    setDraftVariable({ ...templateVariables[idx] });
+    setVariableModalOpen(true);
+  };
 
   const insertPlaceholder = (key: string) => {
     if (wysiwygRef.current) {
@@ -328,21 +415,34 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
             </div>
 
             <div className="rounded-xl border border-border bg-surface-container-lowest p-3 space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="text-label-sm font-bold text-muted-foreground">
-                  متغيرات خاصة بهذا النموذج
-                </p>
-                {templateVariables.length > 0 && (
-                  <span className="rounded-full bg-primary/10 text-primary text-label-xs px-2 py-0.5">
-                    {templateVariables.length}
-                  </span>
-                )}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-label-sm font-bold text-muted-foreground">
+                    متغيرات داخلية بقيم ثابتة
+                  </p>
+                  {templateVariables.length > 0 && (
+                    <span className="rounded-full bg-primary/10 text-primary text-label-xs px-2 py-0.5">
+                      {templateVariables.length}
+                    </span>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={openAddVariable}
+                >
+                  <Plus className="size-4" />
+                  إضافة متغير
+                </Button>
               </div>
 
               {templateVariables.length === 0 ? (
                 <p className="text-label-sm text-muted-foreground">
-                  لا توجد متغيرات خاصة بعد. أضف متغيرات يحددها المستخدم عند
-                  إصدار الخطاب (مثل رقم القرار، اسم المأمورية، الرقم القانوني...).
+                  لا توجد متغيرات داخلية بعد. أضف متغيراً بقيمة ثابتة يحددها
+                  المشرف (مثل رقم القرار، اسم المأمورية، الرقم القانوني...) —
+                  تُستخدم قيمتها عند الإصدار ولا يمكن تغييرها من طرف المستخدم.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -358,29 +458,35 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
                         >
                           {"{{"}{v.key}{"}}"}
                         </span>
-                        <span className="text-label-sm font-medium">
-                          {v.label}
-                        </span>
-                        {v.required && (
-                          <span className="rounded-full bg-destructive/10 text-destructive text-label-xs px-2 py-0.5">
-                            مطلوب
-                          </span>
-                        )}
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="ms-auto size-6 text-destructive"
-                        onClick={() => {
-                          const next = templateVariables.filter(
-                            (_, i) => i !== idx,
-                          );
-                          setValue("variables", next, { shouldDirty: true });
-                        }}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-label-xs text-muted-foreground">
+                          القيمة:
+                        </span>
+                        <span className="rounded-full bg-primary/10 text-primary text-label-xs px-2 py-0.5 font-medium">
+                          {v.defaultValue?.trim() || ""}
+                        </span>
+                      </div>
+                      <div className="ms-auto flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={() => startEdit(idx)}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-destructive"
+                          onClick={() => setDeleteIndex(idx)}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   <div className="flex flex-wrap gap-1.5 items-baseline">
@@ -393,7 +499,7 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
                         type="button"
                         onClick={() => insertPlaceholder(v.key)}
                         className="rounded-full border border-pink-300 bg-pink-50 px-2.5 py-0.5 font-mono text-mono-data text-label-sm text-pink-700 hover:bg-pink-100 transition-colors"
-                        title={v.label}
+                        title={v.key}
                       >
                         {`{{${v.key}}}`}
                       </button>
@@ -402,89 +508,134 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
                 </div>
               )}
 
-              <div className="border-t border-border pt-3 space-y-2">
-                <p className="text-label-sm font-bold text-muted-foreground">
-                  إضافة متغير جديد
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Input
-                    dir="ltr"
-                    className="w-44 font-mono text-label-sm"
-                    placeholder="id: variableName"
-                    value={draftVariable.key}
-                    aria-label="مفتاح المتغير"
-                    onChange={(e) =>
-                      setDraftVariable((d) => ({
-                        ...d,
-                        key: e.target.value.replace(/[^a-zA-Z0-9_.]/g, ""),
-                      }))
-                    }
-                  />
-                  <Input
-                    className="w-52 text-label-sm"
-                    placeholder="اسم المتغير الظاهر للمستخدم"
-                    value={draftVariable.label}
-                    aria-label="اسم المتغير"
-                    onChange={(e) =>
-                      setDraftVariable((d) => ({
-                        ...d,
-                        label: e.target.value,
-                      }))
-                    }
-                  />
-                  <label className="flex items-center gap-1.5 text-label-sm">
-                    <Switch
-                      checked={draftVariable.required}
-                      onCheckedChange={(v) =>
-                        setDraftVariable((d) => ({ ...d, required: v }))
-                      }
-                    />
-                    مطلوب
-                  </label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="gap-2"
-                    disabled={
-                      !draftVariable.key.trim() || !draftVariable.label.trim()
-                    }
-                    onClick={() => {
-                      if (
-                        templateVariables.some(
-                          (v) => v.key === draftVariable.key,
-                        )
-                      ) {
-                        return;
-                      }
-                      setValue(
-                        "variables",
-                        [
-                          ...templateVariables,
-                          {
-                            ...draftVariable,
-                            key: draftVariable.key.trim(),
-                          },
-                        ],
-                        { shouldDirty: true },
-                      );
-                      setDraftVariable({
-                        key: "",
-                        label: "",
-                        required: false,
-                        type: "text",
-                      });
-                    }}
-                  >
-                    <Plus className="size-4" />
-                    إضافة
-                  </Button>
-                </div>
-                <p className="text-label-xs text-muted-foreground">
-                  المفتاح يبدأ بحرف إنجليزي ويمكن أن يحتوي أرقاماً ونقاطاً
-                  وأسفل سطر فقط — يُستخدم داخل {"{{}}"} في المحتوى.
-                </p>
-              </div>
+              <Dialog
+                open={variableModalOpen}
+                onOpenChange={(open) => {
+                  if (!open) resetDraft();
+                }}
+              >
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingIndex !== null
+                        ? "تعديل المتغير الداخلي"
+                        : "إضافة متغير داخلي"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      مقرين بقيمة ثابتة يحددها المشرف — تُستخدم عند إصدار
+                      الخطاب ولا يمكن تغييرها من طرف المستخدم.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="var-key" className="text-label-sm font-bold">
+                        المفتاح ({"{{"} key {"}}"})
+                      </Label>
+                      <Input
+                        id="var-key"
+                        dir="ltr"
+                        className="w-full font-mono text-label-sm"
+                        placeholder="variableName"
+                        value={draftVariable.key}
+                        aria-invalid={!!draftErrors.key}
+                        disabled={editingIndex !== null}
+                        onChange={(e) =>
+                          handleDraftChange("key", (d) => ({
+                            ...d,
+                            key: e.target.value.replace(/[^a-zA-Z0-9_.]/g, ""),
+                          }))
+                        }
+                      />
+                      {draftErrors.key && (
+                        <p className="text-label-xs text-destructive">
+                          {draftErrors.key}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="var-value"
+                        className="text-label-sm font-bold"
+                      >
+                        القيمة الثابتة
+                      </Label>
+                      <Input
+                        id="var-value"
+                        className="w-full text-label-sm"
+                        placeholder="القيمة الثابتة (تظهر للمستخدم للاطلاع فقط)"
+                        value={draftVariable.defaultValue ?? ""}
+                        aria-invalid={!!draftErrors.defaultValue}
+                        onChange={(e) =>
+                          handleDraftChange("defaultValue", (d) => ({
+                            ...d,
+                            defaultValue: e.target.value,
+                          }))
+                        }
+                      />
+                      {draftErrors.defaultValue && (
+                        <p className="text-label-xs text-destructive">
+                          {draftErrors.defaultValue}
+                        </p>
+                      )}
+                    </div>
+
+                    <p className="text-label-xs text-muted-foreground">
+                      المفتاح يبدأ بحرف إنجليزي ويمكن أن يحتوي أرقاماً ونقاطاً
+                      وأسفل سطر فقط — يُستخدم داخل {"{{}}"} في المحتوى، وتُدمج
+                      القيمة الثابتة تلقائياً عند إصدار الخطاب.
+                    </p>
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={resetDraft}
+                    >
+                      إلغاء
+                    </Button>
+                    <Button
+                      type="button"
+                      className="gap-2"
+                      onClick={() => {
+                        const errors = validateDraft();
+                        setDraftErrors(errors);
+                        if (Object.keys(errors).length) return;
+                        if (editingIndex === null) {
+                          setValue(
+                            "variables",
+                            [
+                              ...templateVariables,
+                              {
+                                ...draftVariable,
+                                key: draftVariable.key.trim(),
+                              },
+                            ],
+                            { shouldDirty: true },
+                          );
+                        } else {
+                          const next = templateVariables.map((v, i) =>
+                            i === editingIndex
+                              ? { ...draftVariable, key: v.key }
+                              : v,
+                          );
+                          setValue("variables", next, { shouldDirty: true });
+                        }
+                        resetDraft();
+                      }}
+                    >
+                      {editingIndex !== null ? (
+                        <Pencil className="size-4" />
+                      ) : (
+                        <Plus className="size-4" />
+                      )}
+                      {editingIndex !== null ? "حفظ التعديل" : "إضافة"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </section>
 
@@ -541,6 +692,31 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
           </div>
         </form>
       </Card>
+
+      <ConfirmDialog
+        open={deleteIndex !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteIndex(null);
+        }}
+        title="حذف المتغير الداخلي"
+        description={
+          deleteIndex !== null
+            ? `هل أنت متأكد من حذف المتغير "{{${templateVariables[deleteIndex]?.key ?? ""}}}"؟ سيُحذف من النموذج ولن تُستبدل قيمته في الخطابات القادمة.`
+            : ""
+        }
+        confirmLabel="حذف"
+        cancelLabel="إلغاء"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteIndex !== null) {
+            const next = templateVariables.filter(
+              (_, i) => i !== deleteIndex,
+            );
+            setValue("variables", next, { shouldDirty: true });
+            setDeleteIndex(null);
+          }
+        }}
+      />
     </div>
   );
 }

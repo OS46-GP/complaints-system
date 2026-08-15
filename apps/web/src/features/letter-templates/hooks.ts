@@ -98,14 +98,8 @@ export function usePreviewLetterTemplate() {
 export function useGenerateLetter(complaintId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (args: {
-      templateId: string;
-      variableValues?: Record<string, string>;
-    }) => letterTemplatesApi.generate(
-      complaintId,
-      args.templateId,
-      args.variableValues,
-    ),
+    mutationFn: (args: { templateId: string }) =>
+      letterTemplatesApi.generate(complaintId, args.templateId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: LETTER_QUERY_KEYS.generated(complaintId),

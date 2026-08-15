@@ -100,9 +100,20 @@ export class LettersService {
     if (!templateVariables?.length) return null;
     const samples: Record<string, string> = {};
     for (const v of templateVariables) {
-      samples[v.key] = `[${v.label}]`;
+      samples[v.key] = v.defaultValue?.trim() ? v.defaultValue : `[${v.label}]`;
     }
     return samples;
+  }
+
+  private static fixedVariableValues(
+    templateVariables?: TemplateVariable[] | null,
+  ): Record<string, string> | null {
+    if (!templateVariables?.length) return null;
+    const values: Record<string, string> = {};
+    for (const v of templateVariables) {
+      if (v.defaultValue) values[v.key] = v.defaultValue;
+    }
+    return values;
   }
 
   async preview(templateId: string): Promise<Buffer> {
@@ -147,7 +158,6 @@ export class LettersService {
     complaintId: string,
     templateId: string,
     userId: string,
-    variableValues?: Record<string, string> | null,
   ) {
     const complaint = await this.prisma.client.complaint.findUnique({
       where: { id: complaintId },
@@ -168,13 +178,11 @@ export class LettersService {
     const templateVariables = (template as {
       variables?: TemplateVariable[] | null;
     }).variables;
-    const missing = missingRequiredVariables(
-      templateVariables,
-      variableValues,
-    );
+    const fixedValues = LettersService.fixedVariableValues(templateVariables);
+    const missing = missingRequiredVariables(templateVariables, fixedValues);
     if (missing.length) {
       throw new BadRequestException(
-        `لم يتم توفير المتغيرات المطلوبة: ${missing.join("، ")}`,
+        `المتغيرات التالية مطلوبة ويجب توفير قيمتها من إعدادات النموذج: ${missing.join("، ")}`,
       );
     }
 
@@ -184,7 +192,7 @@ export class LettersService {
         variables?: TemplateVariable[] | null;
       },
       complaint as unknown as LetterComplaintSource,
-      variableValues,
+      fixedValues,
     );
 
     const fileKey = `letters/${complaint.id}_${template.id}.pdf`;
@@ -198,7 +206,7 @@ export class LettersService {
       },
       update: {
         fileKey,
-        variableValues: variableValues ?? undefined,
+        variableValues: fixedValues ?? undefined,
         generatedById: userId,
         createdAt: new Date(),
       },
@@ -206,7 +214,7 @@ export class LettersService {
         complaintId,
         templateId,
         fileKey,
-        variableValues: variableValues ?? undefined,
+        variableValues: fixedValues ?? undefined,
         generatedById: userId,
       },
     });
