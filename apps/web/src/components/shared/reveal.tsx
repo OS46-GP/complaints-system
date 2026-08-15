@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
+import { AnimateIn } from "@/components/shared/animate";
 
 export function Reveal({
   children,
@@ -12,19 +12,9 @@ export function Reveal({
   className?: string;
   as?: "div" | "li" | "tr";
 }) {
-  const style = delay
-    ? ({ "--tw-animation-delay": `${delay}ms` } as CSSProperties)
-    : undefined;
-
   return (
-    <Tag
-      style={style}
-      className={cn(
-        "animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out fill-mode-both",
-        className,
-      )}
-    >
+    <AnimateIn as={Tag} delay={delay} variant="slide-up" className={className}>
       {children}
-    </Tag>
+    </AnimateIn>
   );
 }

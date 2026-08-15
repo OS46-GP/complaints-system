@@ -10,7 +10,7 @@ interface InfoItemProps {
 function InfoItem({ label, value }: InfoItemProps) {
   return (
     <div className="bg-surface-container-low p-2 rounded-lg min-w-0">
-      <span className="text-[11px] text-muted-foreground block mb-1">
+      <span className="text-[0.6875rem] text-muted-foreground block mb-1">
         {label}
       </span>
       <span className="text-body-md font-medium text-foreground break-all min-w-0">
@@ -29,7 +29,7 @@ export function UserCard({ user }: UserCardProps) {
     <div className="bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="font-heading text-[16px] text-foreground">
+          <h3 className="font-heading text-[1rem] text-foreground">
             {user.username}
           </h3>
           <p className="text-label-sm text-muted-foreground">

@@ -97,7 +97,7 @@ export function FileUploadArea({
                   <p className="font-heading text-label-sm text-foreground truncate">
                     {item.file.name}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[0.625rem] text-muted-foreground">
                     {formatSize(item.file.size)}
                   </p>
                 </div>

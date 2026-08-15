@@ -238,7 +238,7 @@ export function ComplaintList({
         <>
           <div className="md:hidden grid grid-cols-1 gap-4">
             {complaints.map((complaint, index) => (
-              <Reveal key={complaint.id} delay={index * 40}>
+              <Reveal key={complaint.id} delay={index * 70}>
                 <ComplaintCard
                   complaint={complaint}
                   selected={selectedIds.has(complaint.id)}

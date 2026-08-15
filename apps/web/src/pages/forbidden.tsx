@@ -23,7 +23,7 @@ export default function Forbidden() {
             </div>
           </div>
 
-          <h1 className="error-number-glitch mb-2 select-none font-mono text-[120px] font-bold leading-none text-primary">
+          <h1 className="error-number-glitch mb-2 select-none font-mono text-[7.5rem] font-bold leading-none text-primary">
             403
           </h1>
 

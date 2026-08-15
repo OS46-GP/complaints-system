@@ -21,7 +21,6 @@ import {
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/shared/app-sidebar";
 import { AppHeader } from "@/components/shared/app-header";
-import { PageTransition } from "@/components/shared/page-transition";
 import { PATHS } from "@/router/paths";
 import { resolveActiveUrls } from "@/lib/utils";
 import type { NavGroup } from "@/components/shared/sidebar-nav";
@@ -116,9 +115,7 @@ export default function AdminLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader title={currentTitle} />
         <main className="flex-1 overflow-auto p-4 md:p-container-padding bg-background">
-          <PageTransition>
-            <Outlet />
-          </PageTransition>
+          <Outlet />
         </main>
       </div>
     </SidebarProvider>

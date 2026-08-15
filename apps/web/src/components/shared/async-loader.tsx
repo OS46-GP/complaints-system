@@ -4,6 +4,7 @@ import { AlertCircle, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimateIn } from "@/components/shared/animate";
 
 interface AsyncLoaderProps {
   loading?: boolean;
@@ -80,8 +81,6 @@ export function AsyncLoader({
   }
 
   return (
-    <div className="animate-in fade-in duration-300 ease-out fill-mode-both">
-      {children}
-    </div>
+    <AnimateIn variant="fade">{children}</AnimateIn>
   );
 }

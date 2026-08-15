@@ -109,7 +109,7 @@ export function DepartmentsList({ departments, onEdit }: DepartmentsListProps) {
         <>
           <div className="lg:hidden grid grid-cols-1 gap-4">
             {paginatedDepartments.map((department, index) => (
-              <Reveal key={department.id} delay={index * 60}>
+              <Reveal key={department.id} delay={index * 90}>
                 <DepartmentCard
                   department={department}
                   onEdit={() => onEdit(department)}
