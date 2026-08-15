@@ -40,7 +40,7 @@ export function DashboardKpiCards({
           trendText="خلال الفترة المحددة"
         />
       </Reveal>
-      <Reveal delay={80}>
+      <Reveal delay={100}>
         <StatCard
           icon={FolderOpen}
           iconColor="text-amber-500"
@@ -50,7 +50,7 @@ export function DashboardKpiCards({
           trendText="غير منتهية بعد"
         />
       </Reveal>
-      <Reveal delay={160}>
+      <Reveal delay={200}>
         <StatCard
           icon={Target}
           iconColor="text-primary"
@@ -60,7 +60,7 @@ export function DashboardKpiCards({
           trendText="الإنجاز الكلي"
         />
       </Reveal>
-      <Reveal delay={240}>
+      <Reveal delay={300}>
         <StatCard
           icon={AlarmClock}
           iconColor="text-destructive"

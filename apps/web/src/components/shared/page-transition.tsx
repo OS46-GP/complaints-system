@@ -1,15 +1,13 @@
 import type { ReactNode } from "react";
 import { useLocation } from "react-router";
+import { AnimateIn } from "@/components/shared/animate";
 
 export function PageTransition({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   return (
-    <div
-      key={location.pathname}
-      className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-out fill-mode-both"
-    >
+    <AnimateIn key={location.pathname} variant="page">
       {children}
-    </div>
+    </AnimateIn>
   );
 }

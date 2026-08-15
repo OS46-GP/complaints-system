@@ -131,7 +131,7 @@ export function LetterTemplatesList({
         <>
           <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map((template, index) => (
-              <Reveal key={template.id} delay={index * 60}>
+              <Reveal key={template.id} delay={index * 90}>
                 <LetterTemplateCard
                   template={template}
                   onEdit={() => onEdit(template)}

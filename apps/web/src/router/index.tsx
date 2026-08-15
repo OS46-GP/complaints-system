@@ -11,6 +11,7 @@ import AdminLayout from "@/layouts/admin-layout";
 import UserLayout from "@/layouts/user-layout";
 import DefaultLayout from "@/layouts/default-layout";
 import { PageLoader } from "@/components/shared/page-loader";
+import { PageTransition } from "@/components/shared/page-transition";
 
 const LoginPage = lazy(() => import("@/pages/auth/login"));
 const RegisterPage = lazy(() => import("@/pages/auth/register"));
@@ -128,7 +129,11 @@ const NotFoundPage = lazy(() => import("@/pages/not-found"));
 const ForbiddenPage = lazy(() => import("@/pages/forbidden"));
 
 function SuspenseBoundary({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <PageTransition>{children}</PageTransition>
+    </Suspense>
+  );
 }
 
 const AppRouter = () => {
