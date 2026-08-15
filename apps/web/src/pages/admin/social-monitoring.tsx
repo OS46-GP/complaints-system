@@ -8,6 +8,7 @@ import { GroupsEmptyState } from "@/features/social/groups-empty-state";
 import { GroupsListSkeleton } from "@/features/social/groups-list-skeleton";
 import { DraftsList } from "@/features/social/drafts-list";
 import { DraftsToolbar } from "@/features/social/drafts-toolbar";
+import { DateSummaryCard } from "@/features/social/date-summary-card";
 import { DraftsEmptyState } from "@/features/social/drafts-empty-state";
 import { DraftsListSkeleton } from "@/features/social/drafts-list-skeleton";
 import {
@@ -62,6 +63,7 @@ export default function AdminSocialMonitoring() {
 
         <TabsContent value="drafts" className="flex flex-col gap-6">
           <DraftsToolbar status={draftStatus} onStatusChange={setDraftStatus} />
+          <DateSummaryCard />
 
           <AsyncLoader
             loading={draftsLoading}
