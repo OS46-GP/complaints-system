@@ -29,6 +29,9 @@ export function useCreateUser() {
         username: formData.username,
         password: formData.password,
         role: formData.role,
+        nationalId: formData.nationalId || undefined,
+        email: formData.email || undefined,
+        fullName: undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users });
@@ -43,6 +46,11 @@ export function useUpdateUser(userId: string) {
       usersApi.update(userId, {
         password: formData.password || undefined,
         role: formData.role,
+        nationalId:
+          formData.nationalId && !formData.nationalId.startsWith("****")
+            ? formData.nationalId
+            : undefined,
+        email: formData.email || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users });

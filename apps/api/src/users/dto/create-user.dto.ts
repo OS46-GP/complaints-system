@@ -12,6 +12,19 @@ export class CreateUserDto {
   password!: string;
 
   @IsOptional()
-  @IsEnum(UserRole, { message: 'Role must be either Official or Admin' })
+  @IsString()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: 'National ID must not be empty' })
+  nationalId?: string;
+
+  @IsOptional()
+  @IsEnum(UserRole, { message: 'Role must be a valid user role' })
   role?: UserRole;
 }

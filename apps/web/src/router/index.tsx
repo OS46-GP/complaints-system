@@ -5,10 +5,12 @@ import { PATHS } from "./paths";
 import GuestGuard from "./guards/guest-guard";
 import AdminGuard from "./guards/admin-guard";
 import UserGuard from "./guards/user-guard";
+import SuperAdminGuard from "./guards/super-admin-guard";
 
 import AuthLayout from "@/layouts/auth-layout";
 import AdminLayout from "@/layouts/admin-layout";
 import UserLayout from "@/layouts/user-layout";
+import SuperAdminLayout from "@/layouts/super-admin-layout";
 import DefaultLayout from "@/layouts/default-layout";
 import { PageLoader } from "@/components/shared/page-loader";
 import { PageTransition } from "@/components/shared/page-transition";
@@ -81,6 +83,26 @@ const AdminOnDemandReportPage = lazy(
 );
 const AdminMemoPage = lazy(() => import("@/pages/admin/memo"));
 const AdminProfilePage = lazy(() => import("@/pages/admin/profile"));
+
+const SuperAdminDashboardPage = lazy(
+  () => import("@/pages/super-admin/dashboard"),
+);
+const SuperAdminUsersPage = lazy(() => import("@/pages/super-admin/users"));
+const SuperAdminCreateUserPage = lazy(
+  () => import("@/pages/super-admin/create-user"),
+);
+const SuperAdminUserDetailPage = lazy(
+  () => import("@/pages/super-admin/user-detail"),
+);
+const SuperAdminSettingsPage = lazy(
+  () => import("@/pages/super-admin/settings"),
+);
+const SuperAdminProfilePage = lazy(
+  () => import("@/pages/super-admin/profile"),
+);
+const SuperAdminNotificationsPage = lazy(
+  () => import("@/pages/super-admin/notifications"),
+);
 
 const UserDashboardPage = lazy(() => import("@/pages/user/dashboard"));
 const UserComplaintsPage = lazy(() => import("@/pages/user/complaints"));
@@ -410,6 +432,67 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminMemoPage />
+                </SuspenseBoundary>
+              }
+            />
+          </Route>
+        </Route>
+
+        <Route element={<SuperAdminGuard />}>
+          <Route element={<SuperAdminLayout />}>
+            <Route
+              path={PATHS.SUPER_ADMIN.DASHBOARD}
+              element={
+                <SuspenseBoundary>
+                  <SuperAdminDashboardPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.SUPER_ADMIN.PROFILE}
+              element={
+                <SuspenseBoundary>
+                  <SuperAdminProfilePage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.SUPER_ADMIN.USERS}
+              element={
+                <SuspenseBoundary>
+                  <SuperAdminUsersPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.SUPER_ADMIN.NEW_USER}
+              element={
+                <SuspenseBoundary>
+                  <SuperAdminCreateUserPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.SUPER_ADMIN.USER_DETAIL(":id")}
+              element={
+                <SuspenseBoundary>
+                  <SuperAdminUserDetailPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.NOTIFICATIONS.SUPER_ADMIN}
+              element={
+                <SuspenseBoundary>
+                  <SuperAdminNotificationsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.SUPER_ADMIN.SETTINGS}
+              element={
+                <SuspenseBoundary>
+                  <SuperAdminSettingsPage />
                 </SuspenseBoundary>
               }
             />

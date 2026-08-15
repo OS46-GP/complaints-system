@@ -5,22 +5,24 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Save, X, Loader2 } from "lucide-react";
 
-import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { BasicInfoSection } from "@/features/users/basic-info-section";
 import { PermissionsSection } from "@/features/users/permissions-section";
 import { useCreateUser } from "@/features/users/hooks";
+import { useUserManagementPaths } from "@/features/users/use-user-management-paths";
 import type { UserFormData } from "@/features/users/types";
 
 const schema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
   password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
   email: z.string(),
-  role: z.enum(["Official", "Admin"]),
+  nationalId: z.string(),
+  role: z.enum(["Official", "Admin", "SuperAdmin"]),
 });
 
 export function UserCreateForm() {
   const navigate = useNavigate();
+  const { usersList } = useUserManagementPaths();
   const mutation = useCreateUser();
 
   const {
@@ -33,6 +35,7 @@ export function UserCreateForm() {
       username: "",
       password: "",
       email: "",
+      nationalId: "",
       role: "Official",
     },
   });
@@ -49,7 +52,7 @@ export function UserCreateForm() {
     mutation.mutate(formData, {
       onSuccess: () => {
         toast.success("تم إنشاء المستخدم بنجاح");
-        navigate(PATHS.ADMIN.USERS);
+        navigate(usersList);
       },
     });
   };
@@ -63,7 +66,7 @@ export function UserCreateForm() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => navigate(PATHS.ADMIN.USERS)}
+          onClick={() => navigate(usersList)}
           className="gap-2 h-11 px-8"
         >
           <X className="size-4" />

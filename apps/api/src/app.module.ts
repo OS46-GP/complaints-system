@@ -15,6 +15,7 @@ import { SocialModule } from "./social/social.module";
 import { IntakeModule } from "./intake/intake.module";
 import { SettingsModule } from "./settings/settings.module";
 import { LettersModule } from "./letters/letters.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { RequestLoggingMiddleware } from "./common/request-logging.middleware";
 
 @Module({
@@ -35,6 +36,7 @@ import { RequestLoggingMiddleware } from "./common/request-logging.middleware";
     AiSummarizationModule,
     SettingsModule,
     LettersModule,
+    NotificationsModule,
   ],
 })
 export class AppModule implements NestModule {

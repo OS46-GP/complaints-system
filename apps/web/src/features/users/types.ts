@@ -1,11 +1,14 @@
 export type UserStatus = "online" | "offline";
 
+export type RowRole = "Official" | "Admin" | "SuperAdmin";
+
 export interface User {
   id: string;
   username: string;
   role: string;
   roleLabel: string;
   email: string;
+  nationalId: string;
   department: string;
   status: UserStatus;
   lastSeen: string;
@@ -15,26 +18,36 @@ export interface User {
 export interface ApiUser {
   id: string;
   username: string;
-  role: "Official" | "Admin";
+  fullName?: string | null;
+  email?: string | null;
+  nationalId?: string | null;
+  role: RowRole;
   createdAt: string;
 }
 
 export interface CreateUserPayload {
   username: string;
   password: string;
-  role: "Official" | "Admin";
+  role: RowRole;
+  fullName?: string;
+  email?: string;
+  nationalId?: string;
 }
 
 export interface UpdateUserPayload {
   password?: string;
-  role?: "Official" | "Admin";
+  role?: RowRole;
+  fullName?: string;
+  email?: string;
+  nationalId?: string;
 }
 
 export interface UserFormData {
   username: string;
   password: string;
   email: string;
-  role: "Official" | "Admin";
+  nationalId: string;
+  role: RowRole;
   department?: string;
   jobTitle?: string;
 }
@@ -43,12 +56,14 @@ export interface UserEditFormData {
   username: string;
   password: string;
   email: string;
-  role: "Official" | "Admin";
+  nationalId: string;
+  role: RowRole;
 }
 
 const ROLE_LABELS: Record<string, string> = {
   Official: "موظف",
   Admin: "مدير نظام",
+  SuperAdmin: "مدير النظام الأعلى",
 };
 
 export function mapApiUser(api: ApiUser): User {
@@ -57,7 +72,8 @@ export function mapApiUser(api: ApiUser): User {
     username: api.username,
     role: api.role,
     roleLabel: ROLE_LABELS[api.role] ?? api.role,
-    email: "",
+    email: api.email ?? "",
+    nationalId: api.nationalId ?? "",
     department: "",
     status: "offline",
     lastSeen: api.createdAt

@@ -22,6 +22,7 @@ const PAGE_SIZE = 10;
 const columns: DataTableColumn[] = [
   { key: "name", label: "اسم الموظف" },
   { key: "role", label: "الدور" },
+  { key: "nationalId", label: "الرقم القومي" },
   { key: "lastSeen", label: "تاريخ الإنشاء" },
   { key: "actions", label: "الإجراءات", className: "text-center" },
 ];

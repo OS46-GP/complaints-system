@@ -5,6 +5,7 @@ import { ModeToggle } from "@/components/shared/mode-toggle";
 import { SearchBar } from "@/components/shared/search-bar";
 import { SearchDialog } from "@/components/shared/search-dialog";
 import { UserNav, type UserNavItem } from "@/components/shared/user-nav";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useAuthStore } from "@/features/auth/store";
 import { PATHS } from "@/router/paths";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,16 @@ import { cn } from "@/lib/utils";
 const ROLE_LABELS: Record<string, string> = {
   Admin: "مدير النظام",
   Official: "موظف",
+  SuperAdmin: "مدير النظام الأعلى",
+};
+
+const USER_MANAGEMENT_PATHS: Record<string, { profile: string; settings: string }> = {
+  Admin: { profile: PATHS.ADMIN.PROFILE, settings: PATHS.ADMIN.SETTINGS },
+  SuperAdmin: {
+    profile: PATHS.SUPER_ADMIN.PROFILE,
+    settings: PATHS.SUPER_ADMIN.SETTINGS,
+  },
+  Official: { profile: PATHS.USER.PROFILE, settings: PATHS.USER.SETTINGS },
 };
 
 export function AppHeader({
@@ -25,18 +36,24 @@ export function AppHeader({
 
   const displayName = user?.fullName || user?.username || "مستخدم";
   const roleLabel = user?.role ? ROLE_LABELS[user.role] ?? user.role : "";
-  const isAdmin = user?.role === "Admin";
+  const roleKey =
+    user?.role === "SuperAdmin"
+      ? "SuperAdmin"
+      : user?.role === "Admin"
+        ? "Admin"
+        : "Official";
+  const rolePaths = USER_MANAGEMENT_PATHS[roleKey] ?? USER_MANAGEMENT_PATHS.Official;
 
   const userMenuItems: UserNavItem[] = [
     {
       label: "الملف الشخصي",
       icon: User,
-      path: isAdmin ? PATHS.ADMIN.PROFILE : PATHS.USER.PROFILE,
+      path: rolePaths.profile,
     },
     {
       label: "الإعدادات",
       icon: Settings,
-      path: isAdmin ? PATHS.ADMIN.SETTINGS : PATHS.USER.SETTINGS,
+      path: rolePaths.settings,
     },
   ];
 
@@ -60,6 +77,7 @@ export function AppHeader({
 
       <div className="flex items-center gap-1 md:gap-4">
         <SearchDialog />
+        <NotificationBell />
         <ModeToggle />
         <div className="mx-1 h-8 w-px bg-border md:mx-2" />
         <UserNav
