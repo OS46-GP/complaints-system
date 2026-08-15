@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Radar } from "lucide-react";
 
@@ -10,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePoll } from "@/features/social/hooks";
+import { PollSummaryDialog } from "@/features/social/poll-summary-dialog";
 import type { SocialDraftStatus } from "@/features/social/types";
 
 interface DraftsToolbarProps {
@@ -20,12 +22,14 @@ interface DraftsToolbarProps {
 
 export function DraftsToolbar({ status, onStatusChange, showPoll = true }: DraftsToolbarProps) {
   const pollMutation = usePoll();
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const handlePoll = () => {
     pollMutation.mutate(undefined, {
       onSuccess: (result) => {
         if (result.draftsCreated.length > 0) {
           toast.success(`تم التقاط ${result.draftsCreated.length} منشور جديد`);
+          if (result.summary) setSummaryOpen(true);
         } else if (result.aiFiltered > 0 || result.spamSkipped > 0) {
           toast.info("لا توجد منشورات جديدة (تم استبعاد الإعلانات والمحتوى غير ذي الصلة)");
         } else {
@@ -67,6 +71,12 @@ export function DraftsToolbar({ status, onStatusChange, showPoll = true }: Draft
           {pollMutation.isPending ? "جارٍ المسح..." : "مسح المنشورات الآن"}
         </Button>
       )}
+
+      <PollSummaryDialog
+        open={summaryOpen}
+        onOpenChange={setSummaryOpen}
+        summary={pollMutation.data?.summary ?? null}
+      />
     </div>
   );
 }
