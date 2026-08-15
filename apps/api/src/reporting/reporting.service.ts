@@ -59,9 +59,9 @@ function readTemplate(name: string): string {
 }
 
 const SEVERITY_LABELS: Record<string, string> = {
-  LOW: 'منخفضة',
-  MEDIUM: 'متوسطة',
-  HIGH: 'عالية',
+  Low: 'منخفضة',
+  Medium: 'متوسطة',
+  High: 'عالية',
 };
 
 const CASE_STATUS_LABELS: Record<string, string> = {

@@ -17,11 +17,8 @@ import type {
   RecurrenceInput,
 } from "./interfaces/analyze-result.interface";
 
-const API_TO_PRISMA_SEVERITY: Record<SeverityLevel, Severity> = {
-  LOW: Severity.Low,
-  MEDIUM: Severity.Medium,
-  HIGH: Severity.High,
-};
+// SeverityLevel uses PascalCase matching the Prisma Severity enum, so no
+// translation map is needed between the agent output and the DB enum.
 
 const RECURRENCE_WINDOW_DAYS = Number(
   process.env.RECURRENCE_WINDOW_DAYS ?? 365,
@@ -92,7 +89,7 @@ export class AiTriageService {
     if (complaint.severity === Severity.Low) {
       await this.prisma.complaint.update({
         where: { id },
-        data: { severity: API_TO_PRISMA_SEVERITY[triage.severity] },
+        data: { severity: triage.severity },
       });
     }
 
@@ -194,7 +191,7 @@ export class AiTriageService {
 
     await this.prisma.complaint.update({
       where: { id },
-      data: { severity: API_TO_PRISMA_SEVERITY[severity] },
+      data: { severity },
     });
 
     return { severity };
@@ -214,7 +211,7 @@ export class AiTriageService {
       const severity =
         ENABLE_AI && needSeverity
           ? (await this.triageWithAgent(complaint, [], new Set<string>())).severity
-          : "MEDIUM";
+          : "Medium";
       return { severity, recurrenceMatches: [] };
     }
 
@@ -233,7 +230,7 @@ export class AiTriageService {
         }
       }
       return {
-        severity: "MEDIUM",
+        severity: "Medium",
         recurrenceMatches: this.toRecurrenceMatches(exactMatches),
       };
     }
@@ -247,7 +244,7 @@ export class AiTriageService {
         }
       }
       return {
-        severity: "MEDIUM",
+        severity: "Medium",
         recurrenceMatches: this.toRecurrenceMatches(exactMatches),
       };
     }
@@ -271,7 +268,7 @@ export class AiTriageService {
     const reasoningCandidates = [...reasoningMap.values()];
 
     // Stage 3: Single combined agent call — severity + recurrence together
-    let severity: SeverityLevel = "MEDIUM";
+    let severity: SeverityLevel = "Medium";
     let confirmed: RecurrenceCandidate[] = [];
 
     if (reasoningCandidates.length > 0 || needSeverity) {
@@ -434,7 +431,7 @@ ${complaintText}
 ${candidates.length > 0 ? `Existing complaints:
 ${candidateText}` : "No existing candidates found."}
 
-Return JSON with "severity" (one of LOW, MEDIUM, HIGH) and "recurrenceIds" (the [ids] of ALL existing complaints that describe the same real-world problem; [] if none). No explanation.`;
+Return JSON with "severity" (one of Low, Medium, High) and "recurrenceIds" (the [ids] of ALL existing complaints that describe the same real-world problem; [] if none). No explanation.`;
 
       this.logger.debug(`Triage prompt:\n${triagePrompt}`);
       const agent = await getOrCreateAgent();
@@ -520,7 +517,7 @@ Return JSON with "severity" (one of LOW, MEDIUM, HIGH) and "recurrenceIds" (the 
     }
 
     if (groupIds.size === 0) {
-      return { severity: "LOW", recurrenceMatches: [] };
+      return { severity: "Low", recurrenceMatches: [] };
     }
 
     const complaints = await this.prisma.complaint.findMany({
@@ -535,7 +532,7 @@ Return JSON with "severity" (one of LOW, MEDIUM, HIGH) and "recurrenceIds" (the 
     });
 
     return {
-      severity: "LOW",
+      severity: "Low",
       recurrenceMatches: complaints.map((c) => this.toRecurrenceMatch(c)),
     };
   }

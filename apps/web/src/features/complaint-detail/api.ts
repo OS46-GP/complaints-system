@@ -17,7 +17,7 @@ export function resolveUploadUrl(storageKey: string): string {
   return `${API_BASE}/uploads/${storageKey}`;
 }
 
-export type SeverityLevel = "LOW" | "MEDIUM" | "HIGH";
+export type SeverityLevel = "Low" | "Medium" | "High";
 
 export interface AnalyzeResponse {
   severity: SeverityLevel;
