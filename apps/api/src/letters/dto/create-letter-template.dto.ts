@@ -42,6 +42,10 @@ export class LetterTemplateVariableDto {
   @IsString()
   @IsOptional()
   group?: string;
+
+  @IsString()
+  @IsOptional()
+  defaultValue?: string;
 }
 
 export class CreateLetterTemplateDto {

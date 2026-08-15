@@ -72,9 +72,19 @@ body {
 
 const EMPTY_PREVIEW = `<div class="empty-preview">لا يوجد محتوى بعد<br/>ابدأ بكتابة محتوى الخطاب في المحرر، وستظهر المعاينة هنا مباشرة.</div>`;
 
+function escapePreviewText(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export interface PreviewVariable {
   key: string;
-  label: string;
+  label?: string;
+  defaultValue?: string;
 }
 
 export function renderLetterPreview(
@@ -90,7 +100,9 @@ export function renderLetterPreview(
   const variableMap = new Map(
     (variables ?? []).map((v) => [
       v.key,
-      `<span class="variable-sample">[${v.label}]</span>`,
+      `<span class="variable-sample">${
+        v.defaultValue?.trim() ? escapePreviewText(v.defaultValue) : `[${v.key}]`
+      }</span>`,
     ]),
   );
 

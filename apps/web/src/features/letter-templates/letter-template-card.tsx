@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { Eye, FileText, ShieldCheck } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LetterTemplateTypeBadge } from "@/features/letter-templates/letter-template-type-badge";
 import { LetterTemplateActionsDropdown } from "@/features/letter-templates/letter-template-actions-dropdown";
 import { usePreviewLetterTemplate } from "@/features/letter-templates/hooks";
+import { PATHS } from "@/router/paths";
 import type { LetterTemplate } from "@/features/letter-templates/types";
 
 interface LetterTemplateCardProps {
@@ -14,11 +16,15 @@ interface LetterTemplateCardProps {
 }
 
 export function LetterTemplateCard({ template, onEdit }: LetterTemplateCardProps) {
+  const navigate = useNavigate();
   const previewMutation = usePreviewLetterTemplate();
   const isPending = previewMutation.isPending;
 
   return (
-    <Card className="group p-4 md:p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+    <Card
+      className="group p-4 md:p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
+      onClick={() => navigate(PATHS.ADMIN.LETTER_TEMPLATE_EDIT(template.id))}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <LetterTemplateTypeBadge type={template.type} />
@@ -52,14 +58,19 @@ export function LetterTemplateCard({ template, onEdit }: LetterTemplateCardProps
         <Button
           variant="outline"
           size="sm"
-          onClick={() => previewMutation.mutate(template.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            previewMutation.mutate(template.id);
+          }}
           disabled={isPending}
           className="gap-2"
         >
           <Eye className="size-4" />
           {isPending ? "جارٍ المعاينة..." : "معاينة"}
         </Button>
-        <LetterTemplateActionsDropdown template={template} onEdit={onEdit} />
+        <span onClick={(e) => e.stopPropagation()}>
+          <LetterTemplateActionsDropdown template={template} onEdit={onEdit} />
+        </span>
       </div>
     </Card>
   );

@@ -6,11 +6,12 @@ export const LETTER_TYPE_LABELS: Record<LetterTemplateType, string> = {
 
 export interface TemplateVariable {
   key: string;
-  label: string;
+  label?: string;
   required?: boolean;
   placeholder?: string;
   type?: "text" | "textarea" | "date";
   group?: string;
+  defaultValue: string;
 }
 
 export interface LetterTemplate {
