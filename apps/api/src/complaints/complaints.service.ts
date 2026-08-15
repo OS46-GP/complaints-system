@@ -72,7 +72,8 @@ export function computeAssignmentStatus(
   if (row.outgoingLetterDate && row.responseDeadlineDays) {
     const due = new Date(row.outgoingLetterDate);
     due.setDate(due.getDate() + row.responseDeadlineDays);
-    if (due.getTime() < now.getTime()) return "OVERDUE";
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (due.getTime() < startOfToday.getTime()) return "OVERDUE";
   }
   return "ACTIVE";
 }
@@ -789,7 +790,8 @@ export class ComplaintsService {
       due.setDate(due.getDate() + row.responseDeadlineDays);
       const dueTime = due.getTime();
       if (dueTime >= endOfToday.getTime()) continue;
-      if (bucket === "overdue" || dueTime >= startOfToday.getTime()) {
+      const isOverdue = dueTime < startOfToday.getTime();
+      if (bucket === "overdue" ? isOverdue : !isOverdue) {
         ids.add(row.complaintId);
       }
     }
