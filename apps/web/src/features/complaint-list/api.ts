@@ -1,5 +1,6 @@
 import { axiosClient } from "@/api/axios-client";
 import type { ApiComplaint, ApiCitizen, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload, DueAssignmentsResponse } from "@/features/complaint-list/types";
+import type { SeverityLevel } from "@/features/complaint-detail/api";
 
 export interface ListComplaintsParams {
   page?: number;
@@ -150,15 +151,15 @@ export const complaintsApi = {
       .then((res) => res.data),
   checkDuplicates: (payload: CheckDuplicatesPayload) =>
     axiosClient
-      .post<{ severity: "LOW" | "MEDIUM" | "HIGH"; recurrenceMatches: RecurrenceMatch[] }>("/api/complaints/check-duplicates", payload)
+      .post<{ severity: SeverityLevel; recurrenceMatches: RecurrenceMatch[] }>("/api/complaints/check-duplicates", payload)
       .then((res) => res.data),
   analyze: (id: string) =>
     axiosClient
-      .post<{ severity: "LOW" | "MEDIUM" | "HIGH"; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/analyze`)
+      .post<{ severity: SeverityLevel; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/analyze`)
       .then((res) => res.data),
-  updateSeverity: (id: string, severity: "LOW" | "MEDIUM" | "HIGH") =>
+  updateSeverity: (id: string, severity: SeverityLevel) =>
     axiosClient
-      .patch<{ severity: "LOW" | "MEDIUM" | "HIGH" }>(`/api/complaints/${id}/severity`, { severity })
+      .patch<{ severity: SeverityLevel }>(`/api/complaints/${id}/severity`, { severity })
       .then((res) => res.data),
   summarize: (id: string) =>
     axiosClient

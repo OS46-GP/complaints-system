@@ -27,8 +27,8 @@ import { useAddGroup } from "@/features/social/hooks";
 import type { GroupType } from "@/features/social/types";
 
 const schema = z.object({
-  name: z.string().min(1, "اسم المجموعة مطلوب"),
-  groupId: z.string().min(1, "معرّف المجموعة مطلوب"),
+  name: z.string().min(1, "اسم المجموعة أو الصفحة مطلوب"),
+  groupId: z.string().min(1, "معرّف المجموعة أو الصفحة مطلوب"),
   type: z.enum(["Group", "Page"]),
 });
 
@@ -61,13 +61,13 @@ export function AddGroupDialog() {
       { ...data, type: data.type as GroupType },
       {
         onSuccess: () => {
-          toast.success("تمت إضافة المجموعة للمراقبة");
+          toast.success("تمت إضافة المجموعة أو الصفحة للمراقبة");
           setOpen(false);
         },
         onError: (error: unknown) => {
           const message =
             (error as { response?: { data?: { message?: string } } })?.response
-              ?.data?.message ?? "تعذر إضافة المجموعة";
+              ?.data?.message ?? "تعذر الإضافة للمراقبة";
           toast.error(message);
         },
       },
@@ -78,12 +78,12 @@ export function AddGroupDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <Button onClick={() => setOpen(true)} className="gap-2">
         <Plus className="size-5" />
-        <span>إضافة مجموعة</span>
+        <span>إضافة مجموعة أو صفحة</span>
       </Button>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>إضافة مجموعة للمراقبة</DialogTitle>
+          <DialogTitle>إضافة مجموعة أو صفحة للمراقبة</DialogTitle>
           <DialogDescription>
             أدخل بيانات المجموعة أو الصفحة التي سيتم تتبع منشوراتها على فيسبوك
           </DialogDescription>
@@ -91,7 +91,7 @@ export function AddGroupDialog() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="group-name">اسم المجموعة</Label>
+            <Label htmlFor="group-name">اسم المجموعة أو الصفحة</Label>
             <Input
               id="group-name"
               placeholder="مثال: شبين الكوم"
@@ -104,7 +104,7 @@ export function AddGroupDialog() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="group-id">معرّف المجموعة (ID)</Label>
+            <Label htmlFor="group-id">معرّف المجموعة أو الصفحة (ID)</Label>
             <Input
               id="group-id"
               placeholder="مثال: 851613538947931"

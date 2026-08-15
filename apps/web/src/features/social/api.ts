@@ -3,6 +3,7 @@ import type {
   AddGroupPayload,
   MonitoredGroup,
   PollResult,
+  PollSummary,
   SocialDraft,
   SocialDraftStatus,
 } from "@/features/social/types";
@@ -21,6 +22,13 @@ export const socialApi = {
   poll: () =>
     axiosClient
       .post<PollResult>("/api/social/poll", null, { timeout: 180000 })
+      .then((res) => res.data),
+  summarizeByDate: (from?: string, to?: string) =>
+    axiosClient
+      .get<{ count: number; summary: PollSummary | null }>("/api/social/summary", {
+        params: { from, to },
+        timeout: 180000,
+      })
       .then((res) => res.data),
   listDrafts: (status?: SocialDraftStatus) =>
     axiosClient

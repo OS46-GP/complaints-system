@@ -30,12 +30,6 @@ const SEVERITY_LABELS: Record<string, string> = {
   Low: "عادي",
 };
 
-const SEVERITY_LEVEL_TO_FORM: Record<string, "High" | "Medium" | "Low"> = {
-  HIGH: "High",
-  MEDIUM: "Medium",
-  LOW: "Low",
-};
-
 const SEVERITY_OPTIONS: { value: "High" | "Medium" | "Low"; label: string }[] = [
   { value: "High", label: "عاجل" },
   { value: "Medium", label: "متوسط" },
@@ -108,7 +102,7 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
   const [checkState, setCheckState] = useState<{
     status: "idle" | "loading" | "done";
     matches: RecurrenceMatch[];
-    aiSeverity: "LOW" | "MEDIUM" | "HIGH" | null;
+    aiSeverity: "Low" | "Medium" | "High" | null;
   }>({ status: "idle", matches: [], aiSeverity: null });
   const autoChecked = useRef(false);
   const [selectedForPreview, setSelectedForPreview] = useState<ApiComplaint | null>(null);
@@ -144,7 +138,7 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
       });
       const aiSeverity = result.severity;
       setCheckState({ status: "done", matches: result.recurrenceMatches, aiSeverity });
-      form.setValue("severity", SEVERITY_LEVEL_TO_FORM[aiSeverity] ?? "Medium", {
+      form.setValue("severity", aiSeverity ?? "Medium", {
         shouldValidate: true,
       });
     } catch {
@@ -275,7 +269,7 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
               <Sparkles className="size-3.5 mt-0.5 shrink-0 text-primary" />
               التوصية التلقائية:{" "}
               <span className="font-semibold">
-                {SEVERITY_LABELS[SEVERITY_LEVEL_TO_FORM[checkState.aiSeverity]]}
+                {SEVERITY_LABELS[checkState.aiSeverity]}
               </span>
               {" "}— يمكنك تعديلها أعلاه قبل الإرسال.
             </p>

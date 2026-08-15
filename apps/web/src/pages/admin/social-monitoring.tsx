@@ -8,6 +8,7 @@ import { GroupsEmptyState } from "@/features/social/groups-empty-state";
 import { GroupsListSkeleton } from "@/features/social/groups-list-skeleton";
 import { DraftsList } from "@/features/social/drafts-list";
 import { DraftsToolbar } from "@/features/social/drafts-toolbar";
+import { DateSummaryCard } from "@/features/social/date-summary-card";
 import { DraftsEmptyState } from "@/features/social/drafts-empty-state";
 import { DraftsListSkeleton } from "@/features/social/drafts-list-skeleton";
 import {
@@ -37,7 +38,7 @@ export default function AdminSocialMonitoring() {
       <Tabs defaultValue="drafts">
         <TabsList className="self-start">
           <TabsTrigger value="drafts">منشورات بانتظار المراجعة</TabsTrigger>
-          <TabsTrigger value="groups">المجموعات المُراقبة</TabsTrigger>
+          <TabsTrigger value="groups">المجموعات والصفحات المُراقبة</TabsTrigger>
         </TabsList>
 
         <TabsContent value="groups" className="flex flex-col gap-6">
@@ -49,7 +50,7 @@ export default function AdminSocialMonitoring() {
             loading={isLoading}
             error={isError}
             onRetry={() => refetch()}
-            errorText="تعذر تحميل المجموعات المُراقبة"
+            errorText="تعذر تحميل المجموعات والصفحات المُراقبة"
             skeleton={<GroupsListSkeleton />}
           >
             {groups && groups.length > 0 ? (
@@ -62,6 +63,7 @@ export default function AdminSocialMonitoring() {
 
         <TabsContent value="drafts" className="flex flex-col gap-6">
           <DraftsToolbar status={draftStatus} onStatusChange={setDraftStatus} />
+          <DateSummaryCard />
 
           <AsyncLoader
             loading={draftsLoading}

@@ -6,7 +6,7 @@ export function GroupsEmptyState() {
       <Radio className="size-12 text-muted-foreground/40" />
       <div>
         <p className="font-heading text-body-lg font-semibold text-foreground">
-          لا توجد مجموعات مراقبة
+          لا توجد مجموعات أو صفحات مراقبة
         </p>
         <p className="text-body-sm text-muted-foreground mt-1">
           أضف مجموعة أو صفحة فيسبوك لبدء تتبع المنشورات

@@ -1,4 +1,4 @@
-export type SeverityLevel = "LOW" | "MEDIUM" | "HIGH";
+export type SeverityLevel = "Low" | "Medium" | "High";
 
 export interface RecurrenceMatch {
   id: string;

@@ -37,6 +37,14 @@ export class SocialController {
     return this.socialService.listDrafts(status);
   }
 
+  @Get("summary")
+  async summarizeByDate(
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+  ) {
+    return this.socialService.summarizeDraftsByDate(from, to);
+  }
+
   @Post("drafts/:id/reject")
   rejectDraft(
     @Param("id") id: string,

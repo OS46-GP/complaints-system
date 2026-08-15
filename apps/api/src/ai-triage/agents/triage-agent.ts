@@ -4,12 +4,14 @@ import { resolveChatModel } from "../../common/llm/model-provider";
 
 const ENABLE_AI = Boolean(process.env.LLM_MODEL);
 // When ENABLE_AI is false:
-// - Severity always returns "MEDIUM"
+// - Severity always returns "Medium"
 // - Recurrence detection uses structured match only (National ID)
 // - Embedding similarity + agent reasoning are skipped
 
+// Severity uses PascalCase to match the Prisma Severity enum (Low/Medium/High),
+// consistent with the social intake agent.
 export const triageResultSchema = z.object({
-  severity: z.enum(["LOW", "MEDIUM", "HIGH"]),
+  severity: z.enum(["Low", "Medium", "High"]),
   recurrenceIds: z.array(z.string()),
 });
 
@@ -35,10 +37,10 @@ Given a new complaint and a list of existing candidate complaints (pre-selected 
 - When in doubt, err on the side of flagging — the system prefers false positives over false negatives
 
 2. SEVERITY ASSESSMENT
-Classify the new complaint's severity as exactly one of: LOW, MEDIUM, HIGH, taking the recurrence findings into account.
-- HIGH: Immediate danger to life/health/safety; large-scale community impact; urgent government intervention needed; or a recurring unresolved problem affecting many people
-- MEDIUM: Significant inconvenience affecting multiple people/households; needs attention but not immediately life-threatening; or a repeated complaint of the same unresolved issue
-- LOW: First-time individual issue, minor inconvenience, non-urgent
+Classify the new complaint's severity as exactly one of: Low, Medium, High, taking the recurrence findings into account.
+- High: Immediate danger to life/health/safety; large-scale community impact; urgent government intervention needed; or a recurring unresolved problem affecting many people
+- Medium: Significant inconvenience affecting multiple people/households; needs attention but not immediately life-threatening; or a repeated complaint of the same unresolved issue
+- Low: First-time individual issue, minor inconvenience, non-urgent
 
 Recurrence must influence severity: a complaint confirmed as a recurrence of an unresolved problem is at least MEDIUM, and HIGH if the impact is broad or the issue has recurred repeatedly.`,
       model: resolveChatModel(process.env.LLM_MODEL),

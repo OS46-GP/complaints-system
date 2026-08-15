@@ -23,20 +23,14 @@ const severityLabels: Record<string, { label: string; color: string }> = {
 };
 
 const SEVERITY_OPTIONS: { value: SeverityLevel; label: string }[] = [
-  { value: "HIGH", label: "عالية (عاجل)" },
-  { value: "MEDIUM", label: "متوسطة" },
-  { value: "LOW", label: "منخفضة" },
+  { value: "High", label: "عالية (عاجل)" },
+  { value: "Medium", label: "متوسطة" },
+  { value: "Low", label: "منخفضة" },
 ];
 
 const caseStatusLabels: Record<string, { label: string; variant: string }> = {
   NOT_FINISHED: { label: "قيد الفحص", variant: "bg-warning/10 text-warning" },
   FINISHED: { label: "تم الفحص", variant: "bg-success/10 text-success" },
-};
-
-const SEVERITY_LEVEL: Record<string, SeverityLevel> = {
-  High: "HIGH",
-  Medium: "MEDIUM",
-  Low: "LOW",
 };
 
 interface ComplaintMetaPanelProps {
@@ -58,7 +52,7 @@ export function ComplaintMetaPanel({
   };
 
   const aiSeveritySuggestion = aiSeverity
-    ? severityLabels[aiSeverity.charAt(0) + aiSeverity.slice(1).toLowerCase()] ?? {
+    ? severityLabels[aiSeverity] ?? {
         label: aiSeverity,
         color: "text-foreground",
       }
@@ -101,7 +95,7 @@ export function ComplaintMetaPanel({
             </span>
           </div>
           <Select
-            value={SEVERITY_LEVEL[complaint.severity] ?? "LOW"}
+            value={complaint.severity}
             onValueChange={(value) => onSeverityChange(value as SeverityLevel)}
             disabled={isSeverityUpdating}
           >
@@ -116,7 +110,7 @@ export function ComplaintMetaPanel({
               ))}
             </SelectContent>
           </Select>
-          {aiSeverity && aiSeverity !== SEVERITY_LEVEL[complaint.severity] && (
+          {aiSeverity && aiSeverity !== complaint.severity && (
             <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
               <Sparkles className="size-3.5 mt-0.5 shrink-0 text-primary" />
               توصية الذكاء الاصطناعي:{" "}
