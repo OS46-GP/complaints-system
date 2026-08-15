@@ -40,8 +40,9 @@ export function UserActionsDropdown({
   const deleteMutation = useDeleteUser();
 
   const hasManagePermission =
-    currentRole === "SuperAdmin" ||
-    (currentRole === "Admin" && (userRole === "Official" || userRole === ""));
+    currentRole === "SuperAdmin"
+      ? userRole !== "SuperAdmin"
+      : currentRole === "Admin" && (userRole === "Official" || userRole === "");
 
   const handleEdit = () => navigate(userDetail(userId));
   const handlePermissions = () => navigate(newUser);

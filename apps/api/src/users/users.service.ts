@@ -38,6 +38,12 @@ export class UsersService {
   async create(actor: CurrentUserPayload, data: CreateUserDto) {
     const targetRole = data.role || UserRole.Official;
 
+    if (targetRole === UserRole.SuperAdmin) {
+      throw new ForbiddenException(
+        'SuperAdmin accounts cannot be created by any user',
+      );
+    }
+
     if (actor.role !== UserRole.SuperAdmin && targetRole !== UserRole.Official) {
       throw new ForbiddenException(
         'Only SuperAdmin can create Admin or SuperAdmin accounts',
@@ -130,6 +136,11 @@ export class UsersService {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
     if (data.role !== undefined && data.role !== null) {
+      if (data.role === UserRole.SuperAdmin) {
+        throw new ForbiddenException(
+          'You cannot assign a user to the SuperAdmin role',
+        );
+      }
       if (
         actor.role !== UserRole.SuperAdmin &&
         data.role !== UserRole.Official
@@ -194,6 +205,13 @@ export class UsersService {
     const target = await this.prisma.user.findUnique({ where: { id } });
     if (!target) {
       throw new NotFoundException('User not found');
+    }
+    // A SuperAdmin must not manage another SuperAdmin account (only their own
+    // profile; role changes on self are also disallowed below).
+    if (target.role === UserRole.SuperAdmin && target.id !== actor.id) {
+      throw new ForbiddenException(
+        'SuperAdmin cannot manage another SuperAdmin account',
+      );
     }
     if (
       actor.role !== UserRole.SuperAdmin &&

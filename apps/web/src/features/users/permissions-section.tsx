@@ -25,7 +25,7 @@ export function PermissionsSection({
 
   const availableRoles: (keyof typeof ROLE_OPTIONS)[] =
     currentRole === "SuperAdmin"
-      ? ["Official", "Admin", "SuperAdmin"]
+      ? ["Official", "Admin"]
       : ["Official"];
 
   return (
