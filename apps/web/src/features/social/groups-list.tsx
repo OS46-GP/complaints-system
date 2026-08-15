@@ -22,7 +22,7 @@ export function GroupsList({ groups }: GroupsListProps) {
     toggleMutation.mutate(
       { id: group.id, isActive },
       {
-        onError: () => toast.error("تعذر تحديث حالة المجموعة"),
+        onError: () => toast.error("تعذر تحديث حالة المصدر"),
       },
     );
   };
@@ -31,10 +31,10 @@ export function GroupsList({ groups }: GroupsListProps) {
     if (!groupToRemove) return;
     removeMutation.mutate(groupToRemove.id, {
       onSuccess: () => {
-        toast.success("تمت إزالة المجموعة");
+        toast.success("تمت إزالة المصدر");
         setGroupToRemove(null);
       },
-      onError: () => toast.error("تعذر إزالة المجموعة"),
+      onError: () => toast.error("تعذر إزالة المصدر"),
     });
   };
 
@@ -94,7 +94,7 @@ export function GroupsList({ groups }: GroupsListProps) {
       <ConfirmDialog
         open={!!groupToRemove}
         onOpenChange={(open) => !open && setGroupToRemove(null)}
-        title="إزالة المجموعة"
+        title="إزالة المصدر"
         description={`هل أنت متأكد من إزالة "${groupToRemove?.name}" من قائمة المراقبة؟`}
         confirmLabel="إزالة"
         variant="destructive"

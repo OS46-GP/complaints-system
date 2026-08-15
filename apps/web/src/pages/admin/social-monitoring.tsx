@@ -38,7 +38,7 @@ export default function AdminSocialMonitoring() {
       <Tabs defaultValue="drafts">
         <TabsList className="self-start">
           <TabsTrigger value="drafts">منشورات بانتظار المراجعة</TabsTrigger>
-          <TabsTrigger value="groups">المجموعات المُراقبة</TabsTrigger>
+          <TabsTrigger value="groups">المجموعات والصفحات المُراقبة</TabsTrigger>
         </TabsList>
 
         <TabsContent value="groups" className="flex flex-col gap-6">
@@ -50,7 +50,7 @@ export default function AdminSocialMonitoring() {
             loading={isLoading}
             error={isError}
             onRetry={() => refetch()}
-            errorText="تعذر تحميل المجموعات المُراقبة"
+            errorText="تعذر تحميل المجموعات والصفحات المُراقبة"
             skeleton={<GroupsListSkeleton />}
           >
             {groups && groups.length > 0 ? (

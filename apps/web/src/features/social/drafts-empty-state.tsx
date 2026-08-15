@@ -18,7 +18,7 @@ export function DraftsEmptyState({ showPoll = true }: DraftsEmptyStateProps) {
           لا توجد منشورات بانتظار المراجعة
         </p>
         <p className="text-body-sm text-muted-foreground mt-1">
-          شغّل عملية مسح المنشورات لالتقاط المنشورات الجديدة من المجموعات المُراقبة
+          شغّل عملية مسح المنشورات لالتقاط المنشورات الجديدة من المجموعات والصفحات المُراقبة
         </p>
       </div>
         {showPoll ? (
@@ -37,7 +37,7 @@ export function DraftsEmptyState({ showPoll = true }: DraftsEmptyStateProps) {
           </Button>
         ) : (
           <p className="text-body-sm text-muted-foreground">
-            تظهر هنا المنشورات التي يلتقطها نظام المراقبة من المجموعات المُتابعة
+            تظهر هنا المنشورات التي يلتقطها نظام المراقبة من المجموعات والصفحات المُتابعة
           </p>
         )}
     </div>
