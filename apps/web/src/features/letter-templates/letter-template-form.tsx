@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -32,6 +32,7 @@ import {
   WysiwygEditor,
   type WysiwygEditorHandle,
 } from "@/components/shared/wysiwyg-editor";
+import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PageHeader } from "@/components/shared/page-header";
 import { PATHS } from "@/router/paths";
@@ -112,12 +113,12 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
     importMutation.isPending;
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
     setValue,
     getValues,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -144,7 +145,11 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
     });
   }, [template, reset]);
 
-  const templateVariables = (watch("variables") ?? []) as TemplateVariable[];
+  const templateVariables = useWatch<FormValues, "variables">({
+    control,
+    name: "variables",
+    defaultValue: [] as TemplateVariable[],
+  }) as TemplateVariable[];
 
   const resetDraft = () => {
     setDraftVariable(EMPTY_DRAFT);
@@ -212,7 +217,23 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
     setValue("body", `${value} {{${key}}}`, { shouldDirty: true });
   };
 
-  const bodyValue = watch("body") ?? "";
+  const bodyValue = useWatch<FormValues, "body">({
+    control,
+    name: "body",
+    defaultValue: "",
+  }) ?? "";
+
+  const isActive = useWatch<FormValues, "isActive">({
+    control,
+    name: "isActive",
+    defaultValue: template?.isActive ?? true,
+  });
+
+  const isDefault = useWatch<FormValues, "isDefault">({
+    control,
+    name: "isDefault",
+    defaultValue: template?.isDefault ?? false,
+  });
   const livePreviewHtml = useMemo(
     () => renderLetterPreview(bodyValue, templateVariables),
     [bodyValue, templateVariables],
@@ -344,7 +365,10 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
               <button
                 type="button"
                 onClick={() => setPreviewOpen((o) => !o)}
-                className="flex items-center justify-between w-full border-b border-border bg-surface-container-lowest px-3 py-2 text-label-sm font-bold text-muted-foreground hover:bg-accent transition-colors"
+                className={cn(
+                  "flex items-center justify-between w-full bg-surface-container-lowest px-3 py-2 text-label-sm font-bold text-muted-foreground hover:bg-accent transition-colors",
+                  previewOpen && "border-b border-border",
+                )}
               >
                 <span className="flex items-center gap-2">
                   <Eye className="size-4" />
@@ -648,14 +672,14 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
             <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-xl border border-border bg-surface-container-lowest p-3">
               <label className="flex items-center gap-2 text-label-sm">
                 <Switch
-                  checked={watch("isActive")}
+                  checked={isActive}
                   onCheckedChange={(v) => setValue("isActive", v)}
                 />
                 مفعّل
               </label>
               <label className="flex items-center gap-2 text-label-sm">
                 <Switch
-                  checked={watch("isDefault")}
+                  checked={isDefault}
                   onCheckedChange={(v) => setValue("isDefault", v)}
                 />
                 النموذج الافتراضي
