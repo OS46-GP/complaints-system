@@ -83,6 +83,9 @@ const AdminOnDemandReportPage = lazy(
 );
 const AdminMemoPage = lazy(() => import("@/pages/admin/memo"));
 const AdminProfilePage = lazy(() => import("@/pages/admin/profile"));
+const AdminNotificationsPage = lazy(
+  () => import("@/pages/admin/notifications"),
+);
 
 const SuperAdminDashboardPage = lazy(
   () => import("@/pages/super-admin/dashboard"),
@@ -129,6 +132,7 @@ const UserComplaintArchivePage = lazy(
 const UserComplaintDetailPage = lazy(
   () => import("@/pages/user/complaint-detail"),
 );
+const UserNotificationsPage = lazy(() => import("@/pages/user/notifications"));
 const UserSocialMonitoringPage = lazy(
   () => import("@/pages/user/social-monitoring"),
 );
@@ -208,6 +212,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminProfilePage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.NOTIFICATIONS.ADMIN}
+              element={
+                <SuspenseBoundary>
+                  <AdminNotificationsPage />
                 </SuspenseBoundary>
               }
             />
@@ -514,6 +526,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <UserProfilePage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.NOTIFICATIONS.USER}
+              element={
+                <SuspenseBoundary>
+                  <UserNotificationsPage />
                 </SuspenseBoundary>
               }
             />

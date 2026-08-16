@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { Bell, KeyRound, Check, X } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   useNotifications,
@@ -105,7 +106,11 @@ function NotificationRow({
   );
 }
 
-export function NotificationListContent() {
+export function NotificationListContent({
+  scrollClassName = "max-h-[60vh]",
+}: {
+  scrollClassName?: string;
+}) {
   const { data: notifications, isLoading, isError } = useNotifications();
 
   if (isLoading) {
@@ -136,7 +141,7 @@ export function NotificationListContent() {
   }
 
   return (
-    <div className="space-y-2 max-h-[60vh] overflow-auto p-1">
+    <div className={cn("space-y-2 overflow-auto p-1", scrollClassName)}>
       {notifications.map((notification) => (
         <NotificationRow key={notification.id} notification={notification} />
       ))}
