@@ -55,11 +55,19 @@ function NotificationRow({
             {notification.title}
           </p>
         </div>
-        {time && (
-          <span className="text-[0.6875rem] text-muted-foreground shrink-0">
-            {time}
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {!notification.readAt && (
+            <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[0.6875rem] font-medium text-primary">
+              <span className="size-1.5 rounded-full bg-primary" />
+              غير مقروء
+            </span>
+          )}
+          {time && (
+            <span className="text-[0.6875rem] text-muted-foreground shrink-0">
+              {time}
+            </span>
+          )}
+        </div>
       </div>
       <p className="text-body-sm text-muted-foreground mt-1">{notification.body}</p>
 
