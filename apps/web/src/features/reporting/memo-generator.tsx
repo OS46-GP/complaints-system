@@ -1,19 +1,44 @@
 import { useState } from "react";
-import { Search, FileText, Download, Loader2, Inbox } from "lucide-react";
+import {
+  Search,
+  FileText,
+  Download,
+  Loader2,
+  Inbox,
+  Eye,
+  FileStack,
+} from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ReportsNav } from "@/features/reporting/components/reports-nav";
 import { openDownload } from "@/features/reporting/download";
 import { useGenerateMemo } from "@/features/reporting/hooks";
+import { resolveDownloadUrl } from "@/features/reporting/api";
+import { useActiveLetterTemplates, useGenerateLetter } from "@/features/letter-templates/hooks";
+import { LetterPreviewDialog } from "@/features/letter-templates/letter-preview-dialog";
 import { complaintsApi } from "@/features/complaint-list/api";
 import type { ApiComplaint } from "@/features/complaint-list/types";
 import { cn } from "@/lib/utils";
 
+const LEGACY_MEMO_TEMPLATE = "__memo";
+
 interface MemoGeneratorProps {
   basePath: string;
+}
+
+interface PreviewState {
+  url: string;
+  title: string;
 }
 
 export function MemoGenerator({ basePath }: MemoGeneratorProps) {
@@ -22,8 +47,22 @@ export function MemoGenerator({ basePath }: MemoGeneratorProps) {
   const [results, setResults] = useState<ApiComplaint[]>([]);
   const [searched, setSearched] = useState(false);
   const [selected, setSelected] = useState<ApiComplaint | null>(null);
+  const [templateValue, setTemplateValue] = useState<string>(LEGACY_MEMO_TEMPLATE);
+  const [preview, setPreview] = useState<PreviewState | null>(null);
 
+  const { data: templates, isLoading: templatesLoading } =
+    useActiveLetterTemplates();
   const memoMutation = useGenerateMemo();
+  const letterMutation = useGenerateLetter(selected?.id ?? "");
+
+  const generating = memoMutation.isPending || letterMutation.isPending;
+
+  const selectedTemplate = templates?.find((t) => t.id === templateValue);
+
+  const templateLabel =
+    templateValue === LEGACY_MEMO_TEMPLATE
+      ? "المذكرة الرسمية الحالية"
+      : (selectedTemplate?.name ?? "الخطاب");
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -44,11 +83,30 @@ export function MemoGenerator({ basePath }: MemoGeneratorProps) {
     setSelected(complaint);
   };
 
-  const handleDownload = () => {
+  const handleGenerate = (mode: "download" | "preview") => {
     if (!selected) return;
-    memoMutation.mutate(selected.id, {
-      onSuccess: (result) => openDownload(result),
-    });
+
+    const onResult = (result: {
+      downloadUrl: string;
+      filename: string;
+      mime: string;
+    }) => {
+      const url = resolveDownloadUrl(result.downloadUrl);
+      if (mode === "download") {
+        openDownload(result);
+      } else {
+        setPreview({ url, title: templateLabel });
+      }
+    };
+
+    if (templateValue === LEGACY_MEMO_TEMPLATE) {
+      memoMutation.mutate(selected.id, { onSuccess: onResult });
+    } else {
+      letterMutation.mutate(
+        { templateId: templateValue },
+        { onSuccess: onResult },
+      );
+    }
   };
 
   return (
@@ -57,7 +115,7 @@ export function MemoGenerator({ basePath }: MemoGeneratorProps) {
 
       <PageHeader
         title="توليد خطاب / مذكرة"
-        description="اختر شكوى لتوليد خطاب رسمي للجهة المختصة وتنزيله بصيغة PDF"
+        description="اختر شكوى ثم حدد نوع الخطاب، واطّلع على المعاينة قبل الطباعة"
       />
 
       <Card>
@@ -140,21 +198,60 @@ export function MemoGenerator({ basePath }: MemoGeneratorProps) {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <h2 className="flex items-center gap-2 font-heading text-title-sm text-foreground">
                 <FileText className="size-5 text-primary" />
-                معاينة المذكرة
+                إصدار خطاب
               </h2>
-              <Button
-                type="button"
-                className="gap-2"
-                onClick={handleDownload}
-                disabled={memoMutation.isPending}
-              >
-                {memoMutation.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Download className="size-4" />
-                )}
-                تنزيل PDF
-              </Button>
+              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                <div className="flex flex-col gap-1.5">
+                  <span className="flex items-center gap-1.5 font-heading text-label-sm text-muted-foreground">
+                    <FileStack className="size-4" />
+                    نوع الخطاب
+                  </span>
+                  <Select
+                    value={selectedTemplate?.id ?? LEGACY_MEMO_TEMPLATE}
+                    onValueChange={setTemplateValue}
+                    disabled={templatesLoading}
+                  >
+                    <SelectTrigger className="w-full sm:w-72">
+                      <SelectValue placeholder="اختر نوع الخطاب" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LEGACY_MEMO_TEMPLATE}>
+                        المذكرة الرسمية الحالية
+                      </SelectItem>
+                      {(templates ?? []).map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => handleGenerate("download")}
+                    disabled={generating}
+                  >
+                    {memoMutation.isPending || letterMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Download className="size-4" />
+                    )}
+                    تنزيل PDF
+                  </Button>
+                  <Button
+                    type="button"
+                    className="gap-2"
+                    onClick={() => handleGenerate("preview")}
+                    disabled={generating}
+                  >
+                    <Eye className="size-4" />
+                    معاينة قبل الطباعة
+                  </Button>
+                </div>
+              </div>
             </div>
 
             <div className="rounded-xl border border-border bg-surface-container-lowest p-6">
@@ -163,7 +260,7 @@ export function MemoGenerator({ basePath }: MemoGeneratorProps) {
                   محافظة المنوفية
                 </p>
                 <p className="font-heading text-label-sm text-muted-foreground">
-                  خطاب بخصوص شكوى
+                  {templateLabel}
                 </p>
               </div>
 
@@ -184,13 +281,22 @@ export function MemoGenerator({ basePath }: MemoGeneratorProps) {
               </dl>
 
               <p className="mt-6 text-label-sm text-muted-foreground">
-                مضمون المذكرة والترويسة الرسمية قيد الاعتماد النهائي — تُنشأ
-                المذكرة الفعلية بضغط «تنزيل PDF» وفق القالب المعتمد في النظام.
+                اضغط «معاينة قبل الطباعة» لعرض الخطاب الفعلي قبل طباعته، أو
+                «تنزيل PDF» لتنزيله مباشرة وفق القالب المختار.
               </p>
             </div>
           </CardContent>
         </Card>
       )}
+
+      <LetterPreviewDialog
+        open={!!preview}
+        onOpenChange={(open) => {
+          if (!open) setPreview(null);
+        }}
+        url={preview?.url ?? null}
+        title={preview?.title}
+      />
     </div>
   );
 }
