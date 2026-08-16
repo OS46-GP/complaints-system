@@ -13,6 +13,8 @@ export function useReportFilters(defaults?: Partial<ReportFilters>) {
     const to = searchParams.get("to");
     const department = searchParams.get("department");
     const village = searchParams.get("village");
+    const status = searchParams.get("status");
+    const severity = searchParams.get("severity");
     const sortBy = searchParams.get("sortBy");
     const order = searchParams.get("order");
 
@@ -20,6 +22,12 @@ export function useReportFilters(defaults?: Partial<ReportFilters>) {
     if (to) merged.to = to;
     if (department) merged.department = department;
     if (village) merged.village = village;
+    if (status === "FINISHED" || status === "NOT_FINISHED") {
+      merged.status = status;
+    }
+    if (severity === "Low" || severity === "Medium" || severity === "High") {
+      merged.severity = severity;
+    }
     if (sortBy === "overdueCount" || sortBy === "avgDaysOverdue") {
       merged.sortBy = sortBy;
     }
@@ -55,6 +63,16 @@ export function useReportFilters(defaults?: Partial<ReportFilters>) {
         next.delete("village");
       } else {
         next.set("village", patch.village);
+      }
+      if (patch.status === undefined || patch.status === null) {
+        next.delete("status");
+      } else {
+        next.set("status", patch.status);
+      }
+      if (patch.severity === undefined || patch.severity === null) {
+        next.delete("severity");
+      } else {
+        next.set("severity", patch.severity);
       }
       if (patch.sortBy === undefined || patch.sortBy === null) {
         next.delete("sortBy");

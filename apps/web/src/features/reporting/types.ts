@@ -3,11 +3,35 @@ export type ReportPeriod = {
   to: string;
 };
 
+export type ReportStatusFilter = "FINISHED" | "NOT_FINISHED";
+export type ReportSeverityFilter = "Low" | "Medium" | "High";
+
+export interface AchievementComplaint {
+  id: string;
+  complaintNumber: number;
+  subject: string;
+  citizenName: string;
+  arrivalDate: string;
+  finished: boolean;
+  severity: string | null;
+}
+
 export interface AchievementRow {
   department: string;
   total: number;
   finished: number;
   percentage: number;
+  complaints?: AchievementComplaint[];
+}
+
+export interface DepartmentComplaintsResult {
+  department: string;
+  complaints: AchievementComplaint[];
+}
+
+export interface DelayDepartmentComplaintsResult {
+  department: string;
+  complaints: OverdueComplaint[];
 }
 
 export interface AchievementReport {
@@ -44,7 +68,7 @@ export interface DelayReport {
   overdueThresholdDays: number;
   totalOverdue: number;
   departments: DelayRow[];
-  complaints: OverdueComplaint[];
+  complaints?: OverdueComplaint[];
 }
 
 export interface CustomReportComplaint {
@@ -117,6 +141,8 @@ export interface ReportFilters {
   to?: string;
   department?: string;
   village?: string;
+  status?: ReportStatusFilter;
+  severity?: ReportSeverityFilter;
   sortBy?: "overdueCount" | "avgDaysOverdue";
   sortOrder?: "asc" | "desc";
 }

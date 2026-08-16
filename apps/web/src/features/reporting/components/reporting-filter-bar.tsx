@@ -1,4 +1,11 @@
-import { ArrowDownWideNarrow, Building2, CalendarDays, MapPin } from "lucide-react";
+import {
+  ArrowDownWideNarrow,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  Gauge,
+  MapPin,
+} from "lucide-react";
 
 import {
   Select,
@@ -71,6 +78,55 @@ export function ReportingFilterBar({
           onChange={(department) => onChange({ department })}
           className="w-56"
         />
+      </FilterGroup>
+
+      <FilterGroup
+        icon={<CheckCircle2 className="size-4" />}
+        label="الحالة"
+      >
+        <Select
+          value={value.status ?? "all"}
+          onValueChange={(v) =>
+            onChange({
+              status:
+                v === "all" ? undefined : (v as "FINISHED" | "NOT_FINISHED"),
+            })
+          }
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="الحالة" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">الكل</SelectItem>
+            <SelectItem value="FINISHED">منتهية</SelectItem>
+            <SelectItem value="NOT_FINISHED">غير منتهية</SelectItem>
+          </SelectContent>
+        </Select>
+      </FilterGroup>
+
+      <FilterGroup
+        icon={<Gauge className="size-4" />}
+        label="الأولوية"
+      >
+        <Select
+          value={value.severity ?? "all"}
+          onValueChange={(v) =>
+            onChange({
+              severity:
+                v === "all" ? undefined : (v as "Low" | "Medium" | "High"),
+            })
+          }
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="الأولوية" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">الكل</SelectItem>
+            <SelectItem value="Low">منخفضة</SelectItem>
+            <SelectItem value="Medium">متوسطة</SelectItem>
+            <SelectItem value="High">عالية</SelectItem>
+          </SelectContent>
+        </Select>
       </FilterGroup>
 
       {showVillage && (

@@ -7,8 +7,8 @@ import {
   User,
   Radio,
   FileBarChart,
+  BarChart3,
   ScanLine,
-  Clock,
   SlidersHorizontal,
   CalendarClock,
   Zap,
@@ -49,14 +49,14 @@ const navGroups: NavGroup[] = [
     label: "التقارير",
     items: [
       {
-        title: "لوحة التقارير",
+        title: "التقارير",
         url: PATHS.USER.REPORTS.DASHBOARD,
         icon: FileBarChart,
       },
       {
-        title: "تقرير المتأخرات حسب الجهة",
-        url: PATHS.USER.REPORTS.DELAYS,
-        icon: Clock,
+        title: "التحليلات",
+        url: PATHS.USER.ANALYTICS,
+        icon: BarChart3,
       },
       {
         title: "تقرير مخصص",

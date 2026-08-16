@@ -36,6 +36,7 @@ export const PATHS = {
       ON_DEMAND: "/admin/reports/on-demand",
       MEMO: "/admin/reports/memo",
     },
+    ANALYTICS: "/admin/analytics",
   },
 
   USER: {
@@ -61,6 +62,7 @@ export const PATHS = {
       ON_DEMAND: "/user/reports/on-demand",
       MEMO: "/user/reports/memo",
     },
+    ANALYTICS: "/user/analytics",
   },
 
   SUPER_ADMIN: {
