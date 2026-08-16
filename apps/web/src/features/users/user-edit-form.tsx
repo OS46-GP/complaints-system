@@ -6,13 +6,13 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Save, X, Loader2 } from "lucide-react";
 
-import { PATHS } from "@/router/paths";
 import { Button } from "@/components/ui/button";
 import { AsyncLoader } from "@/components/shared/async-loader";
 import { FormSkeleton } from "@/components/shared/form-skeleton";
 import { BasicInfoSection } from "@/features/users/basic-info-section";
 import { PermissionsSection } from "@/features/users/permissions-section";
 import { useUser, useUpdateUser } from "@/features/users/hooks";
+import { useUserManagementPaths } from "@/features/users/use-user-management-paths";
 import type { UserEditFormData } from "@/features/users/types";
 
 interface UserEditFormProps {
@@ -23,11 +23,13 @@ const schema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
   password: z.string().or(z.literal("")),
   email: z.string(),
-  role: z.enum(["Official", "Admin"]),
+  nationalId: z.string(),
+  role: z.enum(["Official", "Admin", "SuperAdmin"]),
 });
 
 export function UserEditForm({ userId }: UserEditFormProps) {
   const navigate = useNavigate();
+  const { usersList } = useUserManagementPaths();
   const mutation = useUpdateUser(userId);
 
   const { data: existingUser, isLoading, isError, refetch } = useUser(userId);
@@ -43,6 +45,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
       username: "",
       password: "",
       email: "",
+      nationalId: "",
       role: "Official",
     },
   });
@@ -52,7 +55,8 @@ export function UserEditForm({ userId }: UserEditFormProps) {
       reset({
         username: existingUser.username,
         password: "",
-        email: "",
+        email: existingUser.email ?? "",
+        nationalId: existingUser.nationalId ?? "",
         role: existingUser.role,
       });
     }
@@ -70,7 +74,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
     mutation.mutate(formData, {
       onSuccess: () => {
         toast.success("تم تحديث المستخدم بنجاح");
-        navigate(PATHS.ADMIN.USERS);
+        navigate(usersList);
       },
     });
   };
@@ -102,7 +106,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => navigate(PATHS.ADMIN.USERS)}
+          onClick={() => navigate(usersList)}
           className="gap-2 h-11 px-8"
         >
           <X className="size-4" />

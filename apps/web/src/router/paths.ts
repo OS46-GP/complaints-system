@@ -63,6 +63,21 @@ export const PATHS = {
     },
   },
 
+  SUPER_ADMIN: {
+    DASHBOARD: "/super-admin/dashboard",
+    PROFILE: "/super-admin/profile",
+    USERS: "/super-admin/users",
+    NEW_USER: "/super-admin/users/create",
+    USER_DETAIL: (id: string) => `/super-admin/users/${id}`,
+    SETTINGS: "/super-admin/settings",
+  },
+
+  NOTIFICATIONS: {
+    ADMIN: "/admin/notifications",
+    SUPER_ADMIN: "/super-admin/notifications",
+    USER: "/user/notifications",
+  },
+
   UNAUTHORIZED: "/403",
   NOT_FOUND: "/404",
 } as const;

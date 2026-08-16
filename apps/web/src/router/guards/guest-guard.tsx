@@ -8,7 +8,11 @@ export default function GuestGuard() {
 
   if (token && user) {
     const dashboard =
-      user.role === "Admin" ? PATHS.ADMIN.DASHBOARD : PATHS.USER.DASHBOARD;
+      user.role === "SuperAdmin"
+        ? PATHS.SUPER_ADMIN.DASHBOARD
+        : user.role === "Admin"
+          ? PATHS.ADMIN.DASHBOARD
+          : PATHS.USER.DASHBOARD;
     return <Navigate to={dashboard} replace />;
   }
 

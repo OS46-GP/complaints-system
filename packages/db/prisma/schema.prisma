@@ -16,20 +16,67 @@ enum Severity {
 enum UserRole {
   Official
   Admin
+  SuperAdmin
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  fullName  String?
-  email     String?
-  password  String
-  role      UserRole @default(Official)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  username   String   @unique
+  fullName   String?
+  email      String?
+  nationalId String?  @unique
+  password   String
+  role       UserRole @default(Official)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  complaints Complaint[]
+  complaints        Complaint[]
   letterGenerations LetterGeneration[]
+
+  notifications         Notification[]
+  actorNotifications    Notification[]         @relation("ActorNotifications")
+  passwordResetRequests PasswordResetRequest[]
+}
+
+model Notification {
+  id            String    @id @default(cuid())
+  recipientId   String?
+  recipientRole UserRole?
+  actorId       String?
+  type          String
+  title         String
+  body          String
+  resourceId    String?
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  recipient User? @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User? @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId])
+  @@index([recipientRole])
+  @@index([createdAt])
+}
+
+model PasswordResetRequest {
+  id          String              @id @default(cuid())
+  userId      String
+  requestedBy String
+  status      PasswordResetStatus @default(Pending)
+  requestedAt DateTime            @default(now())
+  resolvedAt  DateTime?
+  resolvedBy  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum PasswordResetStatus {
+  Pending
+  Approved
+  Rejected
 }
 
 model Citizen {
@@ -154,14 +201,14 @@ model Complaint {
   citizenId String
   citizen   Citizen @relation(fields: [citizenId], references: [id])
 
-  actions      ComplaintAction[]
-  escalations  ComplaintEscalation[]
-  files        ComplaintFile[]
-  linksFrom    ComplaintLink[]       @relation("LinkedFrom")
-  linksTo      ComplaintLink[]       @relation("LinkedTo")
-  socialDrafts SocialDraft[]
-  departments  ComplaintDepartment[]
-  urgencies    ComplaintUrgency[]
+  actions           ComplaintAction[]
+  escalations       ComplaintEscalation[]
+  files             ComplaintFile[]
+  linksFrom         ComplaintLink[]       @relation("LinkedFrom")
+  linksTo           ComplaintLink[]       @relation("LinkedTo")
+  socialDrafts      SocialDraft[]
+  departments       ComplaintDepartment[]
+  urgencies         ComplaintUrgency[]
   letterGenerations LetterGeneration[]
 
   @@unique([complaintNumber, statementYear])
@@ -384,13 +431,13 @@ model LetterSettings {
 }
 
 model LetterGeneration {
-  id            String   @id @default(cuid())
-  complaintId   String
-  templateId    String
-  fileKey       String
+  id             String   @id @default(cuid())
+  complaintId    String
+  templateId     String
+  fileKey        String
   variableValues Json?
-  generatedById String
-  createdAt     DateTime @default(now())
+  generatedById  String
+  createdAt      DateTime @default(now())
 
   complaint   Complaint      @relation(fields: [complaintId], references: [id], onDelete: Cascade)
   template    LetterTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)

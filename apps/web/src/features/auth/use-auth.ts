@@ -20,7 +20,11 @@ export function useLogin() {
       const user = persistAuthFromToken(data.access_token, variables.remember);
       if (user) {
         const dashboard =
-          user.role === "Admin" ? PATHS.ADMIN.DASHBOARD : PATHS.USER.DASHBOARD;
+          user.role === "SuperAdmin"
+            ? PATHS.SUPER_ADMIN.DASHBOARD
+            : user.role === "Admin"
+              ? PATHS.ADMIN.DASHBOARD
+              : PATHS.USER.DASHBOARD;
         navigate(dashboard, { replace: true });
       }
     },

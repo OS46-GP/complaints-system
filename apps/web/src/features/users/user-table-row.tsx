@@ -1,4 +1,3 @@
-import { ShieldBan } from "lucide-react";
 import type { User } from "@/features/users/types";
 import { UserActionsDropdown } from "@/features/users/user-actions-dropdown";
 import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
@@ -23,18 +22,18 @@ export function UserTableRow({ user }: UserTableRowProps) {
       <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-foreground">
         {user.roleLabel}
       </DataTableCell>
+      <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data text-foreground">
+        {user.nationalId || "-"}
+      </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data text-muted-foreground">
         {user.lastSeen}
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 text-center">
-        {user.role !== "Admin" ? (
-          <UserActionsDropdown userId={user.id} userName={user.username} />
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/60">
-            <ShieldBan className="size-4" />
-            لا يوجد صلاحية
-          </span>
-        )}
+        <UserActionsDropdown
+          userId={user.id}
+          userName={user.username}
+          userRole={user.role}
+        />
       </DataTableCell>
     </DataTableRow>
   );

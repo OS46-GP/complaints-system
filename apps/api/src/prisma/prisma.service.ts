@@ -62,6 +62,14 @@ export class PrismaService implements OnModuleInit {
   get location() {
     return prisma.location;
   }
+
+  get notification() {
+    return prisma.notification;
+  }
+
+  get passwordResetRequest() {
+    return prisma.passwordResetRequest;
+  }
 }
 
 export { Prisma };

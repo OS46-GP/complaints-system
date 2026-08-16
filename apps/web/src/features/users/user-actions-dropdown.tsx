@@ -8,7 +8,8 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { PATHS } from "@/router/paths";
+import { useAuthStore } from "@/features/auth/store";
+import { useUserManagementPaths } from "@/features/users/use-user-management-paths";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,19 +25,36 @@ import { useDeleteUser } from "@/features/users/hooks";
 interface UserActionsDropdownProps {
   userId: string;
   userName: string;
+  userRole: string;
 }
 
 export function UserActionsDropdown({
   userId,
   userName,
+  userRole,
 }: UserActionsDropdownProps) {
   const navigate = useNavigate();
+  const currentRole = useAuthStore((s) => s.user?.role);
+  const { userDetail, newUser } = useUserManagementPaths();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const deleteMutation = useDeleteUser();
 
-  const handleEdit = () => navigate(PATHS.ADMIN.USER_DETAIL(userId));
-  const handlePermissions = () => {};
+  const hasManagePermission =
+    currentRole === "SuperAdmin"
+      ? userRole !== "SuperAdmin"
+      : currentRole === "Admin" && (userRole === "Official" || userRole === "");
+
+  const handleEdit = () => navigate(userDetail(userId));
+  const handlePermissions = () => navigate(newUser);
   const handleDelete = () => setDeleteOpen(true);
+
+  if (!hasManagePermission) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/60">
+        لا يوجد صلاحية
+      </span>
+    );
+  }
 
   return (
     <>
@@ -51,10 +69,15 @@ export function UserActionsDropdown({
             <Pencil className="size-4" />
             تعديل
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handlePermissions} className="w-full gap-2">
-            <Shield className="size-4" />
-            إدارة الصلاحيات
-          </DropdownMenuItem>
+          {currentRole === "SuperAdmin" && (
+            <DropdownMenuItem
+              onClick={handlePermissions}
+              className="w-full gap-2"
+            >
+              <Shield className="size-4" />
+              إدارة الصلاحيات
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"

@@ -56,6 +56,17 @@ export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionPro
               className="h-10"
             />
           </div>
+          <div className="space-y-3">
+            <Label htmlFor="nationalId">الرقم القومي</Label>
+            <Input
+              id="nationalId"
+              value={data.nationalId}
+              onChange={(e) => onChange({ nationalId: e.target.value })}
+              placeholder="الرقم القومي (يُستخدم لاستعادة كلمة المرور)"
+              className="h-10"
+              dir="ltr"
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,4 +1,3 @@
-import { ShieldBan } from "lucide-react";
 import type { User } from "@/features/users/types";
 import { UserActionsDropdown } from "@/features/users/user-actions-dropdown";
 
@@ -36,17 +35,15 @@ export function UserCard({ user }: UserCardProps) {
             {user.roleLabel}
           </p>
         </div>
-        {user.role !== "Admin" ? (
-          <UserActionsDropdown userId={user.id} userName={user.username} />
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/60">
-            <ShieldBan className="size-4" />
-            لا يوجد صلاحية
-          </span>
-        )}
+        <UserActionsDropdown
+          userId={user.id}
+          userName={user.username}
+          userRole={user.role}
+        />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
         <InfoItem label="البريد الإلكتروني" value={user.email || "-"} />
+        <InfoItem label="الرقم القومي" value={user.nationalId || "-"} />
         <InfoItem label="تاريخ الإنشاء" value={user.lastSeen} />
       </div>
     </div>

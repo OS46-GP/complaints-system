@@ -3,7 +3,8 @@ export interface User {
   username: string;
   fullName?: string | null;
   email?: string | null;
-  role: "Official" | "Admin";
+  nationalId?: string | null;
+  role: "Official" | "Admin" | "SuperAdmin";
   createdAt: string;
 }
 
