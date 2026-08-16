@@ -1,0 +1,1 @@
+export const LEGACY_MEMO_TEMPLATE = "__memo";
