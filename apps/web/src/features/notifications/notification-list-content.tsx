@@ -114,31 +114,13 @@ function NotificationRow({
   );
 }
 
-export function NotificationListContent({
-  scrollClassName = "max-h-[60vh]",
+export function NotificationsList({
+  notifications,
+  scrollClassName,
 }: {
+  notifications: NotificationItem[];
   scrollClassName?: string;
 }) {
-  const { data: notifications, isLoading, isError } = useNotifications();
-
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-16 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <p className="text-sm text-muted-foreground py-8 text-center">
-        تعذر تحميل الإشعارات
-      </p>
-    );
-  }
-
   if (!notifications || notifications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
@@ -154,5 +136,46 @@ export function NotificationListContent({
         <NotificationRow key={notification.id} notification={notification} />
       ))}
     </div>
+  );
+}
+
+export function NotificationsListSkeleton({
+  scrollClassName,
+}: {
+  scrollClassName?: string;
+}) {
+  return (
+    <div className={cn("space-y-2 p-1", scrollClassName)}>
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-16 w-full" />
+      ))}
+    </div>
+  );
+}
+
+export function NotificationListContent({
+  scrollClassName,
+}: {
+  scrollClassName?: string;
+}) {
+  const { data: notifications, isLoading, isError } = useNotifications();
+
+  if (isLoading) {
+    return <NotificationsListSkeleton scrollClassName={scrollClassName} />;
+  }
+
+  if (isError) {
+    return (
+      <p className="text-sm text-muted-foreground py-8 text-center">
+        تعذر تحميل الإشعارات
+      </p>
+    );
+  }
+
+  return (
+    <NotificationsList
+      notifications={notifications ?? []}
+      scrollClassName={scrollClassName}
+    />
   );
 }
