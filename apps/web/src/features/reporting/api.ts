@@ -2,6 +2,8 @@ import { axiosClient } from "@/api/axios-client";
 import type {
   CustomReportFilters,
   CustomReportResult,
+  DelayDepartmentComplaintsResult,
+  DepartmentComplaintsResult,
   ExportFormat,
   ExportResult,
   GeneratedReport,
@@ -42,6 +44,8 @@ export const reportingApi = {
           from: filters?.from || undefined,
           to: filters?.to || undefined,
           village: filters?.village || undefined,
+          status: filters?.status || undefined,
+          severity: filters?.severity || undefined,
         },
       })
       .then((res) => res.data),
@@ -54,8 +58,38 @@ export const reportingApi = {
           from: filters?.from || undefined,
           to: filters?.to || undefined,
           village: filters?.village || undefined,
+          status: filters?.status || undefined,
+          severity: filters?.severity || undefined,
           sortBy: filters?.sortBy || undefined,
           order: filters?.sortOrder || undefined,
+        },
+      })
+      .then((res) => res.data),
+
+  achievementDepartment: (department: string, filters?: ReportFilters) =>
+    axiosClient
+      .get<DepartmentComplaintsResult>("/api/reports/achievement/department", {
+        params: {
+          department,
+          from: filters?.from || undefined,
+          to: filters?.to || undefined,
+          village: filters?.village || undefined,
+          status: filters?.status || undefined,
+          severity: filters?.severity || undefined,
+        },
+      })
+      .then((res) => res.data),
+
+  delayDepartment: (department: string, filters?: ReportFilters) =>
+    axiosClient
+      .get<DelayDepartmentComplaintsResult>("/api/reports/delays/department", {
+        params: {
+          department,
+          from: filters?.from || undefined,
+          to: filters?.to || undefined,
+          village: filters?.village || undefined,
+          status: filters?.status || undefined,
+          severity: filters?.severity || undefined,
         },
       })
       .then((res) => res.data),

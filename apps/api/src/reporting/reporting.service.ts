@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
-import { computeCaseStatus } from '../complaints/case-status.config';
+import { computeCaseStatus, CASE_STATUS_MAPPING } from '../complaints/case-status.config';
 import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,11 +9,37 @@ import { renderHtmlToPdf } from './pdf-generator';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const FINISHED_STATUS_NAMES = Object.entries(CASE_STATUS_MAPPING)
+  .filter(([, status]) => status === 'FINISHED')
+  .map(([name]) => name);
+
+export type ReportStatusFilter = 'FINISHED' | 'NOT_FINISHED';
+export type ReportSeverityFilter = 'Low' | 'Medium' | 'High';
+
+export interface ReportFilterOptions {
+  department?: string;
+  village?: string;
+  search?: string;
+  status?: ReportStatusFilter;
+  severity?: ReportSeverityFilter;
+}
+
+export interface AchievementComplaint {
+  id: string;
+  complaintNumber: number;
+  subject: string;
+  citizenName: string;
+  arrivalDate: string;
+  finished: boolean;
+  severity: string | null;
+}
+
 export interface AchievementRow {
   department: string;
   total: number;
   finished: number;
   percentage: number;
+  complaints?: AchievementComplaint[];
 }
 
 export interface DelayRow {
@@ -100,29 +126,110 @@ export class ReportingService {
     return { start, end };
   }
 
+  private buildFilteredWhere(
+    options: ReportFilterOptions,
+    start: Date,
+    end: Date,
+  ): Record<string, unknown> {
+    const where: Record<string, unknown> = {
+      arrivalDate: { gte: start, lte: end },
+    };
+    const AND: Record<string, unknown>[] = [];
+
+    if (options.department) {
+      AND.push({ department: { name: options.department } });
+    } else if (options.search?.trim()) {
+      AND.push({
+        department: { name: { contains: options.search.trim(), mode: 'insensitive' } },
+      });
+    }
+    if (options.village) {
+      AND.push({ citizen: { village: options.village } });
+    }
+    if (options.severity) {
+      AND.push({ severity: options.severity });
+    }
+    if (options.status === 'FINISHED') {
+      AND.push({ examinationStatus: { name: { in: FINISHED_STATUS_NAMES } } });
+    } else if (options.status === 'NOT_FINISHED') {
+      AND.push({
+        OR: [
+          { examinationStatus: { is: null } },
+          { examinationStatus: { name: { notIn: FINISHED_STATUS_NAMES } } },
+        ],
+      });
+    }
+
+    if (AND.length > 0) where.AND = AND;
+    return where;
+  }
+
   async getAchievementReport(
     department?: string,
     from?: string,
     to?: string,
     village?: string,
+    status?: ReportStatusFilter,
+    severity?: ReportSeverityFilter,
+    search?: string,
+    includeComplaints = true,
   ) {
     const { start, end } = this.parseDateRange(from, to);
-    const where: Record<string, unknown> = {
-      arrivalDate: { gte: start, lte: end },
-    };
-    if (department) {
-      where.department = { name: department };
-    }
-    if (village) {
-      where.citizen = { village };
-    }
+    // The status filter only narrows the expandable per-department detail rows
+    // (fetched lazily). The summary totals/percentages keep the true
+    // finished-rate over the whole scope, so selecting "منتهية" doesn't turn
+    // every department's percentage into 100%.
+    const where = this.buildFilteredWhere(
+      { department, village, severity, search },
+      start,
+      end,
+    );
 
     const complaints = await this.prisma.complaint.findMany({
       where,
-      include: { department: true, examinationStatus: true },
+      include: { department: true, examinationStatus: true, citizen: true },
     });
 
-    return this.buildAchievementData(complaints, start, end);
+    return this.buildAchievementData(complaints, start, end, includeComplaints);
+  }
+
+  async getAchievementDepartmentComplaints(
+    department: string,
+    from?: string,
+    to?: string,
+    village?: string,
+    status?: ReportStatusFilter,
+    severity?: ReportSeverityFilter,
+    search?: string,
+  ) {
+    if (!department) {
+      throw new BadRequestException('department is required');
+    }
+    const { start, end } = this.parseDateRange(from, to);
+    const where = this.buildFilteredWhere(
+      { department, village, status, severity, search },
+      start,
+      end,
+    );
+
+    const complaints = await this.prisma.complaint.findMany({
+      where,
+      include: { citizen: true, examinationStatus: true },
+      orderBy: { arrivalDate: 'desc' },
+    });
+
+    return {
+      department,
+      complaints: complaints.map((c) => ({
+        id: c.id,
+        complaintNumber: c.complaintNumber,
+        subject: c.subject,
+        citizenName: c.citizen.fullName,
+        arrivalDate: c.arrivalDate.toISOString(),
+        finished: this.isFinished(c.examinationStatus?.name ?? null),
+        severity: c.severity ?? null,
+      })),
+    };
   }
 
   /**
@@ -135,7 +242,7 @@ export class ReportingService {
 
     const complaints = await this.prisma.complaint.findMany({
       where: { id: { in: complaintIds } },
-      include: { department: true, examinationStatus: true },
+      include: { department: true, examinationStatus: true, citizen: true },
     });
 
     const now = new Date();
@@ -143,32 +250,63 @@ export class ReportingService {
   }
 
   private buildAchievementData(
-    complaints: Array<{ department: { name: string } | null; examinationStatus: { name: string } | null }>,
+    complaints: Array<{
+      id: string;
+      complaintNumber: number;
+      subject: string;
+      arrivalDate: Date;
+      severity: string | null;
+      citizen: { fullName: string };
+      department: { name: string } | null;
+      examinationStatus: { name: string } | null;
+    }>,
     start: Date,
     end: Date,
+    includeComplaints = true,
   ) {
-    const grouped = new Map<string, AchievementRow>();
+    const grouped = new Map<
+      string,
+      { total: number; finished: number; complaints: AchievementComplaint[] }
+    >();
     let govTotal = 0;
     let govFinished = 0;
 
     for (const c of complaints) {
       const deptName = c.department?.name ?? 'غير محدد';
       if (!grouped.has(deptName)) {
-        grouped.set(deptName, { department: deptName, total: 0, finished: 0, percentage: 0 });
+        grouped.set(deptName, { total: 0, finished: 0, complaints: [] });
       }
       const row = grouped.get(deptName)!;
       row.total++;
       govTotal++;
-      if (this.isFinished(c.examinationStatus?.name ?? null)) {
+      const finished = this.isFinished(c.examinationStatus?.name ?? null);
+      if (finished) {
         row.finished++;
         govFinished++;
       }
+      if (includeComplaints) {
+        row.complaints.push({
+          id: c.id,
+          complaintNumber: c.complaintNumber,
+          subject: c.subject,
+          citizenName: c.citizen.fullName,
+          arrivalDate: c.arrivalDate.toISOString(),
+          finished,
+          severity: c.severity ?? null,
+        });
+      }
     }
 
-    const departments = Array.from(grouped.values()).map((r) => ({
-      ...r,
-      percentage: r.total > 0 ? Math.round((r.finished / r.total) * 100) : 0,
-    }));
+    const departments = Array.from(grouped.entries()).map(([name, r]) => {
+      const row: AchievementRow = {
+        department: name,
+        total: r.total,
+        finished: r.finished,
+        percentage: r.total > 0 ? Math.round((r.finished / r.total) * 100) : 0,
+      };
+      if (includeComplaints) row.complaints = r.complaints;
+      return row;
+    });
 
     return {
       period: { from: start.toISOString(), to: end.toISOString() },
@@ -187,6 +325,10 @@ export class ReportingService {
     village?: string,
     sortBy?: string,
     order?: 'asc' | 'desc',
+    status?: ReportStatusFilter,
+    severity?: ReportSeverityFilter,
+    search?: string,
+    includeComplaints = true,
   ) {
     const { start, end } = this.parseDateRange(from, to);
     const now = Date.now();
@@ -203,15 +345,11 @@ export class ReportingService {
       thresholds.highDays,
     );
 
-    const where: Record<string, unknown> = {
-      arrivalDate: { gte: start, lte: end },
-    };
-    if (department) {
-      where.department = { name: department };
-    }
-    if (village) {
-      where.citizen = { village };
-    }
+    const where = this.buildFilteredWhere(
+      { department, village, status, severity, search },
+      start,
+      end,
+    );
 
     const complaints = await this.prisma.complaint.findMany({
       where,
@@ -261,7 +399,7 @@ export class ReportingService {
       });
     }
 
-    return {
+    const result: Record<string, unknown> = {
       period: { from: start.toISOString(), to: end.toISOString() },
       thresholds: {
         Low: thresholds.lowDays,
@@ -271,7 +409,9 @@ export class ReportingService {
       overdueThresholdDays: maxThresholdDays,
       totalOverdue,
       departments,
-      complaints: overdueComplaints.map((c) => ({
+    };
+    if (includeComplaints) {
+      result.complaints = overdueComplaints.map((c) => ({
         id: c.id,
         complaintNumber: c.complaintNumber,
         arrivalDate: c.arrivalDate.toISOString(),
@@ -279,8 +419,68 @@ export class ReportingService {
         department: c.department?.name ?? null,
         subject: c.subject,
         severity: c.severity ?? null,
-      })),
+      }));
+    }
+    return result;
+  }
+
+  private async getOverdueComplaints(
+    where: Record<string, unknown>,
+    thresholds: { lowDays: number; mediumDays: number; highDays: number },
+    now: number,
+  ) {
+    const complaints = await this.prisma.complaint.findMany({
+      where,
+      include: { department: true, citizen: true, examinationStatus: true },
+      orderBy: { arrivalDate: 'desc' },
+    });
+
+    const thresholdDays: Record<string, number> = {
+      Low: thresholds.lowDays,
+      Medium: thresholds.mediumDays,
+      High: thresholds.highDays,
     };
+
+    return complaints
+      .filter((c) => {
+        if (this.isFinished(c.examinationStatus?.name ?? null)) return false;
+        const days =
+          (c.severity && thresholdDays[c.severity]) || thresholds.mediumDays;
+        return now - c.arrivalDate.getTime() > days * MS_PER_DAY;
+      })
+      .map((c) => ({
+        id: c.id,
+        complaintNumber: c.complaintNumber,
+        arrivalDate: c.arrivalDate.toISOString(),
+        citizenName: c.citizen.fullName,
+        department: c.department?.name ?? null,
+        subject: c.subject,
+        severity: c.severity ?? null,
+      }));
+  }
+
+  async getDelayDepartmentComplaints(
+    department: string,
+    from?: string,
+    to?: string,
+    village?: string,
+    status?: ReportStatusFilter,
+    severity?: ReportSeverityFilter,
+    search?: string,
+  ) {
+    if (!department) {
+      throw new BadRequestException('department is required');
+    }
+    const { start, end } = this.parseDateRange(from, to);
+    const now = Date.now();
+    const thresholds = await this.settingsService.getDelayThresholds();
+    const where = this.buildFilteredWhere(
+      { department, village, status, severity, search },
+      start,
+      end,
+    );
+    const complaints = await this.getOverdueComplaints(where, thresholds, now);
+    return { department, complaints };
   }
 
   async getCustomReport(filters: {

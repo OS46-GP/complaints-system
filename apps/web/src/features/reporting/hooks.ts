@@ -15,6 +15,10 @@ export const REPORTING_QUERY_KEYS = {
   achievement: (filters?: ReportFilters) =>
     ["reporting-achievement", filters] as const,
   delays: (filters?: ReportFilters) => ["reporting-delays", filters] as const,
+  achievementDepartment: (department: string, filters?: ReportFilters) =>
+    ["reporting-achievement-department", department, filters] as const,
+  delayDepartment: (department: string, filters?: ReportFilters) =>
+    ["reporting-delay-department", department, filters] as const,
   scheduled: (params?: ScheduledReportsParams) =>
     ["reporting-scheduled", params] as const,
 };
@@ -30,6 +34,30 @@ export function useDelayReport(filters?: ReportFilters) {
   return useQuery({
     queryKey: REPORTING_QUERY_KEYS.delays(filters),
     queryFn: () => reportingApi.delays(filters),
+  });
+}
+
+export function useAchievementDepartmentComplaints(
+  department: string | null,
+  filters?: ReportFilters,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: REPORTING_QUERY_KEYS.achievementDepartment(department ?? "", filters),
+    queryFn: () => reportingApi.achievementDepartment(department!, filters),
+    enabled: enabled && !!department,
+  });
+}
+
+export function useDelayDepartmentComplaints(
+  department: string | null,
+  filters?: ReportFilters,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: REPORTING_QUERY_KEYS.delayDepartment(department ?? "", filters),
+    queryFn: () => reportingApi.delayDepartment(department!, filters),
+    enabled: enabled && !!department,
   });
 }
 

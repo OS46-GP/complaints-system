@@ -73,7 +73,7 @@ const AdminSocialMonitoringPage = lazy(
 const AdminReportsDashboardPage = lazy(
   () => import("@/pages/admin/reports-dashboard"),
 );
-const AdminDelaysReportPage = lazy(() => import("@/pages/admin/delays-report"));
+const AdminAnalyticsPage = lazy(() => import("@/pages/admin/analytics"));
 const AdminCustomReportPage = lazy(() => import("@/pages/admin/custom-report"));
 const AdminScheduledReportsPage = lazy(
   () => import("@/pages/admin/scheduled-reports"),
@@ -140,7 +140,7 @@ const UserSettingsPage = lazy(() => import("@/pages/user/settings"));
 const UserReportsDashboardPage = lazy(
   () => import("@/pages/user/reports-dashboard"),
 );
-const UserDelaysReportPage = lazy(() => import("@/pages/user/delays-report"));
+const UserAnalyticsPage = lazy(() => import("@/pages/user/analytics"));
 const UserCustomReportPage = lazy(() => import("@/pages/user/custom-report"));
 const UserScheduledReportsPage = lazy(
   () => import("@/pages/user/scheduled-reports"),
@@ -408,12 +408,16 @@ const AppRouter = () => {
               }
             />
             <Route
-              path={PATHS.ADMIN.REPORTS.DELAYS}
+              path={PATHS.ADMIN.ANALYTICS}
               element={
                 <SuspenseBoundary>
-                  <AdminDelaysReportPage />
+                  <AdminAnalyticsPage />
                 </SuspenseBoundary>
               }
+            />
+            <Route
+              path={PATHS.ADMIN.REPORTS.DELAYS}
+              element={<Navigate to={PATHS.ADMIN.ANALYTICS} replace />}
             />
             <Route
               path={PATHS.ADMIN.REPORTS.CUSTOM}
@@ -642,12 +646,16 @@ const AppRouter = () => {
               }
             />
             <Route
-              path={PATHS.USER.REPORTS.DELAYS}
+              path={PATHS.USER.ANALYTICS}
               element={
                 <SuspenseBoundary>
-                  <UserDelaysReportPage />
+                  <UserAnalyticsPage />
                 </SuspenseBoundary>
               }
+            />
+            <Route
+              path={PATHS.USER.REPORTS.DELAYS}
+              element={<Navigate to={PATHS.USER.ANALYTICS} replace />}
             />
             <Route
               path={PATHS.USER.REPORTS.CUSTOM}

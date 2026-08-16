@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { ReportsNav } from "@/features/reporting/components/reports-nav";
 import { ReportingFilterBar } from "@/features/reporting/components/reporting-filter-bar";
 import { ReportingSummaryCards } from "@/features/reporting/components/reporting-summary-cards";
 import { AchievementSection } from "@/features/reporting/components/achievement-section";
@@ -12,11 +11,7 @@ import { lastYearRange } from "@/features/reporting/components/date-range-picker
 import { useReportFilters } from "@/features/reporting/use-report-filters";
 import { useAchievementReport, useDelayReport } from "@/features/reporting/hooks";
 
-interface ReportingDashboardProps {
-  basePath: string;
-}
-
-export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
+export function AnalyticsDashboard() {
   const defaults = useMemo(() => lastYearRange(), []);
   const { filters, setFilters } = useReportFilters(defaults);
 
@@ -40,10 +35,8 @@ export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <ReportsNav basePath={basePath} />
-
       <PageHeader
-        title="لوحة التقارير"
+        title="التحليلات"
         description="نسب الإنجاز والمتأخرات على مستوى المحافظة والجهات"
       />
 
@@ -71,7 +64,7 @@ export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
         errorText="تعذر تحميل تقرير الإنجاز"
         skeleton={<ReportTableSkeleton />}
       >
-        {achievement && <AchievementSection report={achievement} />}
+        {achievement && <AchievementSection report={achievement} filters={filters} />}
       </ReportSection>
 
       <ReportSection
@@ -81,7 +74,7 @@ export function ReportingDashboard({ basePath }: ReportingDashboardProps) {
         errorText="تعذر تحميل تقرير المتأخرات"
         skeleton={<ReportTableSkeleton />}
       >
-        {delays && <DelaySection report={delays} />}
+        {delays && <DelaySection report={delays} filters={filters} />}
       </ReportSection>
     </div>
   );

@@ -76,7 +76,7 @@ const navGroups: NavGroup[] = [
         url: PATHS.ADMIN.REPORTS.DASHBOARD,
         icon: FileBarChart,
       },
-      { title: "التحليلات", url: "#", icon: BarChart3 },
+      { title: "التحليلات", url: PATHS.ADMIN.ANALYTICS, icon: BarChart3 },
     ],
   },
   {

@@ -25,6 +25,18 @@ export class AchievementQueryDto {
   @IsOptional()
   @IsDateString()
   to?: string;
+
+  @IsOptional()
+  @IsIn(["FINISHED", "NOT_FINISHED"])
+  status?: "FINISHED" | "NOT_FINISHED";
+
+  @IsOptional()
+  @IsIn(["Low", "Medium", "High"])
+  severity?: "Low" | "Medium" | "High";
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }
 
 export class DelayQueryDto {
@@ -51,7 +63,49 @@ export class DelayQueryDto {
   @IsOptional()
   @IsIn(["asc", "desc"])
   order?: "asc" | "desc";
+
+  @IsOptional()
+  @IsIn(["FINISHED", "NOT_FINISHED"])
+  status?: "FINISHED" | "NOT_FINISHED";
+
+  @IsOptional()
+  @IsIn(["Low", "Medium", "High"])
+  severity?: "Low" | "Medium" | "High";
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }
+
+export class DepartmentDetailQueryDto {
+  @IsString()
+  department!: string;
+
+  @IsOptional()
+  @IsString()
+  village?: string;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @IsIn(["FINISHED", "NOT_FINISHED"])
+  status?: "FINISHED" | "NOT_FINISHED";
+
+  @IsOptional()
+  @IsIn(["Low", "Medium", "High"])
+  severity?: "Low" | "Medium" | "High";
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
+
 
 export class CustomReportBodyDto {
   @IsOptional()
