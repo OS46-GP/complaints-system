@@ -12,7 +12,6 @@ export function useNotifications() {
   return useQuery({
     queryKey: KEYS.list,
     queryFn: notificationsApi.list,
-    refetchInterval: 30_000,
   });
 }
 
@@ -20,7 +19,6 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: KEYS.unread,
     queryFn: notificationsApi.unreadCount,
-    refetchInterval: 20_000,
   });
 }
 
