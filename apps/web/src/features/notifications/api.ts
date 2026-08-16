@@ -9,6 +9,7 @@ export interface NotificationItem {
   title: string;
   body: string;
   resourceId: string | null;
+  requestStatus: string | null;
   readAt: string | null;
   createdAt: string;
 }

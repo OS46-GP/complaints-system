@@ -8,8 +8,8 @@ export default function AdminUserDetail() {
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
-        title="تعديل المستخدم"
-        description="تحديث بيانات وصلاحيات المستخدم."
+        title="بيانات المستخدم"
+        description="عرض بيانات المستخدم للقراءة فقط."
       />
       <div className="mt-8">
         <UserEditForm userId={id!} />

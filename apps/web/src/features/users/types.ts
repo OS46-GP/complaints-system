@@ -13,6 +13,7 @@ export interface User {
   status: UserStatus;
   lastSeen: string;
   avatar: string;
+  isBlocked: boolean;
 }
 
 export interface ApiUser {
@@ -22,6 +23,7 @@ export interface ApiUser {
   email?: string | null;
   nationalId?: string | null;
   role: RowRole;
+  isBlocked?: boolean;
   createdAt: string;
 }
 
@@ -80,5 +82,6 @@ export function mapApiUser(api: ApiUser): User {
       ? new Date(api.createdAt).toLocaleDateString("ar-SA")
       : "-",
     avatar: "",
+    isBlocked: api.isBlocked ?? false,
   };
 }

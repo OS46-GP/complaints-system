@@ -1,5 +1,6 @@
 import { ShieldCheck, UserCog, ShieldAlert, Crown } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import type { UserFormData } from "@/features/users/types";
 interface PermissionsSectionProps {
   data: UserFormData;
   onChange: (partial: Partial<UserFormData>) => void;
+  disabled?: boolean;
 }
 
 const ROLE_OPTIONS = {
@@ -20,6 +22,7 @@ const ROLE_OPTIONS = {
 export function PermissionsSection({
   data,
   onChange,
+  disabled,
 }: PermissionsSectionProps) {
   const currentRole = useAuthStore((s) => s.user?.role);
 
@@ -27,6 +30,8 @@ export function PermissionsSection({
     currentRole === "SuperAdmin"
       ? ["Official", "Admin"]
       : ["Official"];
+
+  const isDisabled = disabled || currentRole !== "SuperAdmin";
 
   return (
     <Card>
@@ -47,15 +52,23 @@ export function PermissionsSection({
             onValueChange={(value) =>
               onChange({ role: value as UserFormData["role"] })
             }
+            disabled={isDisabled}
             className="grid grid-cols-1 sm:grid-cols-2 gap-3"
           >
             {availableRoles.map((key) => {
               const option = ROLE_OPTIONS[key];
               const Icon = option.icon;
               return (
-                <Label key={key} className="cursor-pointer">
-                  <RadioGroupItem value={key} className="peer sr-only" />
-                  <div className="w-full flex flex-col items-center justify-center p-3 border border-border rounded-lg transition-all text-muted-foreground peer-data-[state=checked]:bg-primary-container/10 peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary">
+                <Label
+                  key={key}
+                  className={cn("cursor-pointer", isDisabled && "cursor-not-allowed")}
+                >
+                  <RadioGroupItem
+                    value={key}
+                    disabled={isDisabled}
+                    className="peer sr-only"
+                  />
+                  <div className="w-full flex flex-col items-center justify-center p-3 border border-border rounded-lg transition-all text-muted-foreground peer-data-[state=checked]:bg-primary-container/10 peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary peer-disabled:opacity-50 peer-disabled:cursor-not-allowed">
                     <Icon className="size-5 mb-1" />
                     <span className="font-heading text-label-sm">
                       {option.label}

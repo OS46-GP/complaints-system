@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export function UserCreateForm() {
   const mutation = useCreateUser();
 
   const {
-    watch,
+    control,
     setValue,
     handleSubmit,
   } = useForm<UserFormData>({
@@ -40,7 +40,13 @@ export function UserCreateForm() {
     },
   });
 
-  const data = watch();
+  const data: UserFormData = {
+    username: useWatch({ control, name: "username" }) ?? "",
+    password: useWatch({ control, name: "password" }) ?? "",
+    email: useWatch({ control, name: "email" }) ?? "",
+    nationalId: useWatch({ control, name: "nationalId" }) ?? "",
+    role: useWatch({ control, name: "role" }) ?? "Official",
+  };
 
   const update = (partial: Partial<UserFormData>) => {
     for (const [key, value] of Object.entries(partial)) {

@@ -10,6 +10,7 @@ const PUBLIC_USER_SELECT = {
   username: true,
   fullName: true,
   email: true,
+  nationalId: true,
   role: true,
   createdAt: true,
 } as const;

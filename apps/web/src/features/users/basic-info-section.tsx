@@ -7,9 +7,17 @@ interface BasicInfoSectionProps {
   data: UserFormData;
   onChange: (partial: Partial<UserFormData>) => void;
   isEdit?: boolean;
+  readOnly?: boolean;
 }
 
-export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionProps) {
+export function BasicInfoSection({
+  data,
+  onChange,
+  isEdit,
+  readOnly,
+}: BasicInfoSectionProps) {
+  const disabled = readOnly || isEdit;
+
   return (
     <Card>
       <CardHeader>
@@ -28,7 +36,7 @@ export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionPro
               onChange={(e) => onChange({ username: e.target.value })}
               placeholder="اسم المستخدم للنظام"
               className="h-10"
-              disabled={isEdit}
+              disabled={disabled}
             />
           </div>
           <div className="space-y-3">
@@ -43,6 +51,7 @@ export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionPro
               onChange={(e) => onChange({ password: e.target.value })}
               placeholder={isEdit ? "اتركه فارغاً إذا لم ترد التغيير" : "••••••••"}
               className="h-10"
+              disabled={disabled}
             />
           </div>
           <div className="space-y-3">
@@ -54,6 +63,7 @@ export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionPro
               onChange={(e) => onChange({ email: e.target.value })}
               placeholder="name@company.gov.sa"
               className="h-10"
+              disabled={disabled}
             />
           </div>
           <div className="space-y-3">
@@ -65,6 +75,7 @@ export function BasicInfoSection({ data, onChange, isEdit }: BasicInfoSectionPro
               placeholder="الرقم القومي (يُستخدم لاستعادة كلمة المرور)"
               className="h-10"
               dir="ltr"
+              disabled={disabled}
             />
           </div>
         </div>

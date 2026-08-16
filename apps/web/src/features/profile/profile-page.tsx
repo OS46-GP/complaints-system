@@ -167,6 +167,17 @@ export function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-3">
+                    <Label htmlFor="nationalId">الرقم القومي</Label>
+                    <Input
+                      id="nationalId"
+                      value={profile?.nationalId ?? ""}
+                      disabled
+                      dir="ltr"
+                      placeholder=""
+                      className="h-10"
+                    />
+                  </div>
+                  <div className="space-y-3">
                     <Label htmlFor="fullName">الاسم الكامل</Label>
                     <Input
                       id="fullName"
