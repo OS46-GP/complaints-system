@@ -59,6 +59,13 @@ export function usePoll() {
   });
 }
 
+export function useSummarizeByDate() {
+  return useMutation({
+    mutationFn: ({ from, to }: { from?: string; to?: string }) =>
+      socialApi.summarizeByDate(from, to),
+  });
+}
+
 export function useSocialDrafts(status?: SocialDraftStatus) {
   return useQuery({
     queryKey: [...SOCIAL_QUERY_KEYS.drafts, status],

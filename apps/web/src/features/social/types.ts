@@ -50,6 +50,17 @@ export interface SocialDraft {
   updatedAt: string;
 }
 
+export interface PollSummaryItem {
+  complaintType: string;
+  severity: "Low" | "Medium" | "High";
+  summary: string;
+}
+
+export interface PollSummary {
+  overview: string;
+  items: PollSummaryItem[];
+}
+
 export interface PollResult {
   groupsPolled: number;
   postsFetched: number;
@@ -57,4 +68,5 @@ export interface PollResult {
   aiFiltered: number;
   duplicatesSkipped: number;
   draftsCreated: SocialDraft[];
+  summary: PollSummary | null;
 }

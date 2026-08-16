@@ -1,3 +1,5 @@
+export type SocialSourceType = "Group" | "Page";
+
 export type SocialPost = {
   id: string;
   message: string;
@@ -8,5 +10,9 @@ export type SocialPost = {
 
 export interface SocialDataSourceProvider {
   readonly name: string;
-  fetchPosts(groupId: string, groupName: string): Promise<SocialPost[]>;
+  fetchPosts(
+    groupId: string,
+    groupName: string,
+    type: SocialSourceType,
+  ): Promise<SocialPost[]>;
 }

@@ -3,9 +3,9 @@ import * as path from "node:path";
 import { computeCaseStatus } from "../complaints/case-status.config";
 
 export const SEVERITY_LABELS: Record<string, string> = {
-  LOW: "منخفضة",
-  MEDIUM: "متوسطة",
-  HIGH: "عالية",
+  Low: "منخفضة",
+  Medium: "متوسطة",
+  High: "عالية",
 };
 
 export const CASE_STATUS_LABELS: Record<string, string> = {

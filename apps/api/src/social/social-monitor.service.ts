@@ -5,6 +5,8 @@ import type { SocialDataSourceProvider } from "./providers";
 import type { SocialPost } from "./providers/social-data-source.interface";
 import { analyzePosts, ENABLE_AI } from "./agents/social-intake-agent";
 import type { PostToAnalyze, SocialIntakeResult } from "./agents/social-intake-agent";
+import { summarizeComplaints } from "./agents/social-summary-agent";
+import type { PollSummary } from "./agents/social-summary-agent";
 
 const SPAM_PATTERNS = [
   /(?:buy|sell|shop|order|discount|price|offer|limited)\s*(?:now|today|online)/i,
@@ -44,6 +46,7 @@ export class SocialMonitorService {
         aiFiltered: 0,
         duplicatesSkipped: 0,
         draftsCreated: [],
+        summary: null,
       };
     }
 
@@ -56,7 +59,11 @@ export class SocialMonitorService {
 
     for (const group of groups) {
       try {
-        const posts = await this.provider.fetchPosts(group.groupId, group.name);
+        const posts = await this.provider.fetchPosts(
+          group.groupId,
+          group.name,
+          group.type,
+        );
 
         for (const post of posts) {
           postsFetched++;
@@ -75,7 +82,11 @@ export class SocialMonitorService {
 
     const analyses = new Map<
       number,
-      { isRelevant: boolean; fields: SocialIntakeResult["fields"] | null }
+      {
+        isRelevant: boolean;
+        reason: string;
+        fields: SocialIntakeResult["fields"] | null;
+      }
     >();
     if (ENABLE_AI && pending.length > 0) {
       const complaintTypes = await this.prisma.client.complaintType.findMany({
@@ -108,6 +119,7 @@ export class SocialMonitorService {
           result.fields.severity !== "Medium";
         analyses.set(result.index, {
           isRelevant: result.isRelevant,
+          reason: result.reason,
           fields: hasExtraction ? result.fields : null,
         });
       }
@@ -119,7 +131,9 @@ export class SocialMonitorService {
 
       if (analysis && !analysis.isRelevant) {
         aiFiltered++;
-        this.logger.log(`AI filtered post ${post.id} in ${group.name}`);
+        this.logger.log(
+          `AI filtered post ${post.id} in ${group.name}: ${analysis.reason || "no reason given"}`,
+        );
         continue;
       }
 
@@ -161,7 +175,32 @@ export class SocialMonitorService {
       });
 
       draftsCreated.push(draft);
-      this.logger.log(`Created draft from post ${post.id} in ${group.name}`);
+      this.logger.log(
+        `Created draft from post ${post.id} in ${group.name}: ${
+          analysis?.reason || "no AI reason"
+        }`,
+      );
+    }
+
+    // Second LLM call: summarize/report the complaints captured by this poll.
+    // Best-effort — a failure or empty result never fails the poll itself.
+    let summary: PollSummary | null = null;
+    if (draftsCreated.length > 0) {
+      summary = await summarizeComplaints(
+        draftsCreated.map((draft) => {
+          const fields =
+            draft.extractedFields && typeof draft.extractedFields === "object"
+              ? (draft.extractedFields as Partial<SocialIntakeResult["fields"]>)
+              : {};
+          return {
+            subject: fields.subject || "",
+            annotation: fields.annotation || draft.postText,
+            complaintType: fields.complaintType || "",
+            severity: fields.severity ?? "Medium",
+            groupName: draft.groupName || "",
+          };
+        }),
+      );
     }
 
     return {
@@ -171,6 +210,7 @@ export class SocialMonitorService {
       aiFiltered,
       duplicatesSkipped,
       draftsCreated,
+      summary,
     };
   }
 
