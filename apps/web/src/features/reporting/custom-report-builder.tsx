@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router";
-import { Search, FileText, Building2, MapPin, CheckSquare } from "lucide-react";
+import { Search, FileText, CheckSquare } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,11 @@ import { ReportResultTable } from "@/features/reporting/components/report-result
 import { ExportButtons } from "@/features/reporting/components/export-buttons";
 import { ReportsNav } from "@/features/reporting/components/reports-nav";
 import { DateRangePicker, type DateRangeValue } from "@/features/reporting/components/date-range-picker";
+import { DepartmentFilter } from "@/features/reporting/components/department-filter";
+import { VillageFilter } from "@/features/reporting/components/village-filter";
 import { useCustomReport, useExportCustomReport } from "@/features/reporting/hooks";
 import { openDownload } from "@/features/reporting/download";
-import {
-  useDepartments,
-  useExaminationStatuses,
-  useLocations,
-} from "@/features/complaint-list/hooks";
+import { useExaminationStatuses } from "@/features/complaint-list/hooks";
 import type { DataTableColumn } from "@/components/shared/data-table";
 import type {
   CustomReportFilters,
@@ -39,18 +37,6 @@ const columns: DataTableColumn[] = [
   { key: "status", label: "حالة الفحص" },
   { key: "arrival", label: "تاريخ الوصول" },
 ];
-
-function uniqueNames(items: Array<{ name: string }>): string[] {
-  const seen = new Set<string>();
-  const names: string[] = [];
-  for (const item of items) {
-    if (item.name && !seen.has(item.name)) {
-      seen.add(item.name);
-      names.push(item.name);
-    }
-  }
-  return names;
-}
 
 interface CustomReportBuilderProps {
   basePath: string;
@@ -75,11 +61,7 @@ export function CustomReportBuilder({ basePath }: CustomReportBuilderProps) {
 
   const customMutation = useCustomReport();
   const exportMutation = useExportCustomReport();
-  const { data: departments, isLoading: departmentsLoading } = useDepartments();
   const { data: statuses, isLoading: statusesLoading } = useExaminationStatuses();
-  const { data: locations, isLoading: locationsLoading } = useLocations();
-
-  const villages = uniqueNames(locations ?? []);
 
   const buildFilters = (): CustomReportFilters => ({
     dateRange:
@@ -165,50 +147,24 @@ export function CustomReportBuilder({ basePath }: CustomReportBuilderProps) {
 
             <div className="flex flex-col gap-1.5">
               <Label className="flex items-center gap-1.5 font-heading text-label-sm text-muted-foreground">
-                <MapPin className="size-4" />
                 القرية / المركز
               </Label>
-              <Select
-                value={village || undefined}
-                onValueChange={(v) => setVillage(v === "all" ? "" : v)}
-                disabled={locationsLoading}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="كل القرى" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">كل القرى</SelectItem>
-                  {villages.map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <VillageFilter
+                value={village}
+                onChange={setVillage}
+                className="w-full"
+              />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <Label className="flex items-center gap-1.5 font-heading text-label-sm text-muted-foreground">
-                <Building2 className="size-4" />
                 الجهة
               </Label>
-              <Select
-                value={department || undefined}
-                onValueChange={(v) => setDepartment(v === "all" ? "" : v)}
-                disabled={departmentsLoading}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="كل الجهات" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">كل الجهات</SelectItem>
-                  {(departments ?? []).map((dept) => (
-                    <SelectItem key={dept.id} value={dept.name}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <DepartmentFilter
+                value={department}
+                onChange={setDepartment}
+                className="w-full"
+              />
             </div>
 
             <div className="flex flex-col gap-1.5">
