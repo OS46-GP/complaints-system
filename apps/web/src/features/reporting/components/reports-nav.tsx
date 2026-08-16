@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router";
 import {
-  AlarmClock,
   BarChart3,
   FileText,
   History,
@@ -25,15 +24,9 @@ function buildItems(basePath: string): ReportsNavItem[] {
   return [
     {
       key: "dashboard",
-      title: "لوحة التقارير",
+      title: "التقارير",
       url: basePath,
       icon: BarChart3,
-    },
-    {
-      key: "delays",
-      title: "المتأخرات",
-      url: `${basePath}/delays`,
-      icon: AlarmClock,
     },
     {
       key: "custom",
