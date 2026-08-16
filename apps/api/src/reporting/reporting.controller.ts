@@ -17,6 +17,7 @@ import {
   GenerateReportBodyDto,
   ExportQueryDto,
   ScheduledReportQueryDto,
+  DepartmentDetailQueryDto,
 } from './dto/report.dto';
 
 @Controller('reports')
@@ -31,6 +32,23 @@ export class ReportingController {
       query.from,
       query.to,
       query.village,
+      query.status,
+      query.severity,
+      query.search,
+      false,
+    );
+  }
+
+  @Get('achievement/department')
+  async getAchievementDepartment(@Query() query: DepartmentDetailQueryDto) {
+    return this.reportingService.getAchievementDepartmentComplaints(
+      query.department,
+      query.from,
+      query.to,
+      query.village,
+      query.status,
+      query.severity,
+      query.search,
     );
   }
 
@@ -43,6 +61,23 @@ export class ReportingController {
       query.village,
       query.sortBy,
       query.order,
+      query.status,
+      query.severity,
+      query.search,
+      false,
+    );
+  }
+
+  @Get('delays/department')
+  async getDelaysDepartment(@Query() query: DepartmentDetailQueryDto) {
+    return this.reportingService.getDelayDepartmentComplaints(
+      query.department,
+      query.from,
+      query.to,
+      query.village,
+      query.status,
+      query.severity,
+      query.search,
     );
   }
 

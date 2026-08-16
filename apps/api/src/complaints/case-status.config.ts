@@ -1,4 +1,4 @@
-const CASE_STATUS_MAPPING: Record<string, "FINISHED" | "NOT_FINISHED"> = {
+export const CASE_STATUS_MAPPING: Record<string, "FINISHED" | "NOT_FINISHED"> = {
   "قيد الفحص": "NOT_FINISHED",
   "تم الفحص": "FINISHED",
   "مستوفي": "FINISHED",
