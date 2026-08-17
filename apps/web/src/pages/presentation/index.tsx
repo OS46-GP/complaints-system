@@ -3,7 +3,9 @@ import { Link } from "react-router";
 import {
   ChevronLeft,
   ChevronRight,
+  Download,
   LayoutGrid,
+  Loader2,
   Maximize2,
   Minimize2,
   MonitorPlay,
@@ -82,6 +84,69 @@ export default function PresentationPage() {
 
   const touchX = useRef<number | null>(null);
   const total = SLIDES.length;
+  const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleDownload = useCallback(async () => {
+    setExportOpen(true);
+    setExporting(true);
+    try {
+      const [{ toCanvas }, { jsPDF }] = await Promise.all([
+        import("html-to-image"),
+        import("jspdf"),
+      ]);
+      const running = document.getAnimations().filter((a) => {
+        const timing = a.effect?.getComputedTiming();
+        return a.playState === "running" && timing?.iterations !== Infinity;
+      });
+      await Promise.allSettled(running.map((a) => a.finished));
+      await new Promise((r) => setTimeout(r, 400));
+
+      const PAGE_W = 360;
+      const PAGE_H = 202.5;
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [PAGE_W, PAGE_H],
+        compress: true,
+      });
+      for (let i = 0; i < SLIDES.length; i++) {
+        const el = slideRefs.current[i];
+        if (!el) continue;
+        el.style.height = "auto";
+        await new Promise((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(r)),
+        );
+        const canvas = await toCanvas(el, {
+          pixelRatio: 2,
+          cacheBust: true,
+        });
+        el.style.height = "1080px";
+        const h = (canvas.height / canvas.width) * PAGE_W;
+        const scale = Math.min(1, PAGE_H / h);
+        const drawW = PAGE_W * scale;
+        const drawH = h * scale;
+        if (i > 0) pdf.addPage([PAGE_W, PAGE_H], "landscape");
+        pdf.addImage(
+          canvas.toDataURL("image/jpeg", 0.92),
+          "JPEG",
+          (PAGE_W - drawW) / 2,
+          (PAGE_H - drawH) / 2,
+          drawW,
+          drawH,
+          undefined,
+          "FAST",
+        );
+      }
+      pdf.save("complaints-system-presentation.pdf");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setExportOpen(false);
+      setExporting(false);
+    }
+  }, []);
 
   const goTo = useCallback((next: number) => {
     const clamped = Math.max(0, Math.min(total - 1, next));
@@ -234,6 +299,15 @@ export default function PresentationPage() {
           >
             {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
+          <button
+            type="button"
+            onClick={() => void handleDownload()}
+            disabled={exporting}
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-border/50 bg-card/70 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            title="Download presentation as PDF"
+          >
+            <Download className="size-4" />
+          </button>
           <Link
             to={PATHS.LOGIN}
             className="inline-flex size-9 items-center justify-center rounded-lg border border-border/50 bg-card/70 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:text-destructive"
@@ -357,6 +431,42 @@ export default function PresentationPage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Hidden PDF export layer */}
+      {exportOpen && (
+        <div
+          data-export-layer
+          className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-background"
+          aria-hidden
+        >
+          {SLIDES.map((s, i) => (
+            <div
+              key={s.id}
+              ref={(el) => {
+                slideRefs.current[i] = el;
+              }}
+              className="relative shrink-0 bg-background text-foreground"
+              style={{ width: 1920, height: 1080 }}
+            >
+              <BackgroundOrbs />
+              <s.Component />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Export loading overlay */}
+      {exporting && (
+        <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-background/90 backdrop-blur-md">
+          <Loader2 className="size-10 animate-spin text-primary" />
+          <p className="font-heading text-lg font-semibold text-foreground">
+            Generating high-quality PDF…
+          </p>
+          <p className="font-mono text-xs text-muted-foreground">
+            Rendering {SLIDES.length} slides
+          </p>
         </div>
       )}
     </div>
