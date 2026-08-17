@@ -22,6 +22,8 @@ function NotificationRow({
   const reject = useRejectPasswordReset();
 
   const isResetRequest = notification.type === "PASSWORD_RESET_REQUEST";
+  const isResetRequestPending =
+    isResetRequest && notification.requestStatus === "Pending";
   const isPending =
     approve.isPending || reject.isPending || markRead.isPending;
 
@@ -73,41 +75,51 @@ function NotificationRow({
 
       {isResetRequest && (
         <div className="flex items-center gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
-          <Button
-            size="sm"
-            className="gap-1"
-            disabled={isPending}
-            onClick={() =>
-              approve.mutate(notification.resourceId!, {
-                onSuccess: () => {
-                  toast.success("تمت إعادة تعيين كلمة المرور بنجاح");
-                  markRead.mutate(notification.id);
-                },
-                onError: () => toast.error("تعذر إعادة تعيين كلمة المرور"),
-              })
-            }
-          >
-            <Check className="size-4" />
-            موافقة
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1 text-destructive"
-            disabled={isPending}
-            onClick={() =>
-              reject.mutate(notification.resourceId!, {
-                onSuccess: () => {
-                  toast.success("تم رفض الطلب");
-                  markRead.mutate(notification.id);
-                },
-                onError: () => toast.error("تعذر رفض الطلب"),
-              })
-            }
-          >
-            <X className="size-4" />
-            رفض
-          </Button>
+          {isResetRequestPending ? (
+            <>
+              <Button
+                size="sm"
+                className="gap-1"
+                disabled={isPending}
+                onClick={() =>
+                  approve.mutate(notification.resourceId!, {
+                    onSuccess: () => {
+                      toast.success("تمت إعادة تعيين كلمة المرور بنجاح");
+                      markRead.mutate(notification.id);
+                    },
+                    onError: () => toast.error("تعذر إعادة تعيين كلمة المرور"),
+                  })
+                }
+              >
+                <Check className="size-4" />
+                موافقة
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 text-destructive"
+                disabled={isPending}
+                onClick={() =>
+                  reject.mutate(notification.resourceId!, {
+                    onSuccess: () => {
+                      toast.success("تم رفض الطلب");
+                      markRead.mutate(notification.id);
+                    },
+                    onError: () => toast.error("تعذر رفض الطلب"),
+                  })
+                }
+              >
+                <X className="size-4" />
+                رفض
+              </Button>
+            </>
+          ) : (
+            <span className="rounded-full bg-surface-container-high px-2.5 py-1 text-[0.6875rem] font-medium text-muted-foreground">
+              {notification.requestStatus === "Approved"
+                ? "تمت الموافقة على الطلب"
+                : "تم رفض الطلب"}
+            </span>
+          )}
         </div>
       )}
     </div>

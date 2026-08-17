@@ -9,7 +9,7 @@ export default function SuperAdminUserDetail() {
     <div className="max-w-4xl mx-auto">
       <PageHeader
         title="تعديل المستخدم"
-        description="تحديث بيانات وصلاحيات المستخدم."
+        description="عرض بيانات المستخدم وتعديل دوره في النظام."
       />
       <div className="mt-8">
         <UserEditForm userId={id!} />

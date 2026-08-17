@@ -44,13 +44,7 @@ export function useUpdateUser(userId: string) {
   return useMutation({
     mutationFn: (formData: UserEditFormData) =>
       usersApi.update(userId, {
-        password: formData.password || undefined,
         role: formData.role,
-        nationalId:
-          formData.nationalId && !formData.nationalId.startsWith("****")
-            ? formData.nationalId
-            : undefined,
-        email: formData.email || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users });
@@ -62,6 +56,26 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (userId: string) => usersApi.remove(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users });
+    },
+  });
+}
+
+export function useBlockUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => usersApi.block(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users });
+    },
+  });
+}
+
+export function useUnblockUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => usersApi.unblock(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users });
     },

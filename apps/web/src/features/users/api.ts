@@ -14,6 +14,10 @@ export const usersApi = {
     axiosClient.patch(`/api/users/${id}`, payload).then((res) => res.data),
   remove: (id: string) =>
     axiosClient.delete(`/api/users/${id}`).then((res) => res.data),
+  block: (id: string) =>
+    axiosClient.post(`/api/users/${id}/block`).then((res) => res.data),
+  unblock: (id: string) =>
+    axiosClient.post(`/api/users/${id}/unblock`).then((res) => res.data),
   requestPasswordReset: (nationalId: string) =>
     axiosClient
       .post("/api/users/password-reset-request", { nationalId })

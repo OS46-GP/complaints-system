@@ -4,6 +4,7 @@ import { Users, ShieldCheck, FilePlus2 } from "lucide-react";
 import { PATHS } from "@/router/paths";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
+import { RecentNotifications } from "@/features/notifications/recent-notifications";
 
 export default function SuperAdminDashboard() {
   return (
@@ -43,6 +44,8 @@ export default function SuperAdminDashboard() {
           </p>
         </div>
       </div>
+
+      <RecentNotifications limit={5} />
     </div>
   );
 }

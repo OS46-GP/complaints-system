@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { Search, FileText, ShieldCheck } from "lucide-react";
+import { FileText, ShieldCheck } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SearchForm } from "@/components/shared/search-form";
 import {
   DataTable,
   DataTableHeader,
@@ -79,7 +77,6 @@ export function LetterTemplatesList({
 }: LetterTemplatesListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get("search") ?? "";
-  const [draft, setDraft] = useState(search);
 
   const filtered = templates.filter(
     (t) =>
@@ -88,9 +85,9 @@ export function LetterTemplatesList({
       (t.description ?? "").includes(search),
   );
 
-  const handleSearch = () => {
+  const handleSearch = (value: string) => {
     setSearchParams((prev) => {
-      if (draft) prev.set("search", draft);
+      if (value) prev.set("search", value);
       else prev.delete("search");
       return prev;
     });
@@ -98,25 +95,12 @@ export function LetterTemplatesList({
 
   return (
     <div className="flex flex-col gap-4">
-      <form
-        className="flex items-center gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSearch();
-        }}
-      >
-        <Input
-          dir="rtl"
-          placeholder="بحث في نماذج الخطابات..."
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          className="max-w-sm"
-        />
-        <Button type="submit" variant="outline" className="gap-2">
-          <Search className="size-4" />
-          بحث
-        </Button>
-      </form>
+      <SearchForm
+        defaultValue={search}
+        placeholder="بحث في نماذج الخطابات..."
+        onSubmit={handleSearch}
+        className="max-w-sm"
+      />
 
       {filtered.length === 0 ? (
         <div className="border border-dashed border-border rounded-2xl py-14 flex flex-col items-center gap-3 text-center">

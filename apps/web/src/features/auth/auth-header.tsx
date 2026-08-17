@@ -1,7 +1,6 @@
-import { Globe, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 import { ModeToggle } from "@/components/shared/mode-toggle";
-import { Button } from "@/components/ui/button";
 
 export function AuthHeader() {
   return (
@@ -13,9 +12,6 @@ export function AuthHeader() {
         </h1>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <Globe className="size-5" />
-        </Button>
         <ModeToggle />
       </div>
     </header>

@@ -19,6 +19,7 @@ const BASE_SELECT = {
   fullName: true,
   email: true,
   role: true,
+  isBlocked: true,
   createdAt: true,
 } as const;
 
@@ -90,6 +91,13 @@ export class UsersService {
     }
     if (filters?.role) {
       where.role = filters.role;
+    }
+    if (actor.role !== UserRole.SuperAdmin) {
+      // Non-SuperAdmin actors must not see SuperAdmin accounts or themselves.
+      where.AND = [
+        { role: { not: UserRole.SuperAdmin } },
+        { id: { not: actor.id } },
+      ];
     }
     const users = await this.prisma.user.findMany({
       where,
@@ -199,6 +207,48 @@ export class UsersService {
 
     await this.prisma.user.delete({ where: { id } });
     return { success: true };
+  }
+
+  async block(actor: CurrentUserPayload, id: string) {
+    return this.setBlocked(actor, id, true);
+  }
+
+  async unblock(actor: CurrentUserPayload, id: string) {
+    return this.setBlocked(actor, id, false);
+  }
+
+  private async setBlocked(
+    actor: CurrentUserPayload,
+    id: string,
+    isBlocked: boolean,
+  ) {
+    const target = await this.assertCanManage(actor, id);
+
+    if (target.id === actor.id) {
+      throw new ForbiddenException('You cannot block your own account');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { isBlocked },
+      select: {
+        ...BASE_SELECT,
+        nationalId: true,
+      },
+    });
+
+    await this.prisma.notification.create({
+      data: {
+        recipientId: target.id,
+        type: isBlocked ? 'ACCOUNT_BLOCKED' : 'ACCOUNT_UNBLOCKED',
+        title: isBlocked ? 'تم حظر حسابك' : 'تم إلغاء حظر حسابك',
+        body: isBlocked
+          ? 'تم حظر حسابك من قبل الإدارة، ولا يمكنك تسجيل الدخول حتى إشعار آخر.'
+          : 'تم إلغاء حظر حسابك، ويمكنك تسجيل الدخول مرة أخرى.',
+      },
+    });
+
+    return this.sanitizeOne(actor, updated);
   }
 
   private async assertCanManage(actor: CurrentUserPayload, id: string) {

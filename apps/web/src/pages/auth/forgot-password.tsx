@@ -16,7 +16,8 @@ export default function ForgotPassword() {
             نسيت كلمة المرور؟
           </h2>
           <p className="font-body text-body-md text-muted-foreground">
-            أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور
+            أدخل الرقم القومي المرتبط بحسابك، وسيتواصل طلب إعادة تعيين كلمة
+            المرور مع الإدارة للموافقة عليه.
           </p>
         </div>{" "}
         <ForgotPasswordForm />{" "}

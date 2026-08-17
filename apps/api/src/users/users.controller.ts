@@ -6,6 +6,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser, CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 
@@ -61,6 +62,25 @@ export class UsersController {
     return this.usersService.remove(actor, id);
   }
 
+  @Roles(UserRole.Admin, UserRole.SuperAdmin)
+  @Post(':id/block')
+  block(
+    @CurrentUser() actor: CurrentUserPayload,
+    @Param('id') id: string,
+  ) {
+    return this.usersService.block(actor, id);
+  }
+
+  @Roles(UserRole.Admin, UserRole.SuperAdmin)
+  @Post(':id/unblock')
+  unblock(
+    @CurrentUser() actor: CurrentUserPayload,
+    @Param('id') id: string,
+  ) {
+    return this.usersService.unblock(actor, id);
+  }
+
+  @Public()
   @Post('password-reset-request')
   requestPasswordReset(@Body() dto: PasswordResetRequestDto) {
     return this.usersService.requestPasswordReset(dto);

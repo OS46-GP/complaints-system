@@ -1,5 +1,6 @@
 import type { User } from "@/features/users/types";
 import { UserActionsDropdown } from "@/features/users/user-actions-dropdown";
+import { Badge } from "@/components/ui/badge";
 
 interface InfoItemProps {
   label: string;
@@ -28,9 +29,14 @@ export function UserCard({ user }: UserCardProps) {
     <div className="bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="font-heading text-[1rem] text-foreground">
-            {user.username}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-heading text-[1rem] text-foreground">
+              {user.username}
+            </h3>
+            {user.isBlocked && (
+              <Badge variant="destructive">محظور</Badge>
+            )}
+          </div>
           <p className="text-label-sm text-muted-foreground">
             {user.roleLabel}
           </p>
@@ -39,6 +45,7 @@ export function UserCard({ user }: UserCardProps) {
           userId={user.id}
           userName={user.username}
           userRole={user.role}
+          isBlocked={user.isBlocked}
         />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">

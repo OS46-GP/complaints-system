@@ -11,7 +11,7 @@ export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(user: CurrentUserPayload) {
-    return this.prisma.notification.findMany({
+    const notifications = await this.prisma.notification.findMany({
       where: {
         OR: [
           { recipientId: user.id },
@@ -20,6 +20,32 @@ export class NotificationsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    const resetRequestIds = notifications
+      .filter(
+        (n) =>
+          n.type === 'PASSWORD_RESET_REQUEST' &&
+          !!n.resourceId,
+      )
+      .map((n) => n.resourceId as string);
+
+    const requests = resetRequestIds.length
+      ? await this.prisma.passwordResetRequest.findMany({
+          where: { id: { in: resetRequestIds } },
+          select: { id: true, status: true },
+        })
+      : [];
+    const statusByRequestId = new Map(
+      requests.map((r) => [r.id, r.status]),
+    );
+
+    return notifications.map((n) => ({
+      ...n,
+      requestStatus:
+        n.type === 'PASSWORD_RESET_REQUEST'
+          ? (statusByRequestId.get(n.resourceId ?? '') ?? null)
+          : null,
+    }));
   }
 
   async unreadCount(user: CurrentUserPayload) {
