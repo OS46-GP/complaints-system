@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import {
-  ArrowDown,
   ArrowRight,
+  BadgeCheck,
   BarChart3,
+  Blocks,
   BookOpen,
   Bot,
   Brain,
@@ -18,10 +19,14 @@ import {
   FileSearch,
   FileSpreadsheet,
   FileStack,
+  FileText,
+  FlaskConical,
+  Gauge,
+  GitBranch,
   Globe,
   GraduationCap,
   Inbox,
-  KeyRound,
+  Layers,
   LayoutDashboard,
   LogIn,
   Mail,
@@ -33,6 +38,7 @@ import {
   Radio,
   Rocket,
   ScanLine,
+  SearchCheck,
   Server,
   ShieldCheck,
   Smartphone,
@@ -45,7 +51,6 @@ import {
 
 import { cn } from "@/lib/utils";
 import {
-  EndpointTable,
   FeatureBadge,
   GlassCard,
   GradientText,
@@ -54,8 +59,6 @@ import {
   SlideKicker,
   SlideScrollable,
   StaggerItem,
-  type EndpointGroup,
-  type LucideIcon,
 } from "./primitives";
 
 const TEAM = [
@@ -157,11 +160,14 @@ export function TitleSlide() {
 const AGENDA = [
   "Introduction",
   "Objectives",
+  "AI & Multi-Agent Objectives",
   "Technologies Used",
   "System Features",
   "System Architecture",
-  "Backend Walkthrough",
+  "AI & Multi-Agents",
+  "Advanced RAG & Evaluation",
   "Frontend Walkthrough",
+  "Testing",
   "System Demonstration",
   "Future Enhancements",
   "Conclusion",
@@ -252,21 +258,68 @@ const OBJECTIVES = [
     text: "JWT authentication for Super Admin, Admin and Official roles.",
   },
   {
-    icon: ScanLine,
-    title: "OCR & AI Intake",
-    text: "Scan documents and use AI triage, duplicate detection & summarization.",
-  },
-  {
     icon: BarChart3,
     title: "Reporting & Analytics",
     text: "KPIs, custom builders, scheduled reports and Excel / PDF exports.",
   },
   {
-    icon: Radio,
-    title: "Social Monitoring & Letters",
-    text: "Track social media complaints and generate official letters.",
+    icon: FileText,
+    title: "Letters & Memos",
+    text: "Generate official letters and government memos from templates.",
   },
 ];
+
+const AI_OBJECTIVES = [
+  {
+    icon: ScanLine,
+    title: "Zero-Typing Intake",
+    text: "The OCR Intake Agent extracts structured data straight from scanned complaint forms.",
+  },
+  {
+    icon: Brain,
+    title: "Smart Triage & Routing",
+    text: "The Complaint Triage Agent flags severity, detects duplicates and routes each case to the right department.",
+  },
+  {
+    icon: Radio,
+    title: "Social Monitoring Agent",
+    text: "The Social Intake Agent watches Facebook groups and turns new posts into complaint drafts automatically.",
+  },
+  {
+    icon: BarChart3,
+    title: "Instant Summaries",
+    text: "The Social Summary Agent condenses threads and the Summarization module produces daily reports.",
+  },
+  {
+    icon: Sparkles,
+    title: "Less Manual Work",
+    text: "Mastra orchestrates all five agents — intake, OCR, triage, scraping and drafting happen end-to-end, automatically.",
+  },
+];
+
+function ObjectivesGrid({ items }: { items: typeof OBJECTIVES }) {
+  return (
+    <div className="flex w-full flex-wrap items-stretch justify-center gap-5">
+      {items.map((o, i) => (
+        <StaggerItem
+          key={o.title}
+          delay={i * 90}
+          className="h-full w-full sm:w-[calc(50%-0.625rem)] lg:w-[calc(33.333%-0.833rem)]"
+        >
+          <div className="group h-full rounded-2xl border border-border/50 bg-card/70 p-6 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+            <IconBadge icon={o.icon} tone={i % 2 === 0 ? "primary" : "tertiary"} className="mb-4 size-11 transition-transform group-hover:scale-110" />
+            <h3 className="mb-1.5 font-heading text-xl font-semibold text-foreground">
+              {o.title}
+            </h3>
+            <p className="font-body text-sm leading-relaxed text-muted-foreground">
+              {o.text}
+            </p>
+          </div>
+        </StaggerItem>
+      ))}
+    </div>
+  );
+}
 
 export function ObjectivesSlide() {
   return (
@@ -275,22 +328,27 @@ export function ObjectivesSlide() {
         kicker="02 · Objectives"
         icon={CircleCheck}
         title="What we aim to achieve"
+        subtitle="Digitizing the full complaint lifecycle with secure roles, AI-assisted intake, reporting and monitoring."
       />
-      <div className="grid w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {OBJECTIVES.map((o, i) => (
-          <StaggerItem key={o.title} delay={i * 90} className={cn(i === 4 && "lg:col-start-2")}>
-            <div className="group h-full rounded-2xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
-              <IconBadge icon={o.icon} tone={i % 2 === 0 ? "primary" : "tertiary"} className="mb-4 transition-transform group-hover:scale-110" />
-              <h3 className="mb-1.5 font-heading text-lg font-semibold text-foreground">
-                {o.title}
-              </h3>
-              <p className="font-body text-sm leading-relaxed text-muted-foreground">
-                {o.text}
-              </p>
-            </div>
-          </StaggerItem>
-        ))}
-      </div>
+      <ObjectivesGrid items={OBJECTIVES} />
+    </SlideScrollable>
+  );
+}
+
+export function AIMultiAgentObjectivesSlide() {
+  return (
+    <SlideScrollable>
+      <SlideHeading
+        kicker="02 · AI & Multi-Agent Objectives"
+        icon={Bot}
+        title={
+          <>
+            One system that does <GradientText>the heavy lifting</GradientText>
+          </>
+        }
+        subtitle="A Mastra multi-agent core automates intake, OCR, triage, scraping and drafting — so officials only review and approve."
+      />
+      <ObjectivesGrid items={AI_OBJECTIVES} />
     </SlideScrollable>
   );
 }
@@ -308,8 +366,10 @@ const TECHNOLOGIES = [
     items: [
       "React 19 + TypeScript",
       "Vite + Tailwind CSS v4",
-      "React Router + TanStack Query",
-      "shadcn/ui · Recharts · Zod",
+      "React Router · TanStack Query",
+      "shadcn/ui + Base UI · Radix",
+      "Recharts · Zod · React Hook Form",
+      "Zustand · Axios · Jodit editor",
     ],
   },
   {
@@ -320,8 +380,9 @@ const TECHNOLOGIES = [
     items: [
       "NestJS (Express) · JWT + Passport",
       "Prisma ORM · class-validator",
-      "Mastra AI + Google Gemini",
-      "Tesseract OCR · ExcelJS · Apify",
+      "Tesseract OCR · Mammoth (DOCX)",
+      "ExcelJS · Puppeteer · Apify",
+      "node-cron · bcrypt",
     ],
   },
   {
@@ -329,7 +390,21 @@ const TECHNOLOGIES = [
     tone: "muted" as const,
     title: "Database",
     accent: "PostgreSQL",
-    items: ["PostgreSQL", "Prisma Migrations & Seed"],
+    items: ["PostgreSQL", "Prisma Migrations & Seed", "pgvector · vector search"],
+  },
+  {
+    icon: Bot,
+    tone: "primary" as const,
+    title: "AI & Multi-Agents",
+    accent: "Mastra + Gemini",
+    items: [
+      "Mastra Framework · multi-agent orchestration",
+      "Google Gemini 2.5 Flash + embeddings",
+      "pgvector semantic search (RAG)",
+      "Structured output (Zod schemas)",
+      "Advanced RAG retrieval techniques",
+      "RAG triad evaluation",
+    ],
   },
 ];
 
@@ -341,7 +416,7 @@ export function TechnologiesSlide() {
         icon={Code2}
         title="The tech stack"
       />
-      <div className="grid w-full max-w-5xl grid-cols-1 gap-5 md:grid-cols-3">
+      <div className="grid w-full max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
         {TECHNOLOGIES.map((t, i) => (
           <StaggerItem key={t.title} delay={i * 120} className="h-full">
             <div className="flex h-full flex-col rounded-2xl border border-border/50 bg-card/70 p-6 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
@@ -382,8 +457,9 @@ const MODULES = [
   { icon: Brain, title: "AI Triage & Summarization", text: "Duplicate detection, severity analysis & summaries.", tone: "primary" as const },
   { icon: Building2, title: "Department Routing", text: "Multi-department assignment, responses & deadlines.", tone: "primary" as const },
   { icon: Radio, title: "Social Media Monitoring", text: "Scraped groups, drafts & polls.", tone: "tertiary" as const },
-  { icon: FileStack, title: "Letter Templates", text: "Placeholders, DOCX import & official letters.", tone: "primary" as const },
-  { icon: FileBarChart, title: "Reporting & Analytics", text: "KPIs, custom & scheduled reports, Excel export.", tone: "tertiary" as const },
+  { icon: FileStack, title: "Letter Templates", text: "Placeholders, DOCX import & template builder.", tone: "primary" as const },
+  { icon: FileText, title: "Official Letters & Memos", text: "Generate official letters & memos with PDF export.", tone: "tertiary" as const },
+  { icon: FileBarChart, title: "Reporting & Analytics", text: "KPIs, custom & scheduled reports, Excel export.", tone: "primary" as const },
 ];
 
 export function FeaturesSlide() {
@@ -394,11 +470,11 @@ export function FeaturesSlide() {
         icon={LayoutDashboard}
         title={
           <>
-            Eight <GradientText>core modules</GradientText>
+            Nine <GradientText>core modules</GradientText>
           </>
         }
       />
-      <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid w-full max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {MODULES.map((m, i) => (
           <StaggerItem key={m.title} delay={i * 70} className="h-full">
             <div className="group flex h-full flex-col gap-3 rounded-2xl border border-border/50 bg-card/70 p-4 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
@@ -423,298 +499,286 @@ export function FeaturesSlide() {
 /* System Architecture                                                 */
 /* ------------------------------------------------------------------ */
 
-function ArchBox({
-  icon: Icon,
-  title,
-  subtitle,
-  tone = "primary",
-  delay = 0,
-}: {
-  icon: LucideIcon;
-  title: string;
-  subtitle: string;
-  tone?: "primary" | "tertiary" | "muted";
-  delay?: number;
-}) {
+const MONOREPO = [
+  {
+    icon: MonitorSmartphone,
+    tone: "primary" as const,
+    name: "apps/web",
+    role: "React SPA",
+    text: "React 19 · Vite · Tailwind · TanStack Query",
+  },
+  {
+    icon: Server,
+    tone: "tertiary" as const,
+    name: "apps/api",
+    role: "NestJS REST API",
+    text: "Express · Prisma · JWT + Passport",
+  },
+  {
+    icon: Database,
+    tone: "muted" as const,
+    name: "packages/db",
+    role: "Prisma schema",
+    text: "Models · migrations · seed · pgvector",
+  },
+  {
+    icon: Blocks,
+    tone: "primary" as const,
+    name: "packages/types",
+    role: "Shared types",
+    text: "TypeScript contracts shared by web & api",
+  },
+];
+
+const FLOW_STEPS = [
+  { icon: User, label: "Roles", sub: "Admin · Official" },
+  { icon: MonitorSmartphone, label: "Web UI", sub: "React SPA" },
+  { icon: Server, label: "NestJS API", sub: "REST · JWT" },
+  { icon: Database, label: "PostgreSQL", sub: "pgvector" },
+  { icon: Bot, label: "AI Layer", sub: "Mastra · Gemini" },
+];
+
+function ArchSectionLabel({ children }: { children: ReactNode }) {
   return (
-    <StaggerItem delay={delay}>
-      <div className="flex w-full max-w-sm items-center gap-4 rounded-2xl border border-border/50 bg-card/80 px-6 py-4 shadow-lg backdrop-blur-md">
-        <IconBadge icon={Icon} tone={tone} className="size-12" />
-        <div className="text-left">
-          <p className="font-heading text-lg font-bold text-foreground">{title}</p>
-          <p className="font-mono text-xs text-muted-foreground">{subtitle}</p>
-        </div>
-      </div>
-    </StaggerItem>
+    <p className="font-mono text-[0.7rem] uppercase tracking-[0.25em] text-muted-foreground">
+      {children}
+    </p>
   );
 }
 
 export function ArchitectureSlide() {
   return (
-    <SlideScrollable>
+    <SlideScrollable className="max-w-[90rem]">
       <SlideHeading
         kicker="05 · System Architecture"
         icon={Workflow}
-        title="How everything connects"
+        title={
+          <>
+            A modular monorepo, <GradientText>fully connected</GradientText>
+          </>
+        }
+        subtitle="Two apps and two shared packages, connected through one REST API, a pgvector-backed database and an orchestrated AI layer."
       />
-      <div className="flex flex-col items-center gap-2">
-        <ArchBox icon={MonitorSmartphone} title="Frontend" subtitle="React SPA · Web UI" delay={0} />
-        <StaggerItem delay={120}>
-          <ArrowDown className="size-6 text-primary/60" />
-        </StaggerItem>
-        <div className="grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
-          <ArchBox icon={Server} title="Backend" subtitle="NestJS REST API" tone="tertiary" delay={200} />
-          <ArchBox icon={KeyRound} title="Auth Layer" subtitle="JWT + Passport" tone="muted" delay={260} />
+
+      <div className="flex w-full max-w-6xl flex-col items-center gap-4">
+        <ArchSectionLabel>Monorepo structure</ArchSectionLabel>
+        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {MONOREPO.map((p, i) => (
+            <StaggerItem key={p.name} delay={i * 60} className="h-full">
+              <div className="flex h-full flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/70 p-4 shadow-sm backdrop-blur-sm">
+                <div className="flex items-center gap-2.5">
+                  <IconBadge icon={p.icon} tone={p.tone} className="size-9 rounded-lg" />
+                  <div className="min-w-0">
+                    <p className="truncate font-mono text-sm font-semibold text-foreground">{p.name}</p>
+                    <p className="font-mono text-[0.65rem] text-muted-foreground">{p.role}</p>
+                  </div>
+                </div>
+                <p className="font-body text-xs leading-relaxed text-muted-foreground">{p.text}</p>
+              </div>
+            </StaggerItem>
+          ))}
         </div>
-        <StaggerItem delay={320}>
-          <ArrowDown className="size-6 text-primary/60" />
-        </StaggerItem>
-        <ArchBox icon={Database} title="Database" subtitle="PostgreSQL · Prisma" tone="muted" delay={360} />
-        <StaggerItem delay={420}>
-          <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-            {[
-              { icon: ScanLine, label: "OCR · Tesseract" },
-              { icon: Brain, label: "AI · Gemini + Mastra" },
-              { icon: Radio, label: "Social · Apify" },
-            ].map((s) => (
-              <span
-                key={s.label}
-                className="flex items-center gap-1.5 rounded-full border border-border/50 bg-tertiary/10 px-3.5 py-1.5 font-mono text-xs text-tertiary"
-              >
-                <s.icon className="size-3.5" />
-                {s.label}
-              </span>
+      </div>
+
+      <div className="flex w-full max-w-6xl flex-col items-center gap-4">
+        <ArchSectionLabel>Request flow</ArchSectionLabel>
+        <GlassCard className="w-full max-w-5xl p-5">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {FLOW_STEPS.map((s, i) => (
+              <div key={s.label} className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-1 rounded-xl border border-border/50 bg-background/50 px-4 py-2.5">
+                  <s.icon className="size-5 text-primary" />
+                  <span className="font-heading text-sm font-semibold text-foreground">{s.label}</span>
+                  <span className="font-body text-[0.7rem] text-muted-foreground">{s.sub}</span>
+                </div>
+                {i < FLOW_STEPS.length - 1 && <ArrowRight className="size-4 text-primary/50" />}
+              </div>
             ))}
+          </div>
+          <p className="mt-4 text-center font-mono text-xs text-muted-foreground">
+            Every request is JWT-protected and hits a dedicated NestJS module before touching the database or an agent.
+          </p>
+        </GlassCard>
+      </div>
+    </SlideScrollable>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* AI & Multi-Agents                                                   */
+/* ------------------------------------------------------------------ */
+
+const AI_AGENTS = [
+  {
+    icon: Brain,
+    tone: "primary" as const,
+    name: "Complaint Triage Agent",
+    text: "Severity assessment & recurrence detection via semantic similarity.",
+  },
+  {
+    icon: ScanLine,
+    tone: "tertiary" as const,
+    name: "OCR Intake Agent",
+    text: "Extracts structured citizen & complaint fields from scanned Arabic forms.",
+  },
+  {
+    icon: Radio,
+    tone: "primary" as const,
+    name: "Social Intake Agent",
+    text: "Filters spam and extracts complaint fields from Facebook posts.",
+  },
+  {
+    icon: FileBarChart,
+    tone: "tertiary" as const,
+    name: "Social Summary Agent",
+    text: "Generates concise overviews of the complaints captured by each poll.",
+  },
+  {
+    icon: FileStack,
+    tone: "primary" as const,
+    name: "ComplaintsAgent",
+    text: "Writes Arabic summaries, official reports and government memos.",
+  },
+];
+
+export function AIAgentsSlide() {
+  return (
+    <SlideScrollable>
+      <SlideHeading
+        kicker="06 · AI & Multi-Agents"
+        icon={Bot}
+        title={
+          <>
+            One framework, <GradientText>many specialists</GradientText>
+          </>
+        }
+        subtitle="Mastra Framework orchestrates dedicated agents — each with a single, focused job and structured, validated output."
+      />
+      <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {AI_AGENTS.map((a, i) => (
+          <StaggerItem key={a.name} delay={i * 70} className="h-full">
+            <div className="group flex h-full flex-col gap-3 rounded-2xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+              <IconBadge icon={a.icon} tone={a.tone} className="transition-transform group-hover:scale-110" />
+              <div>
+                <h3 className="mb-1 font-heading text-lg font-semibold text-foreground">{a.name}</h3>
+                <p className="font-body text-sm leading-relaxed text-muted-foreground">{a.text}</p>
+              </div>
+            </div>
+          </StaggerItem>
+        ))}
+        <StaggerItem delay={350} className="h-full">
+          <div className="flex h-full flex-col justify-center gap-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5">
+            <p className="flex items-center gap-2 font-mono text-[0.7rem] uppercase tracking-[0.2em] text-primary">
+              <Workflow className="size-3.5" /> Orchestration
+            </p>
+            <p className="font-body text-sm leading-relaxed text-foreground/90">
+              <strong>Mastra</strong> routes every call through one model router —{" "}
+              <strong>Google Gemini 2.5 Flash</strong> — with{" "}
+              <strong>Zod structured outputs</strong> and{" "}
+              <strong>pgvector semantic memory</strong>.
+            </p>
           </div>
         </StaggerItem>
       </div>
+    </SlideScrollable>
+  );
+}
 
-      <StaggerItem delay={480}>
-        <div className="flex flex-wrap items-center justify-center gap-2 font-mono text-xs text-muted-foreground">
-          <span className="rounded-full border border-border/50 bg-card/70 px-3 py-1.5">
-            Admin / Official
-          </span>
-          <ArrowRight className="size-4 text-primary/60" />
-          <span className="rounded-full border border-border/50 bg-card/70 px-3 py-1.5">Web UI</span>
-          <ArrowRight className="size-4 text-primary/60" />
-          <span className="rounded-full border border-border/50 bg-card/70 px-3 py-1.5">API Calls</span>
-          <ArrowRight className="size-4 text-primary/60" />
-          <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 font-semibold text-primary">
-            Database
-          </span>
+/* ------------------------------------------------------------------ */
+/* Advanced RAG & Evaluation (course solution)                         */
+/* ------------------------------------------------------------------ */
+
+const RAG_STEPS = [
+  { icon: Database, label: "Data", sub: "Complaints & documents" },
+  { icon: SearchCheck, label: "Retrieve", sub: "Advanced retrieval" },
+  { icon: Gauge, label: "Evaluate", sub: "RAG Triad" },
+  { icon: Sparkles, label: "Generate", sub: "Gemini 2.5 Flash" },
+  { icon: BadgeCheck, label: "Validate", sub: "Quality check" },
+];
+
+const RAG_TECHNIQUES = [
+  {
+    icon: Layers,
+    title: "Vector Search · pgvector",
+    text: "Complaints are embedded and searched semantically, so the Triage agent only sees historically relevant records.",
+  },
+  {
+    icon: SearchCheck,
+    title: "Sentence Window Retrieval",
+    text: "Noisy OCR text is chunked and only the window around the relevant clue is sent to the Intake agent.",
+  },
+  {
+    icon: Workflow,
+    title: "Auto-merging Retrieval",
+    text: "Related social posts & comments are merged into one complete parent context for the Social agents.",
+  },
+];
+
+const RAG_TRIAD = [
+  { title: "Context Relevance", text: "Is the retrieved context actually useful?" },
+  { title: "Groundedness", text: "Is the answer supported by retrieved facts?" },
+  { title: "Answer Relevance", text: "Does the answer address the task?" },
+];
+
+export function AIPipelineSlide() {
+  return (
+    <SlideScrollable>
+      <SlideHeading
+        kicker="07 · Advanced RAG & Evaluation"
+        icon={Brain}
+        title={
+          <>
+            From raw prompts to <GradientText>controlled context</GradientText>
+          </>
+        }
+        subtitle="The course solution upgrades direct LLM calls into an advanced RAG pipeline with retrieval and evaluation."
+      />
+
+      <GlassCard className="w-full max-w-4xl p-6">
+        <p className="mb-3 text-center font-mono text-[0.7rem] uppercase tracking-[0.2em] text-muted-foreground">
+          Advanced RAG pipeline
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {RAG_STEPS.map((s, i) => (
+            <div key={s.label} className="flex items-center gap-2">
+              <div className="flex flex-col items-center gap-1 rounded-xl border border-border/50 bg-background/50 px-4 py-2.5">
+                <s.icon className="size-5 text-primary" />
+                <span className="font-heading text-sm font-semibold text-foreground">{s.label}</span>
+                <span className="font-body text-[0.7rem] text-muted-foreground">{s.sub}</span>
+              </div>
+              {i < RAG_STEPS.length - 1 && <ArrowRight className="size-4 text-primary/50" />}
+            </div>
+          ))}
         </div>
-      </StaggerItem>
-    </SlideScrollable>
-  );
-}
+      </GlassCard>
 
-/* ------------------------------------------------------------------ */
-/* Backend Overview                                                    */
-/* ------------------------------------------------------------------ */
+      <div className="grid w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">
+        {RAG_TECHNIQUES.map((t, i) => (
+          <StaggerItem key={t.title} delay={i * 80} className="h-full">
+            <div className="flex h-full flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm">
+              <IconBadge icon={t.icon} tone={i % 2 === 0 ? "primary" : "tertiary"} />
+              <h3 className="font-heading text-base font-semibold text-foreground">{t.title}</h3>
+              <p className="font-body text-sm leading-relaxed text-muted-foreground">{t.text}</p>
+            </div>
+          </StaggerItem>
+        ))}
+      </div>
 
-const AUTH_GROUP: EndpointGroup = {
-  base: "/api/auth",
-  rows: [
-    { method: "POST", path: "/login", description: "Sign in with username & password (JWT)." },
-  ],
-};
-
-const PROFILE_GROUP: EndpointGroup = {
-  base: "/api/profile",
-  rows: [
-    { method: "GET", path: "/", description: "Get the current user profile." },
-    { method: "PATCH", path: "/", description: "Update profile details." },
-    { method: "PATCH", path: "/password", description: "Change the account password." },
-  ],
-};
-
-const USERS_GROUP: EndpointGroup = {
-  base: "/api/users",
-  rows: [
-    { method: "POST", path: "/", description: "Create a new system user." },
-    { method: "GET", path: "/", description: "List users with roles." },
-    { method: "GET", path: "/:id", description: "Get a user by id." },
-    { method: "PATCH", path: "/:id", description: "Update a user." },
-    { method: "DELETE", path: "/:id", description: "Delete a user." },
-    { method: "POST", path: "/:id/block", description: "Block a user account." },
-    { method: "POST", path: "/:id/unblock", description: "Unblock a user account." },
-    { method: "POST", path: "/password-reset-request", description: "Request a password reset." },
-    { method: "POST", path: "/password-reset/:id/approve", description: "Approve a reset request." },
-    { method: "POST", path: "/password-reset/:id/reject", description: "Reject a reset request." },
-  ],
-};
-
-const COMPLAINTS_GROUP: EndpointGroup = {
-  base: "/api/complaints",
-  rows: [
-    { method: "POST", path: "/", description: "Register a new complaint." },
-    { method: "GET", path: "/", description: "List complaints with filters & search." },
-    { method: "GET", path: "/:id", description: "Get a complaint with full details." },
-    { method: "PATCH", path: "/:id", description: "Update a complaint." },
-    { method: "DELETE", path: "/:id", description: "Delete a complaint." },
-    { method: "GET", path: "/assignments/due", description: "List assignments awaiting response." },
-    { method: "POST", path: "/:id/departments/:deptId/response", description: "Submit a department response." },
-    { method: "POST", path: "/:id/reassign", description: "Reassign the complaint." },
-    { method: "POST", path: "/:id/urgency", description: "Mark an urgency / escalation." },
-    { method: "POST", path: "/:id/files", description: "Upload complaint attachments." },
-    { method: "GET", path: "/:id/files/:fileId/download", description: "Download an attachment." },
-  ],
-};
-
-const DEPARTMENTS_GROUP: EndpointGroup = {
-  base: "/api/departments",
-  rows: [
-    { method: "GET", path: "/", description: "List departments." },
-    { method: "POST", path: "/", description: "Create a department." },
-    { method: "PATCH", path: "/:id", description: "Update a department." },
-    { method: "DELETE", path: "/:id", description: "Delete a department." },
-  ],
-};
-
-const COMPLAINT_TYPES_GROUP: EndpointGroup = {
-  base: "/api/complaint-types",
-  rows: [
-    { method: "GET", path: "/", description: "List complaint types." },
-    { method: "POST", path: "/", description: "Create a complaint type." },
-    { method: "PATCH", path: "/:id", description: "Update a complaint type." },
-    { method: "DELETE", path: "/:id", description: "Delete a complaint type." },
-  ],
-};
-
-const RECEPTION_GROUP: EndpointGroup = {
-  base: "/api/reception-methods",
-  rows: [
-    { method: "GET", path: "/", description: "List reception methods." },
-    { method: "POST", path: "/", description: "Create a reception method." },
-    { method: "PATCH", path: "/:id", description: "Update a reception method." },
-    { method: "DELETE", path: "/:id", description: "Delete a reception method." },
-  ],
-};
-
-const REPORTS_GROUP: EndpointGroup = {
-  base: "/api/reports",
-  rows: [
-    { method: "GET", path: "/achievement", description: "Achievement KPIs (overall & by department)." },
-    { method: "GET", path: "/delays", description: "Delay analysis per department." },
-    { method: "POST", path: "/custom", description: "Run a custom report builder." },
-    { method: "POST", path: "/custom/export", description: "Export custom report (Excel)." },
-    { method: "GET", path: "/scheduled", description: "List scheduled reports." },
-    { method: "POST", path: "/generate", description: "Generate an on-demand report." },
-    { method: "GET", path: "/:id/export", description: "Export a generated report." },
-  ],
-};
-
-const AI_GROUP: EndpointGroup = {
-  base: "/api/ai",
-  rows: [
-    { method: "POST", path: "/summarize/:complaintId", description: "Summarize a single complaint." },
-    { method: "POST", path: "/summarize-batch", description: "Summarize a batch of complaints." },
-    { method: "POST", path: "/draft-report", description: "AI-draft a monthly report." },
-    { method: "POST", path: "/draft-selection-report", description: "AI-draft a selection report." },
-  ],
-};
-
-const INTAKE_GROUP: EndpointGroup = {
-  base: "/api/intake",
-  rows: [
-    { method: "POST", path: "/ocr", description: "OCR a scanned document & extract data." },
-  ],
-};
-
-const LETTERS_GROUP: EndpointGroup = {
-  base: "/api/letter-templates",
-  rows: [
-    { method: "GET", path: "/", description: "List letter templates." },
-    { method: "POST", path: "/", description: "Create a letter template." },
-    { method: "PATCH", path: "/:id", description: "Update a letter template." },
-    { method: "DELETE", path: "/:id", description: "Delete a letter template." },
-    { method: "POST", path: "/import-docx", description: "Import a template from DOCX." },
-    { method: "POST", path: "/preview-draft", description: "Preview a generated draft." },
-  ],
-};
-
-const SOCIAL_GROUP: EndpointGroup = {
-  base: "/api/social",
-  rows: [
-    { method: "POST", path: "/poll", description: "Poll monitored groups for new posts." },
-    { method: "GET", path: "/drafts", description: "List social drafts." },
-    { method: "GET", path: "/groups", description: "List monitored groups." },
-    { method: "POST", path: "/groups/:id/toggle", description: "Enable / disable a group." },
-    { method: "POST", path: "/drafts/:id/link", description: "Link a draft to a complaint." },
-  ],
-};
-
-const NOTIFICATIONS_GROUP: EndpointGroup = {
-  base: "/api/notifications",
-  rows: [
-    { method: "GET", path: "/", description: "List notifications." },
-    { method: "GET", path: "/unread-count", description: "Unread notifications count." },
-    { method: "PATCH", path: "/:id/read", description: "Mark a notification as read." },
-  ],
-};
-
-export function BackendSlide1() {
-  return (
-    <SlideScrollable>
-      <SlideHeading
-        kicker="06 · Backend Walkthrough"
-        icon={ShieldCheck}
-        title={
-          <>
-            Authentication & <GradientText>Users</GradientText>
-          </>
-        }
-        subtitle="Secure JWT auth, profiles and role-based user management."
-      />
-      <EndpointTable groups={[AUTH_GROUP, PROFILE_GROUP, USERS_GROUP]} className="lg:grid-cols-2" />
-    </SlideScrollable>
-  );
-}
-
-export function BackendSlide2() {
-  return (
-    <SlideScrollable>
-      <SlideHeading
-        kicker="06 · Backend Walkthrough · Cont'd"
-        icon={ClipboardList}
-        title={
-          <>
-            <GradientText>Complaints</GradientText> Core
-          </>
-        }
-        subtitle="The heart of the system — registration, routing, responses and files."
-      />
-      <EndpointTable groups={[COMPLAINTS_GROUP]} className="lg:grid-cols-1" />
-    </SlideScrollable>
-  );
-}
-
-export function BackendSlide3() {
-  return (
-    <SlideScrollable>
-      <SlideHeading
-        kicker="06 · Backend Walkthrough · Cont'd"
-        icon={Building2}
-        title="Reference Data"
-        subtitle="Departments, complaint types and reception methods power the intake forms."
-      />
-      <EndpointTable groups={[DEPARTMENTS_GROUP, COMPLAINT_TYPES_GROUP, RECEPTION_GROUP]} className="lg:grid-cols-2" />
-    </SlideScrollable>
-  );
-}
-
-export function BackendSlide4() {
-  return (
-    <SlideScrollable>
-      <SlideHeading
-        kicker="06 · Backend Walkthrough · Cont'd"
-        icon={FileBarChart}
-        title="Intelligence, Reports & Outputs"
-      />
-      <EndpointTable
-        groups={[REPORTS_GROUP, AI_GROUP, INTAKE_GROUP, LETTERS_GROUP, SOCIAL_GROUP, NOTIFICATIONS_GROUP]}
-        className="lg:grid-cols-3"
-      />
+      <div className="flex w-full max-w-4xl flex-col items-center gap-3">
+        <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-muted-foreground">
+          RAG Triad evaluation
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {RAG_TRIAD.map((m, i) => (
+            <FeatureBadge
+              key={m.title}
+              icon={CircleCheck}
+              label={`${m.title} · ${m.text}`}
+              tone={i % 2 === 0 ? "primary" : "tertiary"}
+            />
+          ))}
+        </div>
+      </div>
     </SlideScrollable>
   );
 }
@@ -733,16 +797,16 @@ const FRONTEND_PAGES = [
   { icon: CalendarClock, label: "Due Assignments Page" },
   { icon: Building2, label: "Departments & Reference Data" },
   { icon: FileStack, label: "Letter Templates Page" },
+  { icon: FileText, label: "Letters & Memos Page" },
   { icon: Users, label: "Users Page" },
   { icon: Radio, label: "Social Monitoring Page" },
-  { icon: FileBarChart, label: "Reports Hub Page" },
 ];
 
 export function FrontendOverviewSlide() {
   return (
     <SlideScrollable>
       <SlideHeading
-        kicker="07 · Frontend Walkthrough"
+        kicker="08 · Frontend Walkthrough"
         icon={MonitorSmartphone}
         title={
           <>
@@ -955,27 +1019,72 @@ export function FrontendLettersSlide() {
   );
 }
 
-export function FrontendReportsSlide() {
-  return (
-    <FeatureSlide
-      roman="X."
-      title="Reports Hub"
-      description="Achievement KPIs, delay analysis, a custom report builder, scheduled and on-demand reports — with Excel and PDF export."
-      bullets={["Achievement & delay analytics", "Custom report builder", "Scheduled reports + exports"]}
-      preview={<ScreenshotPreview src="/presentation/reports.png" url="localhost:5173/admin/reports" />}
-    />
-  );
-}
-
 export function FrontendSocialSlide() {
   return (
     <FeatureSlide
-      roman="XI."
+      roman="X."
       title="Social Media Monitoring"
       description="Monitors scraped social groups for potential complaints, keeps drafts, and links relevant posts to complaint records."
       bullets={["Scrape monitored groups", "Review & link drafts to complaints", "Group enable / disable controls"]}
       preview={<ScreenshotPreview src="/presentation/social.png" url="localhost:5173/admin/social-monitoring" />}
     />
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Testing                                                             */
+/* ------------------------------------------------------------------ */
+
+const TESTING_ITEMS = [
+  {
+    icon: GitBranch,
+    title: "CI Pipeline",
+    text: "GitHub Actions runs typecheck, Prisma migrations & seed, the API build and automated tests on every push and PR.",
+  },
+  {
+    icon: FlaskConical,
+    title: "API Tests (Bruno)",
+    text: "End-to-end endpoint collections for Auth, Users, Complaints, Letters, Reports, AI, Intake and Social — run against a live pgvector PostgreSQL.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Type Safety",
+    text: "Strict TypeScript typecheck across the web app and the NestJS API catches errors before they ship.",
+  },
+  {
+    icon: Database,
+    title: "Database Validation",
+    text: "Prisma schema migrations are deployed and the database is seeded with pgvector enabled in CI.",
+  },
+];
+
+export function TestingSlide() {
+  return (
+    <SlideScrollable>
+      <SlideHeading
+        kicker="09 · Testing"
+        icon={FlaskConical}
+        title={
+          <>
+            Quality, <GradientText>automated</GradientText>
+          </>
+        }
+        subtitle="Every push and pull request is verified by an automated CI pipeline before it reaches the reviewers."
+      />
+      <div className="grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2">
+        {TESTING_ITEMS.map((t, i) => (
+          <StaggerItem key={t.title} delay={i * 80} className="h-full">
+            <div className="flex h-full flex-col gap-3 rounded-2xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+              <div className="flex items-center gap-3">
+                <IconBadge icon={t.icon} tone={i % 2 === 0 ? "primary" : "tertiary"} />
+                <h3 className="font-heading text-lg font-semibold text-foreground">{t.title}</h3>
+              </div>
+              <p className="font-body text-sm leading-relaxed text-muted-foreground">{t.text}</p>
+            </div>
+          </StaggerItem>
+        ))}
+      </div>
+    </SlideScrollable>
   );
 }
 
@@ -987,7 +1096,7 @@ export function DemoSlide() {
   return (
     <SlideScrollable>
       <SlideHeading
-        kicker="08 · System Demonstration"
+        kicker="10 · System Demonstration"
         icon={PlayCircle}
         title="See it in action"
       />
@@ -1037,7 +1146,7 @@ export function FutureSlide() {
   return (
     <SlideScrollable>
       <SlideHeading
-        kicker="09 · Future Enhancements"
+        kicker="11 · Future Enhancements"
         icon={Rocket}
         title={
           <>
@@ -1070,7 +1179,7 @@ export function ConclusionSlide() {
   return (
     <SlideScrollable>
       <SlideHeading
-        kicker="10 · Conclusion"
+        kicker="12 · Conclusion"
         icon={CircleCheck}
         title={
           <>
@@ -1104,31 +1213,56 @@ export function ConclusionSlide() {
 /* ------------------------------------------------------------------ */
 
 const REFERENCES = [
-  { icon: Code2, label: "GitHub Frontend", hint: "Source code · web" },
-  { icon: Server, label: "GitHub Backend", hint: "Source code · api" },
+  {
+    icon: Code2,
+    label: "GitHub Repository",
+    hint: "github.com/OS46-GP/complaints-system",
+    href: "https://github.com/OS46-GP/complaints-system",
+  },
+  { icon: BookOpen, label: "API Documentation", hint: "docs/ · coming soon" },
   { icon: SquareKanban, label: "Trello", hint: "Project board" },
-  { icon: BookOpen, label: "API Documentation", hint: "Bruno · OpenAPI" },
-  { icon: Palette, label: "Figma", hint: "UI designs" },
+  {
+    icon: Palette,
+    label: "Figma",
+    hint: "UI designs · ITI-GP-Complaints-System",
+    href: "https://www.figma.com/design/opBzaV2gJjVtoeK80nx47G/ITI-GP-Complaints-System?node-id=0-1&t=U8xSbnV3NACeZX85-1",
+  },
 ];
 
 export function ReferencesSlide() {
+  const cardClass =
+    "group flex items-center gap-4 rounded-2xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg";
   return (
     <SlideScrollable>
       <SlideHeading
         kicker="References"
         icon={Columns3}
         title="Useful links"
+        subtitle="All source code and documentation live in the GitHub repository — docs will be published under docs/ and linked here."
       />
       <div className="grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
         {REFERENCES.map((r, i) => (
           <StaggerItem key={r.label} delay={i * 80}>
-            <div className="group flex items-center gap-4 rounded-2xl border border-border/50 bg-card/70 p-5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+            <div className={cardClass}>
               <IconBadge icon={r.icon} tone={i % 2 === 0 ? "primary" : "tertiary"} className="transition-transform group-hover:scale-110" />
               <div className="min-w-0">
                 <p className="font-heading text-base font-semibold text-foreground">{r.label}</p>
-                <p className="font-mono text-xs text-muted-foreground">{r.hint}</p>
+                <p className="truncate font-mono text-xs text-muted-foreground">{r.hint}</p>
               </div>
-              <ArrowRight className="ml-auto size-4 shrink-0 text-primary/50 transition-transform group-hover:translate-x-1" />
+              {r.href ? (
+                <a
+                  href={r.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-primary ring-1 ring-primary/30 transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  Open
+                </a>
+              ) : (
+                <span className="rounded-md px-2 py-1 text-xs font-semibold text-muted-foreground ring-1 ring-border/50">
+                  Soon
+                </span>
+              )}
             </div>
           </StaggerItem>
         ))}
