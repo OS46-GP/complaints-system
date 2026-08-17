@@ -154,6 +154,8 @@ const UserProfilePage = lazy(() => import("@/pages/user/profile"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 const ForbiddenPage = lazy(() => import("@/pages/forbidden"));
 
+const PresentationPage = lazy(() => import("@/pages/presentation"));
+
 function SuspenseBoundary({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -710,6 +712,15 @@ const AppRouter = () => {
             }
           />
         </Route>
+
+        <Route
+          path={PATHS.PRESENT}
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <PresentationPage />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<Navigate to={PATHS.NOT_FOUND} replace />} />
       </Routes>
     </BrowserRouter>

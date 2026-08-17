@@ -82,4 +82,5 @@ export const PATHS = {
 
   UNAUTHORIZED: "/403",
   NOT_FOUND: "/404",
+  PRESENT: "/present",
 } as const;
