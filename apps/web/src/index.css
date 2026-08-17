@@ -213,8 +213,18 @@ html[data-font-size="xl"] {
   100% { transform: translateY(0px); }
 }
 
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(24px, -32px) scale(1.08); }
+  66% { transform: translate(-20px, 18px) scale(0.94); }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
+}
+
+.animate-blob {
+  animation: blob 14s ease-in-out infinite;
 }
 
 .error-number-glitch {

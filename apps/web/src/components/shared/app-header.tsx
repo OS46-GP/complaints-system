@@ -1,6 +1,8 @@
-import { User, Settings } from "lucide-react";
+import { User, Settings, Presentation } from "lucide-react";
+import { Link } from "react-router";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/shared/mode-toggle";
 import { SearchBar } from "@/components/shared/search-bar";
 import { SearchDialog } from "@/components/shared/search-dialog";
@@ -78,6 +80,17 @@ export function AppHeader({
       <div className="flex items-center gap-1 md:gap-4">
         <SearchDialog />
         <NotificationBell />
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="text-muted-foreground hover:text-primary"
+        >
+          <Link to={PATHS.PRESENT} title="العرض التقديمي">
+            <Presentation className="h-[1.2rem] w-[1.2rem]" />
+            <span className="sr-only">العرض التقديمي</span>
+          </Link>
+        </Button>
         <ModeToggle />
         <div className="mx-1 h-8 w-px bg-border md:mx-2" />
         <UserNav
