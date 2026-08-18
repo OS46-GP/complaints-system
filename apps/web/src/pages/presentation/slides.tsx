@@ -299,14 +299,14 @@ const AI_OBJECTIVES = [
 
 function ObjectivesGrid({ items }: { items: typeof OBJECTIVES }) {
   return (
-    <div className="flex w-full flex-wrap items-stretch justify-center gap-5">
+    <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((o, i) => (
         <StaggerItem
           key={o.title}
           delay={i * 90}
-          className="h-full w-full sm:w-[calc(50%-0.625rem)] lg:w-[calc(33.333%-0.833rem)]"
+          className="h-full"
         >
-          <div className="group h-full rounded-2xl border border-border/50 bg-card/70 p-6 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+          <div className="group flex h-full flex-col rounded-2xl border border-border/50 bg-card/70 p-6 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
             <IconBadge icon={o.icon} tone={i % 2 === 0 ? "primary" : "tertiary"} className="mb-4 size-11 transition-transform group-hover:scale-110" />
             <h3 className="mb-1.5 font-heading text-xl font-semibold text-foreground">
               {o.title}
