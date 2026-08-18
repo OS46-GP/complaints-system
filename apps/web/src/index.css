@@ -237,6 +237,54 @@ html[data-font-size="xl"] {
   overflow: hidden;
 }
 
+.letter-wysiwyg .jodit-wysiwyg img {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+}
+
+.jodit-variable-chip {
+  display: inline-block;
+  border: 1px dashed #f59e0b;
+  border-radius: 6px;
+  background: #fffbeb;
+  color: #b45309;
+  padding: 0 6px;
+  margin: 0 2px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.jodit-variable-chip:hover {
+  background: #fef3c7;
+}
+
+.jodit-image-variable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px dashed #c084fc;
+  border-radius: 6px;
+  background: #faf5ff;
+  color: #a21caf;
+  padding: 2px 8px;
+  margin: 0 2px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.jodit-image-variable:hover {
+  background: #f3e8ff;
+}
+
+.jodit-image-variable__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 @utility no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;

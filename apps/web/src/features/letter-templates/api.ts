@@ -4,7 +4,6 @@ import type {
   GenerateLetterResult,
   GeneratedLetter,
   LetterTemplate,
-  PlaceholderGroup,
   UpdateLetterTemplatePayload,
 } from "@/features/letter-templates/types";
 
@@ -43,10 +42,6 @@ export const letterTemplatesApi = {
     );
     return res.data;
   },
-  placeholders: () =>
-    axiosClient
-      .get<PlaceholderGroup[]>("/api/letter-templates/placeholders")
-      .then((res) => res.data),
   preview: async (id: string) => {
     const res = await axiosClient.post(
       `/api/letter-templates/${id}/preview`,

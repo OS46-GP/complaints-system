@@ -25,6 +25,7 @@ export const PATHS = {
     LETTER_TEMPLATES: "/admin/letter-templates",
     LETTER_TEMPLATE_NEW: "/admin/letter-templates/new",
     LETTER_TEMPLATE_EDIT: (id: string) => `/admin/letter-templates/${id}/edit`,
+    LETTER_VARIABLES: "/admin/letter-variables",
     LETTER_SETTINGS: "/admin/letter-settings",
     SOCIAL_MONITORING: "/admin/social-monitoring",
     SETTINGS: "/admin/settings",

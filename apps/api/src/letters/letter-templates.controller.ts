@@ -21,7 +21,7 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser, CurrentUserPayload } from "../auth/decorators/current-user.decorator";
 import { LetterTemplatesService } from "./letter-templates.service";
 import { LettersService } from "./letters.service";
-import { PLACEHOLDER_GROUPS, type TemplateVariable } from "./letter-context";
+import { type TemplateVariable } from "./letter-context";
 import { CreateLetterTemplateDto } from "./dto/create-letter-template.dto";
 import { UpdateLetterTemplateDto } from "./dto/update-letter-template.dto";
 
@@ -32,11 +32,6 @@ export class LetterTemplatesController {
     private readonly templatesService: LetterTemplatesService,
     private readonly lettersService: LettersService,
   ) {}
-
-  @Get("placeholders")
-  placeholders() {
-    return PLACEHOLDER_GROUPS;
-  }
 
   @Roles(UserRole.Admin)
   @Post("import-docx")

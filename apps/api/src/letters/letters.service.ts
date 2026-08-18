@@ -9,8 +9,11 @@ import { PrismaService } from "../prisma/prisma.service";
 import { LetterSettingsService } from "./letter-settings.service";
 import {
   buildLetterContext,
+  imageToDataUri,
+  imageUrlToStorageKey,
   mergeVariableValues,
   missingRequiredVariables,
+  resolveLetterVariableDefaultValue,
   uploadRoot,
   type LetterComplaintSource,
   type TemplateVariable,
@@ -74,6 +77,79 @@ export class LettersService {
     };
   }
 
+  private async globalVariableRows() {
+    return this.prisma.client.letterVariable.findMany({
+      where: { isSystem: false, isActive: true },
+      select: {
+        key: true,
+        labelAr: true,
+        defaultValue: true,
+        imageUrl: true,
+        fallbackText: true,
+        required: true,
+        type: true,
+      },
+    });
+  }
+
+  private mergeGlobalDefaults(
+    context: { data: Record<string, string> },
+    rows: Awaited<ReturnType<LettersService["globalVariableRows"]>>,
+  ) {
+    const now = new Date();
+    for (const row of rows) {
+      if (row.type === "image") continue;
+      const value = resolveLetterVariableDefaultValue(
+        row.defaultValue,
+        row.type,
+        now,
+      );
+      if (value?.trim()) {
+        context.data[row.key] = value;
+      }
+    }
+  }
+
+  private mergeGlobalImages(
+    context: {
+      images: Record<string, string>;
+      imageFallbacks?: Record<string, string>;
+    },
+    rows: Awaited<ReturnType<LettersService["globalVariableRows"]>>,
+  ) {
+    const fallbacks = (context.imageFallbacks ??= {});
+    for (const row of rows) {
+      if (row.type !== "image") continue;
+      const storageKey = imageUrlToStorageKey(row.imageUrl);
+      const dataUri = imageToDataUri(storageKey);
+      if (dataUri) {
+        context.images[row.key] = dataUri;
+      } else if (row.fallbackText?.trim()) {
+        fallbacks[row.key] = row.fallbackText;
+      }
+    }
+  }
+
+  private mergeTemplateImages(
+    context: {
+      images: Record<string, string>;
+      imageFallbacks?: Record<string, string>;
+    },
+    templateVariables?: TemplateVariable[] | null,
+  ) {
+    const fallbacks = (context.imageFallbacks ??= {});
+    for (const v of templateVariables ?? []) {
+      if (v.type !== "image") continue;
+      const storageKey = imageUrlToStorageKey(v.imageUrl);
+      const dataUri = imageToDataUri(storageKey);
+      if (dataUri) {
+        context.images[v.key] = dataUri;
+      } else if (v.fallbackText?.trim()) {
+        fallbacks[v.key] = v.fallbackText;
+      }
+    }
+  }
+
   private async renderTemplate(
     template: {
       body: string | null;
@@ -84,6 +160,10 @@ export class LettersService {
   ): Promise<Buffer> {
     const settings = await this.settingsService.getOrCreate();
     const context = buildLetterContext(source, settings);
+    const globals = await this.globalVariableRows();
+    this.mergeGlobalDefaults(context, globals);
+    this.mergeGlobalImages(context, globals);
+    this.mergeTemplateImages(context, template.variables);
     if (variableValues) {
       context.data = mergeVariableValues(context.data, variableValues);
     }
@@ -100,6 +180,7 @@ export class LettersService {
     if (!templateVariables?.length) return null;
     const samples: Record<string, string> = {};
     for (const v of templateVariables) {
+      if (v.type === "image") continue;
       samples[v.key] = v.defaultValue?.trim() ? v.defaultValue : `[${v.label}]`;
     }
     return samples;
@@ -111,6 +192,7 @@ export class LettersService {
     if (!templateVariables?.length) return null;
     const values: Record<string, string> = {};
     for (const v of templateVariables) {
+      if (v.type === "image") continue;
       if (v.defaultValue) values[v.key] = v.defaultValue;
     }
     return values;
@@ -143,6 +225,10 @@ export class LettersService {
     const settings = await this.settingsService.getOrCreate();
     const source = await this.sampleSource();
     const context = buildLetterContext(source, settings);
+    const globals = await this.globalVariableRows();
+    this.mergeGlobalDefaults(context, globals);
+    this.mergeGlobalImages(context, globals);
+    this.mergeTemplateImages(context, variables);
     const sampleValues = LettersService.sampleVariableValues(variables);
     if (sampleValues) {
       context.data = mergeVariableValues(context.data, sampleValues);
@@ -180,6 +266,19 @@ export class LettersService {
     }).variables;
     const fixedValues = LettersService.fixedVariableValues(templateVariables);
     const missing = missingRequiredVariables(templateVariables, fixedValues);
+    const globals = await this.globalVariableRows();
+    if (template.body) {
+      for (const variable of globals) {
+        if (
+          variable.required &&
+          !(fixedValues?.[variable.key]?.trim()) &&
+          !(variable.defaultValue?.trim()) &&
+          template.body.includes(`{{${variable.key}}}`)
+        ) {
+          missing.push(variable.labelAr);
+        }
+      }
+    }
     if (missing.length) {
       throw new BadRequestException(
         `المتغيرات التالية مطلوبة ويجب توفير قيمتها من إعدادات النموذج: ${missing.join("، ")}`,
