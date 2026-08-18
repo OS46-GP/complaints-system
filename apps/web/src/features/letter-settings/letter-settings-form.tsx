@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ImagePlus, Loader2, RefreshCw } from "lucide-react";
+import { ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { AsyncLoader } from "@/components/shared/async-loader";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
   useLetterSettings,
   useUpdateLetterSettings,
   useUploadLetterImage,
+  useRemoveLetterImage,
 } from "@/features/letter-settings/hooks";
 import { resolveDownloadUrl } from "@/features/reporting/api";
 
@@ -37,16 +39,21 @@ function ImageUploadField({
   label,
   src,
   busy,
+  removing,
   onUpload,
+  onRemove,
   helper,
 }: {
   label: string;
   src: string | null;
   busy: boolean;
+  removing?: boolean;
   onUpload: (file: File) => void;
+  onRemove?: () => void;
   helper?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [removeOpen, setRemoveOpen] = useState(false);
 
   return (
     <div className="space-y-2">
@@ -74,25 +81,54 @@ function ImageUploadField({
             لا توجد صورة بعد
           </div>
         )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-2 self-start"
-          onClick={() => inputRef.current?.click()}
-          disabled={busy}
-        >
-          {busy ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : src ? (
-            <RefreshCw className="size-4" />
-          ) : (
-            <ImagePlus className="size-4" />
+        <div className="flex flex-wrap gap-2 self-start">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+          >
+            {busy ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : src ? (
+              <RefreshCw className="size-4" />
+            ) : (
+              <ImagePlus className="size-4" />
+            )}
+            {busy ? "جارٍ الرفع..." : src ? "تغيير الصورة" : "رفع صورة"}
+          </Button>
+          {src && onRemove && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              onClick={() => setRemoveOpen(true)}
+              disabled={removing}
+            >
+              <Trash2 className="size-4" />
+              {removing ? "جارٍ الحذف..." : "حذف الصورة"}
+            </Button>
           )}
-          {busy ? "جارٍ الرفع..." : src ? "تغيير الصورة" : "رفع صورة"}
-        </Button>
+        </div>
         {helper && <p className="text-label-sm text-muted-foreground">{helper}</p>}
       </div>
+
+      <ConfirmDialog
+        open={removeOpen}
+        onOpenChange={setRemoveOpen}
+        title="حذف الصورة"
+        description={`هل أنت متأكد من حذف "${label}"؟ سيتم مسح الصورة نهائياً من النظام.`}
+        confirmLabel="حذف"
+        variant="destructive"
+        loading={removing}
+        onConfirm={() => {
+          onRemove?.();
+          setRemoveOpen(false);
+        }}
+      />
     </div>
   );
 }
@@ -101,6 +137,7 @@ export function LetterSettingsForm() {
   const { data: settings, isLoading, isError, refetch } = useLetterSettings();
   const updateMutation = useUpdateLetterSettings();
   const uploadMutation = useUploadLetterImage();
+  const removeMutation = useRemoveLetterImage();
 
   const {
     register,
@@ -221,30 +258,27 @@ export function LetterSettingsForm() {
             <CardHeader>
               <CardTitle>الصور والترويسة</CardTitle>
               <CardDescription>
-                ترويسة الجهة والتوقيع والختم الرسمي — تُستبدل تلقائياً داخل نموذج
-                الخطاب عند استخدام متغيراتها
+                توقيع المدير والختم الرسمي — يُستبدلان تلقائياً داخل نموذج الخطاب
+                عند استخدام متغيراتهما
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <ImageUploadField
-                label="ترويسة الجهة ({{organizationLetterhead}})"
-                src={settings?.organizationLetterheadUrl ?? null}
-                busy={uploadMutation.isPending && uploadMutation.variables?.field === "organizationLetterhead"}
-                onUpload={(file) => uploadMutation.mutate({ field: "organizationLetterhead", file })}
-                helper="PNG / JPG حتى 5MB"
-              />
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ImageUploadField
                 label="توقيع المدير ({{managerSignature}})"
                 src={settings?.managerSignatureUrl ?? null}
                 busy={uploadMutation.isPending && uploadMutation.variables?.field === "managerSignature"}
+                removing={removeMutation.isPending && removeMutation.variables === "managerSignature"}
                 onUpload={(file) => uploadMutation.mutate({ field: "managerSignature", file })}
+                onRemove={() => removeMutation.mutate("managerSignature")}
                 helper="PNG / JPG حتى 5MB — خلفية شفافة مفضّلة"
               />
               <ImageUploadField
                 label="الختم الرسمي ({{seal}})"
                 src={settings?.sealUrl ?? null}
                 busy={uploadMutation.isPending && uploadMutation.variables?.field === "seal"}
+                removing={removeMutation.isPending && removeMutation.variables === "seal"}
                 onUpload={(file) => uploadMutation.mutate({ field: "seal", file })}
+                onRemove={() => removeMutation.mutate("seal")}
                 helper="PNG / JPG حتى 5MB — خلفية شفافة مفضّلة"
               />
             </CardContent>

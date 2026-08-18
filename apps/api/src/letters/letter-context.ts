@@ -14,7 +14,6 @@ export const CASE_STATUS_LABELS: Record<string, string> = {
 };
 
 export const IMAGE_PLACEHOLDER_KEYS = [
-  "organizationLetterhead",
   "managerSignature",
   "seal",
 ] as const;
@@ -129,7 +128,6 @@ export interface LetterSettingsRow {
   organizationFax: string | null;
   organizationEmail: string | null;
   organizationWebsite: string | null;
-  organizationLetterhead: string | null;
   managerName: string | null;
   managerTitle: string | null;
   managerSignature: string | null;

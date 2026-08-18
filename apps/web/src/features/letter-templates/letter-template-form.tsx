@@ -195,7 +195,6 @@ export function LetterTemplateForm({ template }: LetterTemplateFormProps) {
 
   const imageSourceByKey = useMemo(() => {
     const map: Record<string, string | null> = {
-      organizationLetterhead: letterSettings?.organizationLetterheadUrl ?? null,
       managerSignature: letterSettings?.managerSignatureUrl ?? null,
       seal: letterSettings?.sealUrl ?? null,
     };

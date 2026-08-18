@@ -42,7 +42,6 @@ export const SAMPLE_VALUES: Record<string, string> = {
 };
 
 const IMAGE_SAMPLES: Record<string, string> = {
-  organizationLetterhead: "ترويسة الجهة",
   managerSignature: "توقيع المدير",
   seal: "الختم الرسمي",
 };
