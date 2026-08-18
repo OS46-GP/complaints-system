@@ -1,0 +1,22 @@
+meta {
+  name: Preview Letter Template
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/letter-templates/{{templateId}}/preview
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body {
+  none
+}
+
+assert {
+  res.status: eq(201)
+  res.headers.content-type: contains("application/pdf")
+}

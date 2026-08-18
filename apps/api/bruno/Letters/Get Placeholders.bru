@@ -1,0 +1,18 @@
+meta {
+  name: Get Placeholders
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/letter-templates/placeholders
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+}

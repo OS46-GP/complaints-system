@@ -1,0 +1,29 @@
+meta {
+  name: Export Report
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/reports/{{reportId}}/export
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+query {
+  format: xlsx
+}
+
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.downloadUrl) {
+    bru.setVar("downloadUrl", data.downloadUrl);
+  }
+}

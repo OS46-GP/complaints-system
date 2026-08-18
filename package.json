@@ -6,11 +6,26 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:api": "npm run dev -w apps/api"
+    "web": "npm run dev -w apps/web",
+    "dev": "npm run dev -w apps/api",
+    "build": "npm run build -w apps/api",
+    "typecheck": "npm run typecheck -w apps/api",
+    "test": "npm test -w apps/api",
+    "prisma:generate": "npm run prisma:generate -w packages/db",
+    "prisma:migrate": "npm run prisma:migrate -w packages/db",
+    "prisma:studio": "npm run prisma:studio -w packages/db",
+    "prisma:seed": "npm run prisma:seed -w packages/db",
+    "bruno:test": "bru run apps/api/bruno --env Local",
+    "bruno:ci": "bru run apps/api/bruno --env CI"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.1": true,
+    "prisma@7.9.0": true,
+    "@prisma/engines@7.9.0": true
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.0",
-    "dotenv": "^17.4.2",
-    "pg": "^8.22.0"
+    "@prisma/client": "^7.9.0"
   }
 }

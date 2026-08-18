@@ -1,0 +1,34 @@
+meta {
+  name: Index All (Embeddings)
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/complaints/reindex-embeddings
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "limit": 100
+  }
+}
+
+script:post-response {
+  const data = res.getBody();
+  bru.setVar("reindexCursor", data.nextCursor);
+}
+
+assert {
+  res.status: eq(201)
+  res.body.indexed: $notNull
+  res.body.skipped: $notNull
+  res.body.nextCursor: $notNull
+}

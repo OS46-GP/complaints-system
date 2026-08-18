@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head><meta charset="utf-8"><style>
+  body { font-family: "Noto Sans Arabic", sans-serif; padding: 40px; font-size: 12px; line-height: 1.8; }
+  .letterhead { text-align: center; border-bottom: 2px solid #1a365d; padding-bottom: 16px; margin-bottom: 24px; }
+  .letterhead h1 { font-size: 20px; color: #1a365d; margin: 0 0 4px 0; }
+  .letterhead h2 { font-size: 15px; color: #2d3748; margin: 0; }
+  .letterhead .sub { font-size: 11px; color: #718096; margin-top: 4px; }
+  .ref { margin-bottom: 24px; }
+  .ref td { padding: 3px 8px; }
+  .ref td:first-child { font-weight: bold; width: 180px; }
+  .content { margin: 24px 0; line-height: 2; }
+  .content p { margin: 12px 0; }
+  .action-box { background: #f7fafc; border: 1px solid #e2e8f0; padding: 16px 20px; margin: 16px 0; border-radius: 5px; }
+  .action-box h3 { margin: 0 0 8px 0; color: #2d3748; }
+  .sig td { padding: 3px 8px; vertical-align: top; }
+  .footer { text-align: center; font-size: 10px; color: #a0aec0; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+</style></head>
+<body>
+  <div class="letterhead">
+    <h1>محافظة المنوفية</h1>
+    <h2>ديوان عام المحافظة</h2>
+    <div class="sub">إدارة شئون المواطنين - مكتب تلقي الشكاوى</div>
+  </div>
+
+  <table class="ref">
+    <tr><td>رقم الشكوى:</td><td>{{complaintNumber}}</td></tr>
+    <tr><td>تاريخ ورود الشكوى:</td><td>{{arrivalDate}}</td></tr>
+    <tr><td>اسم المواطن:</td><td>{{citizenName}}</td></tr>
+    <tr><td>الجهة المختصة:</td><td>{{department}}</td></tr>
+  </table>
+
+  <div class="content">
+    <p><strong>الموضوع:</strong> {{subject}}</p>
+    <p>السيد/ {{departmentOfficial}} ،</p>
+    <p>تحية طيبة وبعد،</p>
+    <p>إشارة إلى الشكوى المقدمة من السيد/ {{citizenName}} بموجب رقم {{complaintNumber}} والمتعلقة بـ "{{subject}}".</p>
+  </div>
+
+  <!--
+    NOTE (BE-3): The exact letterhead wording, greeting formula, and
+    signatory details above are PLACEHOLDERS pending stakeholder confirmation.
+    The final letterhead must match the official Menofia Governorate
+    document standard (likely requiring a specific header layout, seal
+    placement, and signatory title). Confirm with the stakeholder before
+    deployment.
+  -->
+
+  <div class="action-box">
+    <h3>طلب الإحاطة والتكرم بالعرض</h3>
+    <p>يرجى التكرم بالاطلاع على الشكوى المرفقة واتخاذ اللازم نحوها مع إفادة إدارة شئون المواطنين بنتيجة ما تم خلال مدة أقصاها {{responseDays}} يوماً من تاريخ ورود هذا الكتاب.</p>
+  </div>
+
+  <table class="sig">
+    <tr><td><strong>مقدمه:</strong></td><td>إدارة شئون المواطنين</td></tr>
+    <tr><td><strong>التاريخ:</strong></td><td>{{generatedDate}}</td></tr>
+  </table>
+
+  <div class="footer">محافظة المنوفية - جميع الحقوق محفوظة</div>
+</body>
+</html>

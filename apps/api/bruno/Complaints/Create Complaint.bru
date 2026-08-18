@@ -1,0 +1,51 @@
+meta {
+  name: Create Complaint
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/complaints
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "statementYear": 2026,
+    "arrivalDate": "2026-07-01T08:00:00.000Z",
+    "subject": "طلب صيانة خط مياه في قرية كفر الدوار",
+    "receptionMethodId": 1,
+    "complaintTypeId": 1,
+    "departmentId": "{{departmentId}}",
+    "examinationStatusId": 1,
+    "citizen": {
+      "fullName": "أحمد محمد علي",
+      "nationalId": "29801011234567",
+      "mobileNumber": "01012345678",
+      "address": "شارع الجمهورية، كفر الدوار",
+      "village": "كفر الدوار",
+      "district": "مركز شبين الكوم"
+    }
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.id: $notNull
+  res.body.complaintNumber: $notNull
+  res.body.subject: $notNull
+  res.body.citizen: $notNull
+  res.body.citizen.fullName: $notNull
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.id) {
+    bru.setVar("complaintId", data.id);
+  }
+}

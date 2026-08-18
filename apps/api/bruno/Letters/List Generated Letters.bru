@@ -1,0 +1,18 @@
+meta {
+  name: List Generated Letters
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/complaints/{{complaintId}}/letters
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+}

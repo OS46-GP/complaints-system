@@ -1,0 +1,29 @@
+meta {
+  name: Update Complaint
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/complaints/{{complaintId}}
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "subject": "طلب صيانة خط مياه - تم التحديث",
+    "examinationStatusId": 2,
+    "examinationResult": "تم إرسال فريق الصيانة"
+  }
+}
+
+assert {
+  res.status: eq(200)
+  res.body.id: eq({{complaintId}})
+  res.body.subject: eq("طلب صيانة خط مياه - تم التحديث")
+}

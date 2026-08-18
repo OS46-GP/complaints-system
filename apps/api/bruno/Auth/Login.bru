@@ -1,0 +1,40 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "username": "admin",
+    "password": "admin"
+  }
+}
+
+script:pre-request {
+  // No pre-request script needed
+}
+
+script:post-response {
+  // Store token for subsequent requests
+  const data = res.getBody();
+  bru.setVar("token", data.access_token);
+}
+
+assert {
+  res.status: eq(201)
+  res.body.access_token: $notNull
+  res.body.user: $notNull
+  res.body.user.id: $notNull
+  res.body.user.username: $notNull
+  res.body.user.role: $notNull
+}

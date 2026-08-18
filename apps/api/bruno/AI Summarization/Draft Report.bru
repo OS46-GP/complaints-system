@@ -1,0 +1,34 @@
+meta {
+  name: Draft Report
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/ai/draft-report
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "from": "2026-01-01",
+    "to": "2026-07-01"
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.draft: $notNull
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.draft) {
+    console.log("AI Report Draft generated successfully");
+  }
+}

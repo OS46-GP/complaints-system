@@ -1,0 +1,26 @@
+meta {
+  name: Reject Draft
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/social/drafts/{{draftId}}/reject
+  body: json
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "notes": "إعلان تجاري غير ذي صلة"
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.status: eq("Rejected")
+}

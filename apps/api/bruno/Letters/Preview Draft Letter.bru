@@ -1,0 +1,26 @@
+meta {
+  name: Preview Draft Letter (HTML)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/letter-templates/preview-draft
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "body": "<div class=\"letter-head\"><div class=\"org-name\">{{organizationNameAr}}</div></div><p class=\"to\">إلى السيد/ مدير {{department}}</p><p>{{subject}}</p><div class=\"sign\">{{managerName}}</div>"
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.headers.content-type: contains("pdf")
+}

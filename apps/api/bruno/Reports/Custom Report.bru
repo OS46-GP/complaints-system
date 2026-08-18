@@ -1,0 +1,39 @@
+meta {
+  name: Custom Report
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/reports/custom
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "dateRange": {
+      "from": "2026-01-01",
+      "to": "2026-12-31"
+    },
+    "department": "مديرية التضامن الاجتماعي",
+    "examinationStatus": "غير منتهي"
+  }
+}
+
+assert {
+  res.status: eq(200)
+  res.body.complaints: $notNull
+  res.body.total: $notNull
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.complaints && data.complaints.length > 0 && data.complaints[0].id) {
+    bru.setVar("complaintId", data.complaints[0].id);
+  }
+}

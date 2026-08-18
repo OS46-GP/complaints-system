@@ -1,0 +1,37 @@
+meta {
+  name: Create User
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/users
+  body: json
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "username": "new_official",
+    "password": "securePass123",
+    "role": "Official"
+  }
+}
+
+assert {
+  res.status: eq(201)
+  res.body.id: $notNull
+  res.body.username: eq(new_official)
+  res.body.role: eq(Official)
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (data.id) {
+    bru.setVar("userId", data.id);
+  }
+}

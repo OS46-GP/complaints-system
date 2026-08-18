@@ -1,0 +1,28 @@
+meta {
+  name: Get Departments
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/complaints/departments
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+assert {
+  res.status: eq(200)
+  res.body: $notNull
+  res.body.length: gt(0)
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (Array.isArray(data) && data.length > 0) {
+    bru.setVar("departmentId", data[0].id);
+  }
+}
