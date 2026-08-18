@@ -10,6 +10,7 @@
     "dev": "npm run dev -w apps/api",
     "build": "npm run build -w apps/api",
     "typecheck": "npm run typecheck -w apps/api",
+    "test": "npm test -w apps/api",
     "prisma:generate": "npm run prisma:generate -w packages/db",
     "prisma:migrate": "npm run prisma:migrate -w packages/db",
     "prisma:studio": "npm run prisma:studio -w packages/db",

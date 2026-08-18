@@ -6,7 +6,19 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.spec.json" }]
+    },
+    "testEnvironment": "node",
+    "coverageDirectory": "../coverage"
   },
   "dependencies": {
     "@complaints/db": "*",
@@ -44,9 +56,12 @@
     "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^2.2.0",
     "@types/node": "^26.1.1",
     "@types/passport-jwt": "^4.0.1",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.12",
     "typescript": "^6.0.3"
   }
 }
