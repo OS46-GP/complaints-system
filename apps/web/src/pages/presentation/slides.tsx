@@ -1219,7 +1219,7 @@ const REFERENCES = [
     hint: "github.com/OS46-GP/complaints-system",
     href: "https://github.com/OS46-GP/complaints-system",
   },
-  { icon: BookOpen, label: "API Documentation", hint: "docs/ · coming soon" },
+  { icon: BookOpen, label: "API Documentation", hint: "docs/DOCUMENTATION.pdf · USER-GUIDE.pdf", href: "https://github.com/OS46-GP/complaints-system/blob/dev/docs/DOCUMENTATION.pdf" },
   { icon: SquareKanban, label: "Trello", hint: "Project board" },
   {
     icon: Palette,
@@ -1238,7 +1238,7 @@ export function ReferencesSlide() {
         kicker="References"
         icon={Columns3}
         title="Useful links"
-        subtitle="All source code and documentation live in the GitHub repository — docs will be published under docs/ and linked here."
+        subtitle="All source code and documentation live in the GitHub repository — documentation PDFs are published under docs/ and linked here."
       />
       <div className="grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
         {REFERENCES.map((r, i) => (
