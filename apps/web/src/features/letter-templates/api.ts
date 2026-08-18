@@ -49,9 +49,9 @@ export const letterTemplatesApi = {
       { responseType: "blob" },
     );
     if (res.data && res.data.size > 0) {
-      const url = URL.createObjectURL(res.data);
-      window.open(url, "_blank", "noopener,noreferrer");
+      return URL.createObjectURL(res.data);
     }
+    return null;
   },
   generate: (complaintId: string, templateId: string) =>
     axiosClient
