@@ -8,7 +8,7 @@ interface ComplaintTypeCardProps {
 
 export function ComplaintTypeCard({ type, onEdit }: ComplaintTypeCardProps) {
   return (
-    <div className="bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div className="h-full bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="font-heading text-[1rem] text-foreground break-all">

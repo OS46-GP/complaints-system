@@ -26,7 +26,7 @@ export function LetterTemplateCard({ template, onEdit }: LetterTemplateCardProps
   return (
     <>
       <Card
-        className="group p-4 md:p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
+        className="group h-full p-4 md:p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
         onClick={() => navigate(PATHS.ADMIN.LETTER_TEMPLATE_EDIT(template.id))}
       >
       <div className="flex items-start justify-between gap-3">
@@ -58,7 +58,7 @@ export function LetterTemplateCard({ template, onEdit }: LetterTemplateCardProps
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 mt-1">
+      <div className="flex items-center justify-between gap-2 mt-auto pt-1">
         <Button
           variant="outline"
           size="sm"

@@ -26,7 +26,7 @@ interface UserCardProps {
 
 export function UserCard({ user }: UserCardProps) {
   return (
-    <div className="bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div className="h-full bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2">
