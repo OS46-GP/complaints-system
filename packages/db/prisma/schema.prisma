@@ -394,6 +394,13 @@ enum LetterTemplateType {
   PDF_LETTERHEAD
 }
 
+enum LetterVariableType {
+  text
+  textarea
+  date
+  image
+}
+
 model LetterTemplate {
   id          String             @id @default(cuid())
   name        String
@@ -411,6 +418,24 @@ model LetterTemplate {
   generations LetterGeneration[]
 
   @@index([isActive])
+}
+
+model LetterVariable {
+  id           String             @id @default(cuid())
+  key          String             @unique
+  labelAr      String
+  type         LetterVariableType @default(text)
+  defaultValue String?
+  imageUrl     String?
+  fallbackText String?
+  required     Boolean            @default(false)
+  isSystem     Boolean            @default(false)
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([isActive])
+  @@index([isSystem])
 }
 
 model LetterSettings {

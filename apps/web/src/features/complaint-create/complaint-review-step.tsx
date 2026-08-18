@@ -92,10 +92,15 @@ export function ComplaintReviewStep({ ocrFields, onGoToStep }: ComplaintReviewSt
   const departmentsWatch = useWatch({ control: form.control, name: "departments" }) ?? [];
   const fileItems = useWatch({ control: form.control, name: "files" }) ?? [];
   const departmentNames = departmentsWatch
-    .map(
-      (assignment) =>
-        departments?.find((department) => department.id === assignment.departmentId)?.name,
-    )
+    .map((assignment) => {
+      const department = departments?.find(
+        (item) => item.id === assignment.departmentId,
+      );
+      if (!department) return undefined;
+      return department.subAuthority
+        ? `${department.name} — ${department.subAuthority}`
+        : department.name;
+    })
     .filter((name): name is string => Boolean(name));
   const isOcr = (field: string) => ocrFields?.has(field) ?? false;
   const fileNames = fileItems.map((f) => f.file.name);

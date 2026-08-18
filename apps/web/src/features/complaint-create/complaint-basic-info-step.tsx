@@ -204,7 +204,7 @@ export function ComplaintBasicInfoStep({ ocrFields }: ComplaintBasicInfoStepProp
                     <SelectContent>
                       {departmentsForRow(index).map((d) => (
                         <SelectItem key={d.id} value={d.id}>
-                          {d.name}
+                          {d.subAuthority ? `${d.name} — ${d.subAuthority}` : d.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

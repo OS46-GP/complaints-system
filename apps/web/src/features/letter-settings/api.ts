@@ -19,4 +19,8 @@ export const letterSettingsApi = {
       .post<LetterSettings>(`/api/letter-settings/images/${field}`, formData)
       .then((res) => res.data);
   },
+  removeImage: (field: LetterSettingImageField) =>
+    axiosClient
+      .delete<LetterSettings>(`/api/letter-settings/images/${field}`)
+      .then((res) => res.data),
 };

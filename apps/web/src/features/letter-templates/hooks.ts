@@ -2,11 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { letterTemplatesApi } from "@/features/letter-templates/api";
+import { letterVariablesApi } from "@/features/letter-variables/api";
+import { LETTER_VARIABLE_QUERY_KEYS } from "@/features/letter-variables/hooks";
+import type { LetterVariablePlaceholder } from "@/features/letter-variables/types";
 import { resolveDownloadUrl } from "@/features/reporting/api";
 
 export const LETTER_QUERY_KEYS = {
   templates: ["letter-templates"] as const,
-  placeholders: ["letter-templates-placeholders"] as const,
+  placeholders: LETTER_VARIABLE_QUERY_KEYS.list,
   generated: (complaintId: string) => ["letter-generations", complaintId] as const,
 };
 
@@ -36,8 +39,22 @@ export function useActiveLetterTemplates() {
 
 export function useLetterPlaceholders() {
   return useQuery({
-    queryKey: LETTER_QUERY_KEYS.placeholders,
-    queryFn: () => letterTemplatesApi.placeholders(),
+    queryKey: [...LETTER_QUERY_KEYS.placeholders, "active"],
+    queryFn: async () => {
+      const rows = await letterVariablesApi.list(true);
+      return rows.map(
+        (row): LetterVariablePlaceholder => ({
+          id: row.id,
+          key: row.key,
+          label: row.labelAr,
+          type: row.type,
+          required: row.required,
+          defaultValue: row.defaultValue,
+          imageUrl: row.imageUrl,
+          fallbackText: row.fallbackText,
+        }),
+      );
+    },
   });
 }
 

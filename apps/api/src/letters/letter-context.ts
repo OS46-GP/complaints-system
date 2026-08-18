@@ -14,14 +14,28 @@ export const CASE_STATUS_LABELS: Record<string, string> = {
 };
 
 export const IMAGE_PLACEHOLDER_KEYS = [
-  "organizationLetterhead",
   "managerSignature",
   "seal",
 ] as const;
 
-export interface PlaceholderItem {
-  key: string;
-  label: string;
+export const LETTER_VARIABLE_NOW = "NOW";
+
+export function resolveLetterVariableDefaultValue(
+  defaultValue: string | null | undefined,
+  type: string | null | undefined,
+  now: Date,
+): string | undefined {
+  if (!defaultValue) return undefined;
+  if (defaultValue.trim() === LETTER_VARIABLE_NOW) {
+    const date = now.toLocaleDateString("ar-EG");
+    if (type === "date") return date;
+    const time = now.toLocaleTimeString("ar-EG", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${date} ${time}`;
+  }
+  return defaultValue;
 }
 
 export interface TemplateVariable {
@@ -29,80 +43,11 @@ export interface TemplateVariable {
   label: string;
   required?: boolean;
   placeholder?: string;
-  type?: "text" | "textarea" | "date";
-  group?: string;
+  type?: "text" | "textarea" | "date" | "image";
   defaultValue?: string;
+  imageUrl?: string | null;
+  fallbackText?: string | null;
 }
-
-export interface PlaceholderGroup {
-  group: string;
-  label: string;
-  items: PlaceholderItem[];
-}
-
-export const PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
-  {
-    group: "complaint",
-    label: "بيانات الشكوى",
-    items: [
-      { key: "complaintNumber", label: "رقم الشكوى" },
-      { key: "statementYear", label: "سنة البيان" },
-      { key: "arrivalDate", label: "تاريخ الوصول" },
-      { key: "severity", label: "الدرجة" },
-      { key: "department", label: "الجهة المختصة" },
-      { key: "departmentOfficial", label: "السيد/ مدير الجهة" },
-      { key: "complaintType", label: "فئة الشكوى" },
-      { key: "receptionMethod", label: "طريقة الاستلام" },
-      { key: "examinationStatus", label: "حالة الفحص" },
-      { key: "presentationStatus", label: "حالة العرض" },
-      { key: "caseStatus", label: "حالة القضية" },
-      { key: "citizenName", label: "اسم المواطن" },
-      { key: "citizenNationalId", label: "الرقم القومي" },
-      { key: "citizenMobile", label: "الهاتف" },
-      { key: "citizenAddress", label: "العنوان" },
-      { key: "citizenVillage", label: "القرية" },
-      { key: "citizenDistrict", label: "المركز" },
-      { key: "subject", label: "موضوع الشكوى" },
-      { key: "annotation", label: "الملاحظات" },
-      { key: "respondentName", label: "اسم المسؤول" },
-      { key: "authorityResponseText", label: "رد الجهة المختصة" },
-      { key: "authorityResponseDate", label: "تاريخ الرد" },
-      { key: "incomingResponseNumber", label: "رقم الرد الوارد" },
-      { key: "archiveNumber", label: "رقم الأرشيف" },
-      { key: "archiveDate", label: "تاريخ الأرشفة" },
-      { key: "archiveLocation", label: "موقع الأرشيف" },
-      { key: "createdBy", label: "أدخلها" },
-      { key: "createdAt", label: "تاريخ الإدخال" },
-    ],
-  },
-  {
-    group: "settings",
-    label: "بيانات الجهة والمدير",
-    items: [
-      { key: "organizationNameAr", label: "اسم الجهة (عربي)" },
-      { key: "organizationNameEn", label: "اسم الجهة (إنجليزي)" },
-      { key: "organizationAddress", label: "عنوان الجهة" },
-      { key: "organizationPhone", label: "هاتف الجهة" },
-      { key: "organizationFax", label: "فاكس الجهة" },
-      { key: "organizationEmail", label: "البريد الإلكتروني" },
-      { key: "organizationWebsite", label: "الموقع الإلكتروني" },
-      { key: "organizationLetterhead", label: "ترويسة الجهة (صورة)" },
-      { key: "managerName", label: "اسم المدير" },
-      { key: "managerTitle", label: "صفة المدير" },
-      { key: "managerSignature", label: "توقيع المدير (صورة)" },
-      { key: "seal", label: "الختم الرسمي (صورة)" },
-      { key: "responseDefaultDays", label: "مدة الرد المطلوبة (أيام)" },
-    ],
-  },
-  {
-    group: "special",
-    label: "بيانات الإصدار",
-    items: [
-      { key: "generatedDate", label: "تاريخ إصدار الخطاب" },
-      { key: "generatedTime", label: "وقت إصدار الخطاب" },
-    ],
-  },
-];
 
 export function escapeHtml(value: string): string {
   return (value ?? "")
@@ -142,7 +87,12 @@ export function missingRequiredVariables(
 ): string[] {
   if (!templateVariables?.length) return [];
   return templateVariables
-    .filter((v) => v.required && !(values?.[v.key] ?? "").trim())
+    .filter(
+      (v) =>
+        v.type !== "image" &&
+        v.required &&
+        !(values?.[v.key] ?? "").trim(),
+    )
     .map((v) => v.label);
 }
 
@@ -178,7 +128,6 @@ export interface LetterSettingsRow {
   organizationFax: string | null;
   organizationEmail: string | null;
   organizationWebsite: string | null;
-  organizationLetterhead: string | null;
   managerName: string | null;
   managerTitle: string | null;
   managerSignature: string | null;
@@ -220,6 +169,15 @@ export interface LetterComplaintSource {
 export interface LetterContext {
   data: Record<string, string>;
   images: Record<string, string>;
+  imageFallbacks?: Record<string, string>;
+}
+
+export function imageUrlToStorageKey(
+  url: string | null | undefined,
+): string | null | undefined {
+  if (!url) return url;
+  const clean = url.replace(/^\/uploads\//, "");
+  return clean === url ? null : clean;
 }
 
 export function buildLetterContext(

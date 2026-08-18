@@ -4,7 +4,6 @@ import type {
   GenerateLetterResult,
   GeneratedLetter,
   LetterTemplate,
-  PlaceholderGroup,
   UpdateLetterTemplatePayload,
 } from "@/features/letter-templates/types";
 
@@ -43,10 +42,6 @@ export const letterTemplatesApi = {
     );
     return res.data;
   },
-  placeholders: () =>
-    axiosClient
-      .get<PlaceholderGroup[]>("/api/letter-templates/placeholders")
-      .then((res) => res.data),
   preview: async (id: string) => {
     const res = await axiosClient.post(
       `/api/letter-templates/${id}/preview`,
@@ -54,9 +49,9 @@ export const letterTemplatesApi = {
       { responseType: "blob" },
     );
     if (res.data && res.data.size > 0) {
-      const url = URL.createObjectURL(res.data);
-      window.open(url, "_blank", "noopener,noreferrer");
+      return URL.createObjectURL(res.data);
     }
+    return null;
   },
   generate: (complaintId: string, templateId: string) =>
     axiosClient

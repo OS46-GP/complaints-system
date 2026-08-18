@@ -38,3 +38,16 @@ export function useUploadLetterImage() {
     onError: () => toast.error("تعذر رفع الصورة. تأكد من امتداد وحجم الملف."),
   });
 }
+
+export function useRemoveLetterImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (field: LetterSettingImageField) =>
+      letterSettingsApi.removeImage(field),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: LETTER_SETTINGS_QUERY_KEY });
+      toast.success("تم حذف الصورة بنجاح");
+    },
+    onError: () => toast.error("تعذر حذف الصورة. حاول مرة أخرى."),
+  });
+}

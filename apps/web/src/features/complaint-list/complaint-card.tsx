@@ -28,7 +28,7 @@ export function ComplaintCard({
   return (
     <div
       className={cn(
-        "bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer",
+        "h-full bg-surface-container-lowest border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer",
         selected && "border-primary/50 bg-primary/5",
       )}
       onClick={() => navigate(detailPath)}

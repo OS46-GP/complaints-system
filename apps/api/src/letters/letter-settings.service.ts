@@ -6,7 +6,6 @@ import { uploadRoot } from "./letter-context";
 import { UpdateLetterSettingsDto } from "./dto/update-letter-settings.dto";
 
 export const LETTER_SETTING_IMAGE_FIELDS = [
-  "organizationLetterhead",
   "managerSignature",
   "seal",
 ] as const;
@@ -40,7 +39,6 @@ export class LetterSettingsService {
         : null;
     return {
       ...settings,
-      organizationLetterheadUrl: imageUrl("organizationLetterhead"),
       managerSignatureUrl: imageUrl("managerSignature"),
       sealUrl: imageUrl("seal"),
     };
@@ -85,5 +83,26 @@ export class LetterSettingsService {
       downloadUrl: `/uploads/${storageKey}`,
       ...settings,
     };
+  }
+
+  async removeImage(field: LetterSettingImageField) {
+    if (!LETTER_SETTING_IMAGE_FIELDS.includes(field)) {
+      throw new NotFoundException("حقل الصورة غير صالح");
+    }
+
+    const settings = await this.getOrCreate();
+    const storageKey = settings[field];
+    if (storageKey) {
+      const fullPath = path.resolve(uploadRoot(), storageKey);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+      await this.prisma.client.letterSettings.update({
+        where: { id: 1 },
+        data: { [field]: null },
+      });
+    }
+
+    return this.toDto();
   }
 }

@@ -4,14 +4,17 @@ export const LETTER_TYPE_LABELS: Record<LetterTemplateType, string> = {
   HTML: "HTML",
 };
 
+export type TemplateVariableType = "text" | "textarea" | "date" | "image";
+
 export interface TemplateVariable {
   key: string;
   label?: string;
   required?: boolean;
   placeholder?: string;
-  type?: "text" | "textarea" | "date";
-  group?: string;
-  defaultValue: string;
+  type?: TemplateVariableType;
+  defaultValue?: string;
+  imageUrl?: string | null;
+  fallbackText?: string | null;
 }
 
 export interface LetterTemplate {
@@ -40,17 +43,6 @@ export interface CreateLetterTemplatePayload {
 }
 
 export type UpdateLetterTemplatePayload = Partial<CreateLetterTemplatePayload>;
-
-export interface PlaceholderItem {
-  key: string;
-  label: string;
-}
-
-export interface PlaceholderGroup {
-  group: string;
-  label: string;
-  items: PlaceholderItem[];
-}
 
 export interface GeneratedLetter {
   id: string;

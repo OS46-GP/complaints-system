@@ -16,6 +16,7 @@ import {
   CalendarClock,
   FileStack,
   Landmark,
+  Braces,
 } from "lucide-react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -59,6 +60,7 @@ const navGroups: NavGroup[] = [
       { title: "الفئات", url: PATHS.ADMIN.COMPLAINT_TYPES, icon: Tags },
       { title: "طرق الاستلام", url: PATHS.ADMIN.RECEPTION_METHODS, icon: Inbox },
       { title: "نماذج الخطابات", url: PATHS.ADMIN.LETTER_TEMPLATES, icon: FileStack },
+      { title: "متغيرات الخطابات", url: PATHS.ADMIN.LETTER_VARIABLES, icon: Braces },
       { title: "بيانات الجهة والخطابات", url: PATHS.ADMIN.LETTER_SETTINGS, icon: Landmark },
       { title: "الموظفون", url: PATHS.ADMIN.USERS, icon: Users },
     ],

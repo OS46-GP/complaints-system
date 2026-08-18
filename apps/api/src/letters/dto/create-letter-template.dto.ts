@@ -33,19 +33,23 @@ export class LetterTemplateVariableDto {
   @IsOptional()
   placeholder?: string;
 
-  @IsIn(["text", "textarea", "date"], {
+  @IsIn(["text", "textarea", "date", "image"], {
     message: "نوع المتغير غير صالح",
   })
   @IsOptional()
-  type?: "text" | "textarea" | "date";
-
-  @IsString()
-  @IsOptional()
-  group?: string;
+  type?: "text" | "textarea" | "date" | "image";
 
   @IsString()
   @IsOptional()
   defaultValue?: string;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  fallbackText?: string;
 }
 
 export class CreateLetterTemplateDto {

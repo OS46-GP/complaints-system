@@ -63,6 +63,9 @@ const AdminLetterTemplateEditPage = lazy(
 const AdminLetterSettingsPage = lazy(
   () => import("@/pages/admin/letter-settings"),
 );
+const AdminLetterVariablesPage = lazy(
+  () => import("@/pages/admin/letter-variables"),
+);
 const AdminDepartmentsPage = lazy(() => import("@/pages/admin/departments"));
 const AdminCreateUserPage = lazy(() => import("@/pages/admin/create-user"));
 const AdminUserDetailPage = lazy(() => import("@/pages/admin/user-detail"));
@@ -358,6 +361,14 @@ const AppRouter = () => {
               element={
                 <SuspenseBoundary>
                   <AdminLetterSettingsPage />
+                </SuspenseBoundary>
+              }
+            />
+            <Route
+              path={PATHS.ADMIN.LETTER_VARIABLES}
+              element={
+                <SuspenseBoundary>
+                  <AdminLetterVariablesPage />
                 </SuspenseBoundary>
               }
             />

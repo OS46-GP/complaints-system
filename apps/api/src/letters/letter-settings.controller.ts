@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -14,7 +15,10 @@ import { UserRole } from "@prisma/client";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
-import { LetterSettingsService } from "./letter-settings.service";
+import {
+  LetterSettingsService,
+  LetterSettingImageField,
+} from "./letter-settings.service";
 import { UpdateLetterSettingsDto } from "./dto/update-letter-settings.dto";
 
 @Controller("letter-settings")
@@ -38,10 +42,15 @@ export class LetterSettingsController {
   @Post("images/:field")
   @UseInterceptors(FileInterceptor("file"))
   uploadImage(
-    @Param("field")
-    field: "organizationLetterhead" | "managerSignature" | "seal",
+    @Param("field") field: LetterSettingImageField,
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.settingsService.uploadImage(field, file);
+  }
+
+  @Roles(UserRole.Admin)
+  @Delete("images/:field")
+  removeImage(@Param("field") field: LetterSettingImageField) {
+    return this.settingsService.removeImage(field);
   }
 }

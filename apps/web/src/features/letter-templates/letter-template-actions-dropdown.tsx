@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { LetterPreviewDialog } from "@/features/letter-templates/letter-preview-dialog";
 import {
   useDeleteLetterTemplate,
   usePreviewLetterTemplate,
@@ -26,9 +27,15 @@ export function LetterTemplateActionsDropdown({
   onEdit,
 }: LetterTemplateActionsDropdownProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const deleteMutation = useDeleteLetterTemplate();
   const previewMutation = usePreviewLetterTemplate();
   const isPending = deleteMutation.isPending || previewMutation.isPending;
+
+  const openPreview = () =>
+    previewMutation.mutate(template.id, {
+      onSuccess: (url) => url && setPreviewUrl(url),
+    });
 
   return (
     <>
@@ -40,7 +47,7 @@ export function LetterTemplateActionsDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-44">
           <DropdownMenuItem
-            onClick={() => previewMutation.mutate(template.id)}
+            onClick={openPreview}
             disabled={isPending}
             className="w-full gap-2"
           >
@@ -77,6 +84,15 @@ export function LetterTemplateActionsDropdown({
             onSuccess: () => setDeleteOpen(false),
           })
         }
+      />
+
+      <LetterPreviewDialog
+        open={!!previewUrl}
+        onOpenChange={(open) => {
+          if (!open) setPreviewUrl(null);
+        }}
+        url={previewUrl}
+        title={`معاينة: ${template.name}`}
       />
     </>
   );
