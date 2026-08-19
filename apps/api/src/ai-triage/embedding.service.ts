@@ -24,6 +24,9 @@ export class EmbeddingService {
     this.pgVector = new PgVector({
       id: 'complaint-embeddings',
       connectionString: process.env.DATABASE_URL!,
+      // Runtime-managed schema, outside Prisma's scope (Prisma manages only
+      // "public"; see prisma/schema.prisma datasource) — keeps migrate clean.
+      schemaName: 'embeddings',
     });
 
     this.embeddingModel = resolveEmbeddingModel(process.env.EMBEDDING_MODEL);
