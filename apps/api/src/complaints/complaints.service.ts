@@ -100,7 +100,7 @@ const complaintInclude = {
   citizen: true,
   department: true,
   departments: {
-    include: { department: true },
+    include: { department: true, examinationStatus: true },
     orderBy: [{ assignmentIndex: "asc" }, { createdAt: "asc" }],
   },
   urgencies: {

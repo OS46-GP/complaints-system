@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsIn, IsNumber, Min, ValidateNested, IsObject, IsDateString } from "class-validator";
+import { IsOptional, IsString, IsIn, IsNumber, Min, Max, ValidateNested, IsObject, IsDateString } from "class-validator";
 import { Type } from "class-transformer";
 
 class DateRangeDto {
@@ -104,6 +104,19 @@ export class DepartmentDetailQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(200)
+  limit?: number = 20;
 }
 
 
@@ -124,6 +137,19 @@ export class CustomReportBodyDto {
   @IsOptional()
   @IsString()
   examinationStatus?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(200)
+  limit?: number = 20;
 }
 
 export class CustomReportExportBodyDto extends CustomReportBodyDto {

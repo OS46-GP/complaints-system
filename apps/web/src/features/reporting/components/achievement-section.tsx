@@ -2,6 +2,8 @@ import { Fragment, useState } from "react";
 import { CheckCircle2, ChevronDown, Loader2, Target } from "lucide-react";
 
 import { ReportResultTable } from "@/features/reporting/components/report-result-table";
+import { ComplaintDetailsButton } from "@/features/reporting/components/complaint-details-button";
+import { ReportListPagination } from "@/features/reporting/components/report-list-pagination";
 import type { DataTableColumn } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,6 +13,8 @@ import type {
   AchievementReport,
   ReportFilters,
 } from "@/features/reporting/types";
+
+const INLINE_PAGE_SIZE = 20;
 
 const SEVERITY_META: Record<string, { label: string; chip: string }> = {
   High: {
@@ -37,6 +41,7 @@ const columns: DataTableColumn[] = [
 interface AchievementSectionProps {
   report: AchievementReport;
   filters?: ReportFilters;
+  showTotals?: boolean;
 }
 
 function AchievementDepartmentDetail({
@@ -51,20 +56,46 @@ function AchievementDepartmentDetail({
   inlineComplaints?: AchievementComplaint[];
 }) {
   const useInline = inlineComplaints != null;
+  const [inlinePage, setInlinePage] = useState(1);
+  const [serverPage, setServerPage] = useState(1);
   const { data, isFetching } = useAchievementDepartmentComplaints(
     useInline ? null : department,
     filters,
     isOpen && !useInline,
+    serverPage,
   );
 
   if (!isOpen) return null;
 
-  const complaints = inlineComplaints ?? data?.complaints ?? [];
+  let complaints: AchievementComplaint[];
+  let total: number;
+  let totalPages: number;
+  let page: number;
+
+  if (useInline) {
+    total = inlineComplaints.length;
+    totalPages = Math.max(1, Math.ceil(total / INLINE_PAGE_SIZE));
+    page = Math.min(inlinePage, totalPages);
+    complaints = inlineComplaints.slice(
+      (page - 1) * INLINE_PAGE_SIZE,
+      page * INLINE_PAGE_SIZE,
+    );
+  } else {
+    complaints = data?.complaints ?? [];
+    total = data?.total ?? 0;
+    totalPages = data?.totalPages ?? 1;
+    page = data?.page ?? serverPage;
+  }
+
+  const handlePageChange = (next: number) => {
+    if (useInline) setInlinePage(next);
+    else setServerPage(next);
+  };
 
   return (
     <tr className="border-b border-border bg-surface-container-lowest/60 last:border-b-0">
       <td colSpan={columns.length} className="px-6 py-4">
-        <div className="grid gap-2">
+        <div className="grid gap-3">
           {isFetching ? (
             <p className="flex items-center justify-center gap-2 py-4 text-label-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
@@ -75,49 +106,60 @@ function AchievementDepartmentDetail({
               لا توجد تفاصيل للجهة في هذه الفترة
             </p>
           ) : (
-            complaints.map((complaint) => (
-              <div
-                key={complaint.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5"
-              >
-                <div className="flex min-w-0 flex-col gap-1">
-                  <span className="truncate font-heading text-label-sm text-foreground">
-                    {complaint.subject || "بدون موضوع"}
-                  </span>
-                  <span className="flex flex-wrap items-center gap-2 text-label-sm text-muted-foreground">
-                    {complaint.citizenName}
-                    {complaint.severity && (
+            <>
+              <div className="grid gap-2">
+                {complaints.map((complaint) => (
+                  <div
+                    key={complaint.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5"
+                  >
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="truncate font-heading text-label-sm text-foreground">
+                        {complaint.subject || "بدون موضوع"}
+                      </span>
+                      <span className="flex flex-wrap items-center gap-2 text-label-sm text-muted-foreground">
+                        {complaint.citizenName}
+                        {complaint.severity && (
+                          <span
+                            className={cn(
+                              "inline-flex h-5 items-center rounded-full px-2 font-mono text-mono-data",
+                              SEVERITY_META[complaint.severity]?.chip,
+                            )}
+                          >
+                            {SEVERITY_META[complaint.severity]?.label ?? complaint.severity}
+                          </span>
+                        )}
+                        <span dir="ltr" className="font-mono text-mono-data">
+                          #{complaint.complaintNumber}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <span className="text-label-sm text-muted-foreground">
+                        {new Date(complaint.arrivalDate).toLocaleDateString("ar-EG")}
+                      </span>
                       <span
                         className={cn(
                           "inline-flex h-5 items-center rounded-full px-2 font-mono text-mono-data",
-                          SEVERITY_META[complaint.severity]?.chip,
+                          complaint.finished
+                            ? "bg-green-500/10 text-green-600"
+                            : "bg-amber-500/10 text-amber-600",
                         )}
                       >
-                        {SEVERITY_META[complaint.severity]?.label ?? complaint.severity}
+                        {complaint.finished ? "منتهية" : "غير منتهية"}
                       </span>
-                    )}
-                    <span dir="ltr" className="font-mono text-mono-data">
-                      #{complaint.complaintNumber}
-                    </span>
-                  </span>
-                </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <span className="text-label-sm text-muted-foreground">
-                    {new Date(complaint.arrivalDate).toLocaleDateString("ar-EG")}
-                  </span>
-                  <span
-                    className={cn(
-                      "inline-flex h-5 items-center rounded-full px-2 font-mono text-mono-data",
-                      complaint.finished
-                        ? "bg-green-500/10 text-green-600"
-                        : "bg-amber-500/10 text-amber-600",
-                    )}
-                  >
-                    {complaint.finished ? "منتهية" : "غير منتهية"}
-                  </span>
-                </div>
+                      <ComplaintDetailsButton complaintId={complaint.id} label="عرض" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))
+              <ReportListPagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                onPageChange={handlePageChange}
+              />
+            </>
           )}
         </div>
       </td>
@@ -125,20 +167,16 @@ function AchievementDepartmentDetail({
   );
 }
 
-export function AchievementSection({ report, filters }: AchievementSectionProps) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+export function AchievementSection({
+  report,
+  filters,
+  showTotals = true,
+}: AchievementSectionProps) {
+  const [expanded, setExpanded] = useState<string | null>(null);
   const { departments } = report;
 
   const toggle = (department: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(department)) {
-        next.delete(department);
-      } else {
-        next.add(department);
-      }
-      return next;
-    });
+    setExpanded((prev) => (prev === department ? null : department));
   };
 
   return (
@@ -147,21 +185,23 @@ export function AchievementSection({ report, filters }: AchievementSectionProps)
         <h2 className="font-heading text-title-sm md:text-title-md text-foreground">
           نسبة الإنجاز حسب الجهة
         </h2>
-        <div className="flex flex-wrap items-center gap-4 text-label-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <Target className="size-4 text-primary" />
-            الإجمالي: {report.governorateTotal.toLocaleString("ar-SA")}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <CheckCircle2 className="size-4 text-green-600" />
-            المنتهية: {report.governorateFinished.toLocaleString("ar-SA")}
-          </span>
-        </div>
+        {showTotals && (
+          <div className="flex flex-wrap items-center gap-4 text-label-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Target className="size-4 text-primary" />
+              الإجمالي: {report.governorateTotal.toLocaleString("ar-SA")}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="size-4 text-green-600" />
+              المنتهية: {report.governorateFinished.toLocaleString("ar-SA")}
+            </span>
+          </div>
+        )}
       </div>
 
       <ReportResultTable columns={columns} emptyText="لا توجد شكاوى في هذه الفترة">
         {departments.map((row) => {
-          const isOpen = expanded.has(row.department);
+          const isOpen = expanded === row.department;
           return (
             <Fragment key={row.department}>
               <tr className="border-b border-border last:border-b-0">
