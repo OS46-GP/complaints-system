@@ -217,8 +217,11 @@ function draftHasContent(draft: ComplaintDraft): boolean {
 export function ComplaintCreateForm() {
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
-  const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
-  const ocrPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINT_OCR : PATHS.ADMIN.COMPLAINT_OCR;
+  const isUser = pathname.startsWith("/user");
+  const ocrPath = isUser ? PATHS.USER.COMPLAINT_OCR : PATHS.ADMIN.COMPLAINT_OCR;
+  const detailPath = isUser
+    ? PATHS.USER.COMPLAINT_DETAIL
+    : PATHS.ADMIN.COMPLAINT_DETAIL;
   const createMutation = useCreateComplaint();
   const linkDraftMutation = useLinkDraft();
 
@@ -474,7 +477,7 @@ export function ComplaintCreateForm() {
           }
         }
         toast.success("تم تقديم الشكوى بنجاح");
-        navigate(listPath);
+        navigate(detailPath(created.id));
       },
       onError: () => {
         toast.error("حدث خطأ أثناء تقديم الشكوى");
