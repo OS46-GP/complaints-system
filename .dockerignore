@@ -1,0 +1,34 @@
+# VCS / tooling
+.git
+.github
+
+# Dependencies — installed fresh inside the build (from package-lock.json)
+node_modules
+**/node_modules
+
+# Build outputs — generated in the builder stage
+dist
+**/dist
+coverage
+**/coverage
+*.tsbuildinfo
+
+# Ignored project data
+docs
+uploads
+backup.sql
+backups
+*.log
+*.log.*
+
+# Secrets — never enter the build context
+.env
+.env.local
+.env.*
+deploy/.env.production
+!deploy/env.example
+
+# Local tooling
+.prisma
+apps/api/bruno
+docs/configs/typst

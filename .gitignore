@@ -10,3 +10,4 @@ backup.sql
 backups/
 docs/templates/
 *.tsbuildinfo
+deploy/.env.production

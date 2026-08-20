@@ -16,12 +16,14 @@ import { IntakeModule } from "./intake/intake.module";
 import { SettingsModule } from "./settings/settings.module";
 import { LettersModule } from "./letters/letters.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { HealthModule } from "./health/health.module";
 import { RequestLoggingMiddleware } from "./common/request-logging.middleware";
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     PrismaModule,
+    HealthModule,
     AuthModule,
     UsersModule,
     ProfileModule,
