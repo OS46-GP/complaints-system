@@ -662,9 +662,9 @@ export class ComplaintsService {
     }
 
     const status = computeAssignmentStatus(target);
-    if (status !== "ACTIVE") {
+    if (status !== "OVERDUE") {
       throw new BadRequestException(
-        "Cannot send an urgency request: the assignment reached its deadline or is no longer active",
+        "Cannot send an urgency request: the assignment deadline has not ended yet or it is not active/overdue",
       );
     }
 
