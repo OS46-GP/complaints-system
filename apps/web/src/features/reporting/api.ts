@@ -1,4 +1,4 @@
-import { axiosClient } from "@/api/axios-client";
+import { axiosClient, AI_REQUEST_TIMEOUT } from "@/api/axios-client";
 import type {
   CustomReportFilters,
   CustomReportResult,
@@ -146,6 +146,8 @@ export const reportingApi = {
 
   draftPeriodReport: (from: string, to: string) =>
     axiosClient
-      .post<{ draft: string }>("/api/ai/draft-report", { from, to })
+      .post<{ draft: string }>("/api/ai/draft-report", { from, to }, {
+        timeout: AI_REQUEST_TIMEOUT,
+      })
       .then((res) => res.data),
 };
