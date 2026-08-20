@@ -1,6 +1,6 @@
 import { Toaster } from "sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import AppRouter from "./router";
 import { queryClient } from "./lib/query-client";
@@ -25,7 +25,7 @@ export default function App() {
             <QueryClientProvider client={queryClient}>
               <AppRouter />
               <ThemedToaster />
-              <ReactQueryDevtools initialIsOpen={false} />
+              {/* <ReactQueryDevtools initialIsOpen={false} /> */}
             </QueryClientProvider>
           </TooltipProvider>
         </PreferencesProvider>

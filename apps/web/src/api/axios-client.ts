@@ -9,6 +9,12 @@ export const axiosClient = axios.create({
   timeout: 10000,
 });
 
+// AI generation (summaries, reports, triage) is inherently slow — it can take
+// 8–15s+ on a single request, and the backend retries on rate-limits with
+// backoff. The default 10s timeout is too tight for these calls, so they use
+// this dedicated, much longer timeout.
+export const AI_REQUEST_TIMEOUT = 180000;
+
 axiosClient.interceptors.request.use((config) => {
   const token = getAuthToken();
   if (token) {

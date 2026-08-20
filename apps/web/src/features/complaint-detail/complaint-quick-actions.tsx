@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import {
-  Pencil,
   MessageSquareReply,
   Archive,
   Sparkles,
@@ -45,9 +44,6 @@ export function ComplaintQuickActions({
   const pdfMutation = useGenerateComplaintPdf();
   const caseStatusMutation = useUpdateCaseStatus(complaintId);
   const isAdmin = pathname.startsWith("/admin");
-  const editPath = isAdmin
-    ? `/admin/complaints/${complaintId}/edit`
-    : `/user/complaints/${complaintId}/edit`;
   const responsePath = isAdmin
     ? `/admin/complaints/${complaintId}/response`
     : `/user/complaints/${complaintId}/response`;
@@ -65,7 +61,6 @@ export function ComplaintQuickActions({
 
   const actions: ActionItem[] = [
     { icon: <Sparkles className="size-5" />, label: "الملخص الذكي", onClick: () => setSummaryOpen(true) },
-    { icon: <Pencil className="size-5" />, label: "تعديل الشكوى", onClick: () => navigate(editPath) },
     { icon: <MessageSquareReply className="size-5" />, label: "إضافة رد", onClick: () => navigate(responsePath) },
     { icon: <Repeat className="size-5" />, label: "إعادة إحالة", onClick: () => navigate(reassignPath) },
     { icon: <Zap className="size-5" />, label: "استعجال", onClick: () => navigate(urgencyPath) },

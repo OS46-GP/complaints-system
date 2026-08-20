@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
-import { Send } from "lucide-react";
+import { Send, AlertTriangle } from "lucide-react";
 
 import { useComplaint } from "@/features/complaint-detail/hooks";
 import { useSubmitComplaintResponse } from "@/features/complaint-response/hooks";
@@ -27,7 +27,10 @@ interface ComplaintResponseFormProps {
 export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
+  const isUser = pathname.startsWith("/user");
+  const detailPath = isUser
+    ? PATHS.USER.COMPLAINT_DETAIL
+    : PATHS.ADMIN.COMPLAINT_DETAIL;
   const responseMutation = useSubmitComplaintResponse();
 
   const [responseText, setResponseText] = useState("");
@@ -43,7 +46,7 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
   const openDepartments = useMemo(() => {
     const latest = new Map<string, { id: string; name: string; index: number }>();
     for (const assignment of complaint?.assignmentHistory ?? []) {
-      if (assignment.endedAt || assignment.responseText) continue;
+      if (assignment.status !== "ACTIVE") continue;
       const existing = latest.get(assignment.departmentId);
       if (!existing || assignment.assignmentIndex > existing.index) {
         latest.set(assignment.departmentId, {
@@ -92,7 +95,7 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
         },
       });
       toast.success("تم إضافة الرد بنجاح");
-      navigate(listPath);
+      navigate(detailPath(complaintId));
     } catch {
       toast.error("حدث خطأ أثناء إضافة الرد");
     }
@@ -125,9 +128,17 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
                 ))}
               </SelectContent>
             </Select>
-            {openDepartments.length === 0 && (
+            {openDepartments.length === 0 ? (
+              <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-body-sm text-destructive">
+                <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                <span>
+                  لا توجد جهات معنية بإحالات مفتوحة قبل انتهاء مهلة الرد. لا يمكن إضافة رد
+                  لإحالة متأخرة أو منتهية.
+                </span>
+              </div>
+            ) : (
               <p className="text-body-sm text-muted-foreground">
-                لا توجد جهات معنية بإحالة مفتوحة دون رد على هذه الشكوى.
+                يمكن إضافة الرد فقط للجهات التي لم تنتهِ مهلة الرد على إحالاتها بعد.
               </p>
             )}
           </div>
@@ -204,7 +215,7 @@ export function ComplaintResponseForm({ complaintId }: ComplaintResponseFormProp
               {responseMutation.isPending ? "جارٍ الإرسال..." : "إضافة الرد"}
               <Send className="size-4" />
             </Button>
-            <Button variant="ghost" onClick={() => navigate(listPath)} className="gap-2">
+            <Button variant="ghost" onClick={() => navigate(detailPath(complaintId))} className="gap-2">
               إلغاء
             </Button>
           </div>

@@ -103,12 +103,29 @@ export default function PresentationPage() {
       await Promise.allSettled(running.map((a) => a.finished));
       await new Promise((r) => setTimeout(r, 400));
 
+      const waitForImages = async (root: HTMLElement) => {
+        const images = Array.from(root.querySelectorAll("img"));
+        await Promise.all(
+          images.map(
+            (img) =>
+              new Promise<void>((resolve) => {
+                if (img.complete) {
+                  resolve();
+                  return;
+                }
+                const done = () => resolve();
+                img.addEventListener("load", done, { once: true });
+                img.addEventListener("error", done, { once: true });
+              }),
+          ),
+        );
+      };
+
       const PAGE_W = 360;
-      const PAGE_H = 202.5;
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: [PAGE_W, PAGE_H],
+        format: [PAGE_W, 202.5],
         compress: true,
       });
       for (let i = 0; i < SLIDES.length; i++) {
@@ -118,27 +135,26 @@ export default function PresentationPage() {
         await new Promise((r) =>
           requestAnimationFrame(() => requestAnimationFrame(r)),
         );
+        await waitForImages(el);
         const canvas = await toCanvas(el, {
           pixelRatio: 2,
           cacheBust: true,
         });
         el.style.height = "1080px";
-        const h = (canvas.height / canvas.width) * PAGE_W;
-        const scale = Math.min(1, PAGE_H / h);
-        const drawW = PAGE_W * scale;
-        const drawH = h * scale;
-        if (i > 0) pdf.addPage([PAGE_W, PAGE_H], "landscape");
+        const pageH = (canvas.height / canvas.width) * PAGE_W;
+        pdf.addPage([PAGE_W, pageH], "landscape");
         pdf.addImage(
           canvas.toDataURL("image/jpeg", 0.92),
           "JPEG",
-          (PAGE_W - drawW) / 2,
-          (PAGE_H - drawH) / 2,
-          drawW,
-          drawH,
+          0,
+          0,
+          PAGE_W,
+          pageH,
           undefined,
           "FAST",
         );
       }
+      pdf.deletePage(1);
       pdf.save("complaints-system-presentation.pdf");
     } catch (err) {
       console.error("PDF export failed:", err);

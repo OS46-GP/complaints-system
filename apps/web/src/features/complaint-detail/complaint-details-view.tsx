@@ -40,7 +40,7 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
       </div>
 
       <div className="grid grid-cols-12 gap-4 md:gap-6 w-full">
-        <div className="col-span-12 lg:col-span-5 space-y-4 md:space-y-6">
+        <div className="col-span-12 xl:col-span-5 space-y-4 md:space-y-6">
           <ComplaintDescriptionCard
             subject={complaint.subject}
             annotation={complaint.annotation ?? ""}
@@ -72,11 +72,11 @@ export function ComplaintDetailsView({ complaint }: ComplaintDetailsViewProps) {
           <ComplaintEvidenceGallery files={complaint.files} />
         </div>
 
-        <div className="col-span-12 lg:col-span-4">
+        <div className="col-span-12 xl:col-span-4">
           <ComplaintTimeline complaint={complaint} />
         </div>
 
-        <div className="col-span-12 lg:col-span-3 space-y-4 md:space-y-6">
+        <div className="col-span-12 xl:col-span-3 space-y-4 md:space-y-6">
           <ComplaintMetaPanel
             complaint={complaint}
             aiSeverity={analyzeMutation.data?.severity ?? null}
