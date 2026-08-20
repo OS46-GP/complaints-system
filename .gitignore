@@ -9,3 +9,4 @@ uploads/
 backup.sql
 backups/
 docs/templates/
+deploy/.env.production

@@ -1,0 +1,81 @@
+# syntax=docker/dockerfile:1
+# ---------------------------------------------------------------------------
+# API image — NestJS backend (apps/api), Prisma (packages/db), Mastra AI.
+#
+# NOTE on the "fat" runtime: the Nest build `require()`s the workspace
+# packages @complaints/db / @complaints/types, whose "main" is raw TypeScript
+# (packages/*/src/index.ts). Node >= 22.18 type-strips .ts natively (CI proves
+# this: `node apps/api/dist/main`), so the runtime stage must keep the
+# workspace sources + node_modules. A dist-only runtime is not possible
+# without restructuring the packages, so this image keeps them and prunes
+# everything else instead.
+# ---------------------------------------------------------------------------
+
+# ------------------------------- builder ------------------------------------
+FROM node:22-bookworm-slim AS builder
+
+WORKDIR /app
+
+# 1) Manifests first -> `npm ci` layer is cached until package.json/lock change.
+#    npm ci requires every workspace manifest to be present in the tree.
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json        apps/web/package.json
+COPY packages/db/package.json     packages/db/package.json
+COPY packages/types/package.json  packages/types/package.json
+RUN npm ci
+
+# 2) Sources (context restricted by .dockerignore).
+COPY . .
+
+# 3) prisma generate reads prisma.config.ts, which calls env("DATABASE_URL").
+#    It never connects to a DB — any syntactically valid URL satisfies it; the
+#    real URL is injected at runtime via container env.
+ARG DATABASE_URL="postgresql://postgres:postgres@postgres:5432/complaints"
+ENV DATABASE_URL=$DATABASE_URL
+
+RUN npm run prisma:generate \
+    && npm run build -w apps/api
+
+# ------------------------------- runtime ------------------------------------
+FROM node:22-bookworm-slim AS runtime
+
+# Chromium is required by apps/api/src/reporting/pdf-generator.ts
+# (puppeteer-core). openssl + ca-certificates are Prisma runtime needs;
+# fonts-noto-core renders Arabic in generated report PDFs; curl for health.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       chromium \
+       fonts-noto-core \
+       openssl \
+       ca-certificates \
+       curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+WORKDIR /app
+
+# Prisma client lands under node_modules/.prisma (generated in builder).
+COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/node_modules          ./node_modules
+COPY --from=builder /app/packages              ./packages
+COPY --from=builder /app/apps/api/dist         ./apps/api/dist
+COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
+
+# Uploads are served from process.cwd()/uploads (main.ts).
+RUN mkdir -p /app/apps/api/uploads \
+    && chown -R node:node /app
+
+USER node
+
+EXPOSE 3000
+
+# migrate deploy + seed are idempotent; seed only ensures default accounts.
+ENTRYPOINT ["sh", "-c", "cd /app/packages/db && npx prisma migrate deploy && npx tsx prisma/seed.ts && cd /app/apps/api && node dist/main"]
+
+# 401 from /api/auth/login proves the HTTP layer is up (no -f: HTTP errors are OK).
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=12 \
+  CMD curl -s -o /dev/null http://localhost:3000/api/auth/login || exit 1

@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+# Production deployment: postgres (pgvector) + api + web (nginx, single origin)
+#
+#   cp deploy/env.example deploy/.env.production   # then fill in secrets
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   -> http://<server-ip>/  (web on port 80 by default, override WEB_PORT)
+#
+# Interpolation variables (optional root .env next to this file):
+#   POSTGRES_PASSWORD, DATABASE_URL, WEB_PORT, VITE_API_URL
+# ---------------------------------------------------------------------------
+name: complaints
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: complaints-db-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: complaints
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    # No host port mapping — the DB is reachable only via the compose network.
+    volumes:
+      - postgres_data:/var/lib/postgresql/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/complaints}
+    env_file:
+      - ./deploy/.env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/apps/api/uploads
+    expose:
+      - "3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  uploads_data:
