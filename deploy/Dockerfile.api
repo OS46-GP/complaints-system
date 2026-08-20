@@ -76,6 +76,8 @@ EXPOSE 3000
 # migrate deploy + seed are idempotent; seed only ensures default accounts.
 ENTRYPOINT ["sh", "-c", "cd /app/packages/db && npx prisma migrate deploy && npx tsx prisma/seed.ts && cd /app/apps/api && node dist/main"]
 
-# 401 from /api/auth/login proves the HTTP layer is up (no -f: HTTP errors are OK).
+# Readiness probe: /api/health returns 200 when the API AND its database are
+# up, 503 (degraded) when the database is unreachable. -f fails on non-2xx,
+# so the container turns unhealthy while the DB is down.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=12 \
-  CMD curl -s -o /dev/null http://localhost:3000/api/auth/login || exit 1
+  CMD curl -sf -o /dev/null http://localhost:3000/api/health || exit 1
