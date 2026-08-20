@@ -19,7 +19,10 @@ interface ComplaintArchiveFormProps {
 export function ComplaintArchiveForm({ complaintId }: ComplaintArchiveFormProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
+  const isUser = pathname.startsWith("/user");
+  const detailPath = isUser
+    ? PATHS.USER.COMPLAINT_DETAIL
+    : PATHS.ADMIN.COMPLAINT_DETAIL;
   const archiveMutation = useArchiveComplaint();
 
   const [archiveNumber, setArchiveNumber] = useState("");
@@ -54,7 +57,7 @@ export function ComplaintArchiveForm({ complaintId }: ComplaintArchiveFormProps)
         },
       });
       toast.success("تم أرشفة الشكوى بنجاح");
-      navigate(listPath);
+      navigate(detailPath(complaintId));
     } catch {
       toast.error("حدث خطأ أثناء أرشفة الشكوى");
     }
@@ -109,7 +112,7 @@ export function ComplaintArchiveForm({ complaintId }: ComplaintArchiveFormProps)
               {archiveMutation.isPending ? "جارٍ الأرشفة..." : "أرشفة"}
               <Archive className="size-4" />
             </Button>
-            <Button variant="ghost" onClick={() => navigate(listPath)} className="gap-2">
+            <Button variant="ghost" onClick={() => navigate(detailPath(complaintId))} className="gap-2">
               إلغاء
             </Button>
           </div>
