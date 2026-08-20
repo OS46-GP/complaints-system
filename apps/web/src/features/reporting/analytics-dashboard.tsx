@@ -52,6 +52,8 @@ export function AnalyticsDashboard() {
       >
         <ReportingSummaryCards
           achievement={achievement?.governorateAchievement ?? 0}
+          total={achievement?.governorateTotal ?? 0}
+          finished={achievement?.governorateFinished ?? 0}
           totalOpen={totalOpen}
           totalOverdue={delays?.totalOverdue ?? 0}
         />
@@ -64,7 +66,9 @@ export function AnalyticsDashboard() {
         errorText="تعذر تحميل تقرير الإنجاز"
         skeleton={<ReportTableSkeleton />}
       >
-        {achievement && <AchievementSection report={achievement} filters={filters} />}
+        {achievement && (
+          <AchievementSection report={achievement} filters={filters} showTotals={false} />
+        )}
       </ReportSection>
 
       <ReportSection
