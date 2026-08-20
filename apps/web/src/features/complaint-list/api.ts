@@ -8,6 +8,7 @@ export interface ListComplaintsParams {
   departmentId?: string;
   citizenNationalId?: string;
   citizenFullName?: string;
+  citizenNameAny?: string;
   name?: string;
   complaintNumber?: number;
   statementYear?: number;

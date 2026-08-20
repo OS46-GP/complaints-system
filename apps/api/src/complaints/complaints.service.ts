@@ -255,6 +255,7 @@ export class ComplaintsService {
       sortOrder = "desc",
       citizenNationalId,
       citizenFullName,
+      citizenNameAny,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -279,6 +280,19 @@ export class ComplaintsService {
           mode: "insensitive",
         },
       };
+    }
+
+    if (citizenNameAny?.trim()) {
+      const parts = citizenNameAny.trim().split(/\s+/).filter(Boolean);
+      if (parts.length > 0) {
+        const citizenFilter: Prisma.CitizenWhereInput = {
+          ...(where.citizen as Prisma.CitizenWhereInput | undefined),
+          OR: parts.map((part) => ({
+            fullName: { contains: part, mode: "insensitive" as const },
+          })),
+        };
+        where.citizen = citizenFilter;
+      }
     }
 
     if (name) {

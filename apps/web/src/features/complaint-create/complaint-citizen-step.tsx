@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { memo, useMemo, useRef, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { ChevronLeft, History, Search, Loader2, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { useLocations } from "@/features/complaint-list/hooks";
 import { complaintsApi } from "@/features/complaint-list/api";
+import { HighlightText } from "@/components/shared/highlight-text";
 import { type ApiCitizen, type ApiComplaint, type LocationItem } from "@/features/complaint-list/types";
 
 interface ComplaintCitizenStepProps {
@@ -164,9 +165,13 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
   const [selectedComplaint, setSelectedComplaint] = useState<ApiComplaint | null>(null);
   const [historyNationalId, setHistoryNationalId] = useState("");
   const searchedHistoryName = useRef<string>("");
+  const [historySearchMode, setHistorySearchMode] = useState<"nationalId" | "name">("nationalId");
+  const [exactNameComplaints, setExactNameComplaints] = useState<ApiComplaint[]>([]);
+  const [partialNameComplaints, setPartialNameComplaints] = useState<ApiComplaint[]>([]);
   const [isNameCitizenLoading, setIsNameCitizenLoading] = useState(false);
   const [citizenCandidates, setCitizenCandidates] = useState<ApiCitizen[]>([]);
   const [candidatesOpen, setCandidatesOpen] = useState(false);
+  const [showAllPartialOpen, setShowAllPartialOpen] = useState(false);
 
   const clearLookedUpCitizen = () => {
     const citizen = form.getValues("citizen");
@@ -194,6 +199,10 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     setHasSearchedHistory(false);
     setSelectedComplaint(null);
     setHistoryNationalId("");
+    setHistorySearchMode("nationalId");
+    setExactNameComplaints([]);
+    setPartialNameComplaints([]);
+    searchedHistoryName.current = "";
   };
 
   const handleNationalIdChange = (value: string, onFieldChange: (value: string) => void) => {
@@ -270,6 +279,7 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
       setHistoryComplaints([]);
       setHasSearchedHistory(false);
       setHistoryNationalId(nationalId);
+      setHistorySearchMode("nationalId");
     }
     setIsHistoryLoading(true);
     try {
@@ -302,18 +312,33 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     if (!name) return;
     if (name !== searchedHistoryName.current) {
       setHistoryComplaints([]);
+      setExactNameComplaints([]);
+      setPartialNameComplaints([]);
       setHasSearchedHistory(false);
       searchedHistoryName.current = name;
     }
     setIsHistoryLoading(true);
     try {
-      const response = await complaintsApi.list({
-        citizenFullName: name,
-        limit: 10,
-        sortBy: "createdAt",
-        sortOrder: "desc",
-      });
-      setHistoryComplaints(response.data);
+      const [exactResponse, partialResponse] = await Promise.all([
+        complaintsApi.list({
+          citizenFullName: name,
+          limit: 10,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        }),
+        complaintsApi.list({
+          citizenNameAny: name,
+          limit: 50,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        }),
+      ]);
+      const exactIds = new Set(exactResponse.data.map((c) => c.id));
+      setExactNameComplaints(exactResponse.data);
+      setPartialNameComplaints(
+        partialResponse.data.filter((c) => !exactIds.has(c.id)),
+      );
+      setHistorySearchMode("name");
       setHasSearchedHistory(true);
     } catch {
       toast.error("تعذر جلب شكاوى المواطن السابقة");
@@ -338,6 +363,7 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
       const citizens = await complaintsApi.findCitizensByName(name);
       if (citizens.length === 0) {
         toast.error("لم يتم العثور على مواطن بهذا الاسم");
+        void searchCitizenHistoryByName();
       } else if (citizens.length === 1) {
         applyCitizenCandidate(citizens[0]);
       } else {
@@ -351,7 +377,59 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     }
   };
 
-  const nationalIdValue = form.watch("citizen.nationalId");
+  const renderComplaintList = (
+    complaints: ApiComplaint[],
+    highlightQuery?: string,
+    splitQuery = false,
+  ) => {
+    const queries =
+      highlightQuery && splitQuery
+        ? highlightQuery.trim().split(/\s+/).filter(Boolean)
+        : undefined;
+    return (
+      <ul className="space-y-2">
+        {complaints.map((complaint) => (
+          <li key={complaint.id}>
+            <button
+              type="button"
+              onClick={() => setSelectedComplaint(complaint)}
+              className="w-full rounded-lg border border-border bg-surface-container-lowest p-3 flex items-center gap-3 text-start transition-colors hover:bg-surface-container-low cursor-pointer"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-heading text-label-sm text-foreground truncate">
+                  #{complaint.complaintNumber}-{complaint.statementYear} —{" "}
+                  {complaint.subject}
+                </p>
+                <p className="text-label-sm text-muted-foreground mt-0.5">
+                  {caseStatusLabel(complaint)} ·{" "}
+                  {new Date(complaint.arrivalDate).toLocaleDateString("ar-SA")}
+                  {complaint.complaintType?.name
+                    ? ` · ${complaint.complaintType.name}`
+                    : ""}
+                </p>
+                <p className="text-label-xs text-muted-foreground mt-0.5">
+                  {complaint.citizen?.fullName ? (
+                    <HighlightText
+                      text={complaint.citizen.fullName}
+                      query={splitQuery ? undefined : highlightQuery}
+                      queries={queries}
+                    />
+                  ) : null}
+                  {complaint.citizen?.nationalId
+                    ? ` · ${complaint.citizen.nationalId}`
+                    : ""}
+                </p>
+              </div>
+              <ChevronLeft
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden
+              />
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -585,21 +663,10 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
               اعرض الشكاوى المسجلة مسبقاً لنفس الرقم القومي أو بنفس الاسم لتجنب تكرار التسجيل.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
+          <HistorySearchButton
+            isHistoryLoading={isHistoryLoading}
             onClick={openCitizenHistory}
-            disabled={isHistoryLoading || !nationalIdValue.trim()}
-            className="gap-2"
-          >
-            {isHistoryLoading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Search className="size-4" />
-            )}
-            البحث عن الشكاوى السابقة
-          </Button>
+          />
         </div>
 
         {isHistoryLoading && (
@@ -613,42 +680,66 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
 
         {!isHistoryLoading && hasSearchedHistory && (
           <>
-            {historyComplaints.length > 0 ? (
-              <ul className="space-y-2">
-                {historyComplaints.map((complaint) => (
-                  <li key={complaint.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedComplaint(complaint)}
-                      className="w-full rounded-lg border border-border bg-surface-container-lowest p-3 flex items-center gap-3 text-start transition-colors hover:bg-surface-container-low cursor-pointer"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-heading text-label-sm text-foreground truncate">
-                          #{complaint.complaintNumber}-{complaint.statementYear} —{" "}
-                          {complaint.subject}
-                        </p>
-                        <p className="text-label-sm text-muted-foreground mt-0.5">
-                          {caseStatusLabel(complaint)} ·{" "}
-                          {new Date(complaint.arrivalDate).toLocaleDateString("ar-SA")}
-                          {complaint.complaintType?.name
-                            ? ` · ${complaint.complaintType.name}`
-                            : ""}
-                        </p>
-                        <p className="text-label-xs text-muted-foreground mt-0.5">
-                          {complaint.citizen?.fullName}
-                          {complaint.citizen?.nationalId
-                            ? ` · ${complaint.citizen.nationalId}`
-                            : ""}
-                        </p>
-                      </div>
-                      <ChevronLeft
-                        className="size-4 shrink-0 text-muted-foreground"
-                        aria-hidden
-                      />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            {historySearchMode === "name" ? (
+              <>
+                {exactNameComplaints.length > 0 ? (
+                  <div className="mb-3">
+                    <p className="font-heading text-label-sm text-foreground mb-2 flex items-center gap-1.5">
+                      <span className="size-1.5 rounded-full bg-success" />
+                      مطابقة بالاسم الكامل
+                    </p>
+                    {renderComplaintList(
+                      exactNameComplaints,
+                      form.getValues("citizen.fullName"),
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low text-muted-foreground mb-3">
+                    <Inbox className="size-5 shrink-0" />
+                    <p className="font-body text-body-md">
+                      لا توجد شكاوى بالاسم الكامل المطابق.
+                    </p>
+                  </div>
+                )}
+
+                {partialNameComplaints.length > 0 && (
+                  <div>
+                    <p className="font-heading text-label-sm text-foreground mb-2 flex items-center gap-1.5">
+                      <span className="size-1.5 rounded-full bg-muted-foreground" />
+                      شكاوى تحتوي على جزء من الاسم ({partialNameComplaints.length})
+                    </p>
+                    {renderComplaintList(
+                      partialNameComplaints.slice(0, 3),
+                      form.getValues("citizen.fullName"),
+                      true,
+                    )}
+                    {partialNameComplaints.length > 3 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 gap-1.5"
+                        onClick={() => setShowAllPartialOpen(true)}
+                      >
+                        عرض الكل ({partialNameComplaints.length})
+                        <ChevronLeft className="size-3.5 -rotate-90" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {exactNameComplaints.length === 0 &&
+                  partialNameComplaints.length === 0 && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low text-muted-foreground">
+                      <Inbox className="size-5 shrink-0" />
+                      <p className="font-body text-body-md">
+                        لا توجد شكاوى سابقة بهذا الاسم.
+                      </p>
+                    </div>
+                  )}
+              </>
+            ) : historyComplaints.length > 0 ? (
+              renderComplaintList(historyComplaints)
             ) : (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low text-muted-foreground">
                 <Inbox className="size-5 shrink-0" />
@@ -696,6 +787,25 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={showAllPartialOpen} onOpenChange={setShowAllPartialOpen}>
+          <DialogContent className="sm:max-w-xl">
+            <DialogHeader>
+              <DialogTitle>كل الشكاوى التي تحتوي على جزء من الاسم</DialogTitle>
+              <DialogDescription>
+                {partialNameComplaints.length} شكوى مطابقة جزئياً، اضغط على أي شكوى
+                لعرض تفاصيلها.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[55vh] space-y-2 overflow-y-auto pe-1">
+              {renderComplaintList(
+                partialNameComplaints,
+                form.getValues("citizen.fullName"),
+                true,
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <ComplaintPreviewDialog
           open={!!selectedComplaint}
           onOpenChange={(open) => {
@@ -707,3 +817,30 @@ export function ComplaintCitizenStep({ ocrFields }: ComplaintCitizenStepProps) {
     </div>
   );
 }
+
+const HistorySearchButton = memo(function HistorySearchButton({
+  isHistoryLoading,
+  onClick,
+}: {
+  isHistoryLoading: boolean;
+  onClick: () => void;
+}) {
+  const nationalId = useWatch({ name: "citizen.nationalId" }) as string;
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      disabled={isHistoryLoading || !(nationalId ?? "").trim()}
+      className="gap-2"
+    >
+      {isHistoryLoading ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <Search className="size-4" />
+      )}
+      البحث عن الشكاوى السابقة
+    </Button>
+  );
+});
