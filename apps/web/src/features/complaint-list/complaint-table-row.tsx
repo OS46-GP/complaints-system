@@ -5,6 +5,7 @@ import { ComplaintPriority } from "@/features/complaint-list/complaint-priority"
 import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { DataTableRow, DataTableCell } from "@/components/shared/data-table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HighlightText } from "@/components/shared/highlight-text";
 import { cn } from "@/lib/utils";
 import { PATHS } from "@/router/paths";
 import {
@@ -17,12 +18,14 @@ interface ComplaintTableRowProps {
   complaint: ComplaintItem;
   selected: boolean;
   onToggle: () => void;
+  search?: string;
 }
 
 export function ComplaintTableRow({
   complaint,
   selected,
   onToggle,
+  search,
 }: ComplaintTableRowProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -50,14 +53,14 @@ export function ComplaintTableRow({
         />
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 font-mono text-mono-data font-bold text-primary">
-        {complaint.displayId}
+        <HighlightText text={complaint.displayId} query={search} />
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 max-w-64">
         <div className="flex flex-col">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="font-heading text-label-sm font-bold text-foreground truncate">
-                {complaint.subject}
+                <HighlightText text={complaint.subject} query={search} />
               </span>
             </TooltipTrigger>
             <TooltipContent side="bottom" align="start">
@@ -67,7 +70,7 @@ export function ComplaintTableRow({
         </div>
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-foreground whitespace-normal break-words">
-        {complaint.citizenName}
+        <HighlightText text={complaint.citizenName} query={search} />
       </DataTableCell>
       <DataTableCell className="p-0 px-6 py-4 font-body text-body-md text-muted-foreground whitespace-normal break-words">
         {complaint.departmentName}

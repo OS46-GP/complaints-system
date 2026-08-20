@@ -243,6 +243,7 @@ export function ComplaintList({
                   complaint={complaint}
                   selected={selectedIds.has(complaint.id)}
                   onToggle={() => toggleSelect(complaint.id)}
+                  search={search}
                 />
               </Reveal>
             ))}
@@ -260,6 +261,7 @@ export function ComplaintList({
                   complaint={complaint}
                   selected={selectedIds.has(complaint.id)}
                   onToggle={() => toggleSelect(complaint.id)}
+                  search={search}
                 />
               ))}
             </DataTableBody>

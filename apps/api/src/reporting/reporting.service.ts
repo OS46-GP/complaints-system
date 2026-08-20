@@ -63,6 +63,10 @@ export interface CustomReportComplaint {
 
 export interface CustomReportResult {
   complaints: CustomReportComplaint[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
   summary: {
     total: number;
     byStatus: Record<string, number>;
@@ -201,6 +205,8 @@ export class ReportingService {
     status?: ReportStatusFilter,
     severity?: ReportSeverityFilter,
     search?: string,
+    page = 1,
+    limit = 20,
   ) {
     if (!department) {
       throw new BadRequestException('department is required');
@@ -212,11 +218,18 @@ export class ReportingService {
       end,
     );
 
-    const complaints = await this.prisma.complaint.findMany({
-      where,
-      include: { citizen: true, examinationStatus: true },
-      orderBy: { arrivalDate: 'desc' },
-    });
+    const [complaints, total] = await Promise.all([
+      this.prisma.complaint.findMany({
+        where,
+        include: { citizen: true, examinationStatus: true },
+        orderBy: { arrivalDate: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.complaint.count({ where }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
 
     return {
       department,
@@ -229,6 +242,10 @@ export class ReportingService {
         finished: this.isFinished(c.examinationStatus?.name ?? null),
         severity: c.severity ?? null,
       })),
+      total,
+      page,
+      limit,
+      totalPages,
     };
   }
 
@@ -459,6 +476,40 @@ export class ReportingService {
       }));
   }
 
+  private buildOverdueWhere(
+    where: Record<string, unknown>,
+    thresholds: { lowDays: number; mediumDays: number; highDays: number },
+    now: number,
+  ): Record<string, unknown> {
+    const cutoff = (days: number) => new Date(now - days * MS_PER_DAY);
+
+    const notFinished: Record<string, unknown> = {
+      OR: [
+        { examinationStatus: { is: null } },
+        { examinationStatus: { name: { notIn: FINISHED_STATUS_NAMES } } },
+      ],
+    };
+
+    const overdueDate: Record<string, unknown> = {
+      OR: [
+        { severity: 'High', arrivalDate: { lt: cutoff(thresholds.highDays) } },
+        {
+          severity: 'Medium',
+          arrivalDate: { lt: cutoff(thresholds.mediumDays) },
+        },
+        { severity: 'Low', arrivalDate: { lt: cutoff(thresholds.lowDays) } },
+      ],
+    };
+
+    const baseAnd = Array.isArray(where.AND) ? where.AND : [];
+    const { AND: _omit, ...rest } = where;
+
+    return {
+      ...rest,
+      AND: [...baseAnd, { AND: [notFinished, overdueDate] }],
+    };
+  }
+
   async getDelayDepartmentComplaints(
     department: string,
     from?: string,
@@ -467,6 +518,8 @@ export class ReportingService {
     status?: ReportStatusFilter,
     severity?: ReportSeverityFilter,
     search?: string,
+    page = 1,
+    limit = 20,
   ) {
     if (!department) {
       throw new BadRequestException('department is required');
@@ -474,21 +527,54 @@ export class ReportingService {
     const { start, end } = this.parseDateRange(from, to);
     const now = Date.now();
     const thresholds = await this.settingsService.getDelayThresholds();
-    const where = this.buildFilteredWhere(
+    const baseWhere = this.buildFilteredWhere(
       { department, village, status, severity, search },
       start,
       end,
     );
-    const complaints = await this.getOverdueComplaints(where, thresholds, now);
-    return { department, complaints };
+    const where = this.buildOverdueWhere(baseWhere, thresholds, now);
+
+    const [complaints, total] = await Promise.all([
+      this.prisma.complaint.findMany({
+        where,
+        include: { department: true, citizen: true, examinationStatus: true },
+        orderBy: { arrivalDate: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.complaint.count({ where }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return {
+      department,
+      complaints: complaints.map((c) => ({
+        id: c.id,
+        complaintNumber: c.complaintNumber,
+        arrivalDate: c.arrivalDate.toISOString(),
+        citizenName: c.citizen.fullName,
+        department: c.department?.name ?? null,
+        subject: c.subject,
+        severity: c.severity ?? null,
+      })),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
-  async getCustomReport(filters: {
-    dateRange?: { from: string; to: string };
-    village?: string;
-    department?: string;
-    examinationStatus?: string;
-  }): Promise<CustomReportResult> {
+  async getCustomReport(
+    filters: {
+      dateRange?: { from: string; to: string };
+      village?: string;
+      department?: string;
+      examinationStatus?: string;
+    },
+    page?: number,
+    limit?: number,
+  ): Promise<CustomReportResult> {
     const where: Record<string, unknown> = {};
 
     if (filters.dateRange) {
@@ -510,6 +596,8 @@ export class ReportingService {
       where.examinationStatus = { name: filters.examinationStatus };
     }
 
+    const total = await this.prisma.complaint.count({ where });
+
     const complaints = await this.prisma.complaint.findMany({
       where,
       include: {
@@ -518,10 +606,58 @@ export class ReportingService {
         examinationStatus: true,
       },
       orderBy: { arrivalDate: 'desc' },
+      ...(page && limit
+        ? { skip: (page - 1) * limit, take: limit }
+        : {}),
     });
 
     const byStatus: Record<string, number> = {};
     const byDepartment: Record<string, number> = {};
+
+    if (page && limit) {
+      const statusGroups = await this.prisma.complaint.groupBy({
+        by: ['examinationStatusId'],
+        where,
+        _count: { _all: true },
+      });
+      const departmentGroups = await this.prisma.complaint.groupBy({
+        by: ['departmentId'],
+        where,
+        _count: { _all: true },
+      });
+      const statusIds = statusGroups
+        .map((g) => g.examinationStatusId)
+        .filter((id): id is number => id != null);
+      const departmentIds = departmentGroups
+        .map((g) => g.departmentId)
+        .filter((id): id is string => id != null);
+      const [statuses, departments] = await Promise.all([
+        this.prisma.examinationStatus.findMany({
+          where: { id: { in: statusIds } },
+          select: { id: true, name: true },
+        }),
+        this.prisma.department.findMany({
+          where: { id: { in: departmentIds } },
+          select: { id: true, name: true },
+        }),
+      ]);
+      const statusName = new Map(statuses.map((s) => [s.id, s.name]));
+      const deptName = new Map(departments.map((d) => [d.id, d.name]));
+      for (const g of statusGroups) {
+        const st = g.examinationStatusId != null
+          ? statusName.get(g.examinationStatusId)
+          : undefined;
+        const key = st ?? 'غير محدد';
+        byStatus[key] = (byStatus[key] ?? 0) + g._count._all;
+      }
+      for (const g of departmentGroups) {
+        const key = g.departmentId != null
+          ? deptName.get(g.departmentId)
+          : undefined;
+        byDepartment[key ?? 'غير محدد'] =
+          (byDepartment[key ?? 'غير محدد'] ?? 0) + g._count._all;
+      }
+    }
 
     const mapped = complaints.map((c) => ({
       id: c.id,
@@ -536,17 +672,25 @@ export class ReportingService {
       severity: c.severity,
     }));
 
-    for (const c of mapped) {
-      const st = c.examinationStatus ?? 'غير محدد';
-      byStatus[st] = (byStatus[st] ?? 0) + 1;
-      const dept = c.department ?? 'غير محدد';
-      byDepartment[dept] = (byDepartment[dept] ?? 0) + 1;
+    if (!page || !limit) {
+      for (const c of mapped) {
+        const st = c.examinationStatus ?? 'غير محدد';
+        byStatus[st] = (byStatus[st] ?? 0) + 1;
+        const dept = c.department ?? 'غير محدد';
+        byDepartment[dept] = (byDepartment[dept] ?? 0) + 1;
+      }
     }
+
+    const totalPages = page && limit ? Math.max(1, Math.ceil(total / limit)) : 1;
 
     return {
       complaints: mapped,
+      total,
+      page: page ?? 1,
+      limit: limit ?? total,
+      totalPages,
       summary: {
-        total: complaints.length,
+        total,
         byStatus,
         byDepartment,
       },

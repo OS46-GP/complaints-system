@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { useForm, useWatch } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -25,11 +25,7 @@ export function UserCreateForm() {
   const { usersList } = useUserManagementPaths();
   const mutation = useCreateUser();
 
-  const {
-    control,
-    setValue,
-    handleSubmit,
-  } = useForm<UserFormData>({
+  const form = useForm<UserFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       username: "",
@@ -39,20 +35,6 @@ export function UserCreateForm() {
       role: "Official",
     },
   });
-
-  const data: UserFormData = {
-    username: useWatch({ control, name: "username" }) ?? "",
-    password: useWatch({ control, name: "password" }) ?? "",
-    email: useWatch({ control, name: "email" }) ?? "",
-    nationalId: useWatch({ control, name: "nationalId" }) ?? "",
-    role: useWatch({ control, name: "role" }) ?? "Official",
-  };
-
-  const update = (partial: Partial<UserFormData>) => {
-    for (const [key, value] of Object.entries(partial)) {
-      setValue(key as keyof UserFormData, value as never);
-    }
-  };
 
   const onSubmit = (formData: UserFormData) => {
     mutation.mutate(formData, {
@@ -64,9 +46,10 @@ export function UserCreateForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-stack-lg pb-12 mx-auto">
-      <BasicInfoSection data={data} onChange={update} />
-      <PermissionsSection data={data} onChange={update} />
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-stack-lg pb-12 mx-auto">
+        <BasicInfoSection />
+        <PermissionsSection />
 
       <div className="flex items-center justify-end gap-stack-md pt-6">
         <Button
@@ -87,6 +70,7 @@ export function UserCreateForm() {
           {mutation.isPending ? "جارٍ الحفظ..." : "حفظ المستخدم"}
         </Button>
       </div>
-    </form>
+      </form>
+    </FormProvider>
   );
 }

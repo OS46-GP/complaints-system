@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { useForm, useWatch } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -37,12 +37,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
 
   const { data: existingUser, isLoading, isError, refetch } = useUser(userId);
 
-  const {
-    control,
-    setValue,
-    handleSubmit,
-    reset,
-  } = useForm<UserEditFormData>(
+  const form = useForm<UserEditFormData>(
     {
       resolver: zodResolver(schema),
       defaultValues: {
@@ -55,17 +50,9 @@ export function UserEditForm({ userId }: UserEditFormProps) {
     },
   );
 
-  const data: UserEditFormData = {
-    username: useWatch({ control, name: "username" }) ?? "",
-    password: useWatch({ control, name: "password" }) ?? "",
-    email: useWatch({ control, name: "email" }) ?? "",
-    nationalId: useWatch({ control, name: "nationalId" }) ?? "",
-    role: useWatch({ control, name: "role" }) ?? "Official",
-  };
-
   useEffect(() => {
     if (existingUser) {
-      reset({
+      form.reset({
         username: existingUser.username,
         password: "",
         email: existingUser.email ?? "",
@@ -73,13 +60,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
         role: existingUser.role,
       });
     }
-  }, [existingUser, reset]);
-
-  const update = (partial: Partial<UserEditFormData>) => {
-    for (const [key, value] of Object.entries(partial)) {
-      setValue(key as keyof UserEditFormData, value as never);
-    }
-  };
+  }, [existingUser, form]);
 
   const onSubmit = (formData: UserEditFormData) => {
     mutation.mutate(formData, {
@@ -105,18 +86,10 @@ export function UserEditForm({ userId }: UserEditFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-stack-lg pb-12 mx-auto">
-      <BasicInfoSection
-        data={data}
-        onChange={update}
-        isEdit
-        readOnly
-      />
-      <PermissionsSection
-        data={data}
-        onChange={update}
-        disabled={readOnly}
-      />
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-stack-lg pb-12 mx-auto">
+        <BasicInfoSection isEdit readOnly />
+        <PermissionsSection disabled={readOnly} />
 
       <div className="flex items-center justify-end gap-stack-md pt-6">
         <Button
@@ -139,6 +112,7 @@ export function UserEditForm({ userId }: UserEditFormProps) {
           </Button>
         )}
       </div>
-    </form>
+      </form>
+    </FormProvider>
   );
 }

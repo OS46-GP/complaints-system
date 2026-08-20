@@ -27,11 +27,19 @@ export interface AchievementRow {
 export interface DepartmentComplaintsResult {
   department: string;
   complaints: AchievementComplaint[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface DelayDepartmentComplaintsResult {
   department: string;
   complaints: OverdueComplaint[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface AchievementReport {
@@ -86,6 +94,10 @@ export interface CustomReportComplaint {
 
 export interface CustomReportResult {
   complaints: CustomReportComplaint[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
   summary: {
     total: number;
     byStatus: Record<string, number>;
@@ -152,6 +164,8 @@ export interface CustomReportFilters {
   village?: string;
   department?: string;
   examinationStatus?: string;
+  page?: number;
+  limit?: number;
 }
 
 export const REPORT_TYPE_LABELS: Record<ReportType, string> = {

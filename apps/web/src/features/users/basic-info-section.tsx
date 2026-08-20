@@ -1,22 +1,33 @@
+import { memo } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { UserFormData } from "@/features/users/types";
 
 interface BasicInfoSectionProps {
-  data: UserFormData;
-  onChange: (partial: Partial<UserFormData>) => void;
   isEdit?: boolean;
   readOnly?: boolean;
 }
 
-export function BasicInfoSection({
-  data,
-  onChange,
+export const BasicInfoSection = memo(function BasicInfoSection({
   isEdit,
   readOnly,
 }: BasicInfoSectionProps) {
+  const { setValue } = useFormContext<UserFormData>();
   const disabled = readOnly || isEdit;
+
+  const username = useWatch<{ username: string }>({ name: "username" }) ?? "";
+  const password = useWatch<{ password: string }>({ name: "password" }) ?? "";
+  const email = useWatch<{ email: string }>({ name: "email" }) ?? "";
+  const nationalId = useWatch<{ nationalId: string }>({ name: "nationalId" }) ?? "";
+
+  const update = (field: keyof UserFormData, value: string) => {
+    setValue(field, value as never, {
+      shouldValidate: false,
+      shouldDirty: true,
+    });
+  };
 
   return (
     <Card>
@@ -32,8 +43,8 @@ export function BasicInfoSection({
             </Label>
             <Input
               id="username"
-              value={data.username}
-              onChange={(e) => onChange({ username: e.target.value })}
+              value={username}
+              onChange={(e) => update("username", e.target.value)}
               placeholder="اسم المستخدم للنظام"
               className="h-10"
               disabled={disabled}
@@ -47,8 +58,8 @@ export function BasicInfoSection({
             <Input
               id="password"
               type="password"
-              value={data.password}
-              onChange={(e) => onChange({ password: e.target.value })}
+              value={password}
+              onChange={(e) => update("password", e.target.value)}
               placeholder={isEdit ? "اتركه فارغاً إذا لم ترد التغيير" : "••••••••"}
               className="h-10"
               disabled={disabled}
@@ -59,8 +70,8 @@ export function BasicInfoSection({
             <Input
               id="email"
               type="email"
-              value={data.email}
-              onChange={(e) => onChange({ email: e.target.value })}
+              value={email}
+              onChange={(e) => update("email", e.target.value)}
               placeholder="name@company.gov.sa"
               className="h-10"
               disabled={disabled}
@@ -70,8 +81,8 @@ export function BasicInfoSection({
             <Label htmlFor="nationalId">الرقم القومي</Label>
             <Input
               id="nationalId"
-              value={data.nationalId}
-              onChange={(e) => onChange({ nationalId: e.target.value })}
+              value={nationalId}
+              onChange={(e) => update("nationalId", e.target.value)}
               placeholder="الرقم القومي (يُستخدم لاستعادة كلمة المرور)"
               className="h-10"
               dir="ltr"
@@ -82,4 +93,4 @@ export function BasicInfoSection({
       </CardContent>
     </Card>
   );
-}
+});

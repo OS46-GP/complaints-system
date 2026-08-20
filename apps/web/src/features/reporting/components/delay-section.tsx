@@ -2,6 +2,8 @@ import { Fragment, useState } from "react";
 import { AlarmClock, ChevronDown, Loader2 } from "lucide-react";
 
 import { ReportResultTable } from "@/features/reporting/components/report-result-table";
+import { ComplaintDetailsButton } from "@/features/reporting/components/complaint-details-button";
+import { ReportListPagination } from "@/features/reporting/components/report-list-pagination";
 import type { DataTableColumn } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,6 +15,7 @@ import type {
 } from "@/features/reporting/types";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const INLINE_PAGE_SIZE = 20;
 
 const SEVERITY_META: Record<string, { label: string; chip: string }> = {
   High: {
@@ -54,20 +57,46 @@ function DelayDepartmentDetail({
   thresholds: DelayReport["thresholds"];
 }) {
   const useInline = inlineComplaints != null;
+  const [inlinePage, setInlinePage] = useState(1);
+  const [serverPage, setServerPage] = useState(1);
   const { data, isFetching } = useDelayDepartmentComplaints(
     useInline ? null : department,
     filters,
     isOpen && !useInline,
+    serverPage,
   );
 
   if (!isOpen) return null;
 
-  const complaints = inlineComplaints ?? data?.complaints ?? [];
+  let complaints: OverdueComplaint[];
+  let total: number;
+  let totalPages: number;
+  let page: number;
+
+  if (useInline) {
+    total = inlineComplaints.length;
+    totalPages = Math.max(1, Math.ceil(total / INLINE_PAGE_SIZE));
+    page = Math.min(inlinePage, totalPages);
+    complaints = inlineComplaints.slice(
+      (page - 1) * INLINE_PAGE_SIZE,
+      page * INLINE_PAGE_SIZE,
+    );
+  } else {
+    complaints = data?.complaints ?? [];
+    total = data?.total ?? 0;
+    totalPages = data?.totalPages ?? 1;
+    page = data?.page ?? serverPage;
+  }
+
+  const handlePageChange = (next: number) => {
+    if (useInline) setInlinePage(next);
+    else setServerPage(next);
+  };
 
   return (
     <tr className="border-b border-border bg-surface-container-lowest/60 last:border-b-0">
       <td colSpan={columns.length} className="px-6 py-4">
-        <div className="grid gap-2">
+        <div className="grid gap-3">
           {isFetching ? (
             <p className="flex items-center justify-center gap-2 py-4 text-label-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
@@ -78,17 +107,27 @@ function DelayDepartmentDetail({
               لا توجد شكاوى متأخرة لهذه الجهة
             </p>
           ) : (
-            complaints.map((complaint) => (
-              <div
-                key={complaint.id}
-                className="rounded-lg border border-border bg-card px-4 py-2.5"
-              >
-                <DelayComplaintItem
-                  complaint={complaint}
-                  thresholds={thresholds}
-                />
+            <>
+              <div className="grid gap-2">
+                {complaints.map((complaint) => (
+                  <div
+                    key={complaint.id}
+                    className="rounded-lg border border-border bg-card px-4 py-2.5"
+                  >
+                    <DelayComplaintItem
+                      complaint={complaint}
+                      thresholds={thresholds}
+                    />
+                  </div>
+                ))}
               </div>
-            ))
+              <ReportListPagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                onPageChange={handlePageChange}
+              />
+            </>
           )}
         </div>
       </td>
@@ -156,24 +195,17 @@ function DelayComplaintItem({
       >
         #{complaint.complaintNumber}
       </span>
+      <ComplaintDetailsButton complaintId={complaint.id} label="عرض" />
     </div>
   );
 }
 
 export function DelaySection({ report, filters }: DelaySectionProps) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<string | null>(null);
   const { departments } = report;
 
   const toggle = (department: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(department)) {
-        next.delete(department);
-      } else {
-        next.add(department);
-      }
-      return next;
-    });
+    setExpanded((prev) => (prev === department ? null : department));
   };
 
   const complaintsFor = (department: string) =>
@@ -191,7 +223,7 @@ export function DelaySection({ report, filters }: DelaySectionProps) {
 
       <ReportResultTable columns={columns} emptyText="لا توجد شكاوى متأخرة">
         {departments.map((row) => {
-          const isOpen = expanded.has(row.department);
+          const isOpen = expanded === row.department;
           return (
             <Fragment key={row.department}>
               <tr className="border-b border-border last:border-b-0">

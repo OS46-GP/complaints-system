@@ -8,9 +8,13 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { AssignmentStatusBadge } from "@/features/complaint-detail/assignment-status-badge";
 import { ComplaintAssignmentDetailsDialog } from "@/features/complaint-detail/complaint-assignment-details-dialog";
-import { formatDate } from "@/features/complaint-detail/assignment-status";
+import {
+  computeLateDays,
+  formatDate,
+} from "@/features/complaint-detail/assignment-status";
 import type { ComplaintDetailsData } from "@/features/complaint-detail/types";
 
 interface ComplaintDepartmentsCardProps {
@@ -57,6 +61,18 @@ export function ComplaintDepartmentsCard({ complaint }: ComplaintDepartmentsCard
                     <span className="flex items-center gap-2 flex-wrap">
                       {department.name}
                       <AssignmentStatusBadge status={department.assignmentStatus} />
+                      {(() => {
+                        const lateDays = computeLateDays(department);
+                        return lateDays ? (
+                          <Badge
+                            variant="warning"
+                            className="h-auto px-2 py-0.5 text-[0.625rem] font-semibold"
+                          >
+                            <AlertTriangle className="size-3" />
+                            متأخر {lateDays} يوم
+                          </Badge>
+                        ) : null;
+                      })()}
                     </span>
                   </div>
                   <Button

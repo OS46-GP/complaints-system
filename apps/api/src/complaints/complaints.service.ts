@@ -100,7 +100,7 @@ const complaintInclude = {
   citizen: true,
   department: true,
   departments: {
-    include: { department: true },
+    include: { department: true, examinationStatus: true },
     orderBy: [{ assignmentIndex: "asc" }, { createdAt: "asc" }],
   },
   urgencies: {
@@ -255,6 +255,7 @@ export class ComplaintsService {
       sortOrder = "desc",
       citizenNationalId,
       citizenFullName,
+      citizenNameAny,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -279,6 +280,19 @@ export class ComplaintsService {
           mode: "insensitive",
         },
       };
+    }
+
+    if (citizenNameAny?.trim()) {
+      const parts = citizenNameAny.trim().split(/\s+/).filter(Boolean);
+      if (parts.length > 0) {
+        const citizenFilter: Prisma.CitizenWhereInput = {
+          ...(where.citizen as Prisma.CitizenWhereInput | undefined),
+          OR: parts.map((part) => ({
+            fullName: { contains: part, mode: "insensitive" as const },
+          })),
+        };
+        where.citizen = citizenFilter;
+      }
     }
 
     if (name) {
@@ -648,9 +662,9 @@ export class ComplaintsService {
     }
 
     const status = computeAssignmentStatus(target);
-    if (status !== "ACTIVE") {
+    if (status !== "OVERDUE") {
       throw new BadRequestException(
-        "Cannot send an urgency request: the assignment reached its deadline or is no longer active",
+        "Cannot send an urgency request: the assignment deadline has not ended yet or it is not active/overdue",
       );
     }
 

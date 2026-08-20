@@ -49,6 +49,8 @@ export class ReportingController {
       query.status,
       query.severity,
       query.search,
+      query.page ?? 1,
+      query.limit ?? 20,
     );
   }
 
@@ -78,12 +80,23 @@ export class ReportingController {
       query.status,
       query.severity,
       query.search,
+      query.page ?? 1,
+      query.limit ?? 20,
     );
   }
 
   @Post('custom')
   async customReport(@Body() body: CustomReportBodyDto) {
-    return this.reportingService.getCustomReport(body);
+    return this.reportingService.getCustomReport(
+      {
+        dateRange: body.dateRange,
+        village: body.village,
+        department: body.department,
+        examinationStatus: body.examinationStatus,
+      },
+      body.page ?? 1,
+      body.limit ?? 20,
+    );
   }
 
   @Post('custom/export')

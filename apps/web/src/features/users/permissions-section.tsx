@@ -1,3 +1,5 @@
+import { memo } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { ShieldCheck, UserCog, ShieldAlert, Crown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -8,8 +10,6 @@ import { useAuthStore } from "@/features/auth/store";
 import type { UserFormData } from "@/features/users/types";
 
 interface PermissionsSectionProps {
-  data: UserFormData;
-  onChange: (partial: Partial<UserFormData>) => void;
   disabled?: boolean;
 }
 
@@ -19,12 +19,12 @@ const ROLE_OPTIONS = {
   SuperAdmin: { icon: Crown, label: "مدير النظام الأعلى" },
 } as const;
 
-export function PermissionsSection({
-  data,
-  onChange,
+export const PermissionsSection = memo(function PermissionsSection({
   disabled,
 }: PermissionsSectionProps) {
+  const { setValue } = useFormContext<UserFormData>();
   const currentRole = useAuthStore((s) => s.user?.role);
+  const role = useWatch<{ role: UserFormData["role"] }>({ name: "role" }) ?? "Official";
 
   const availableRoles: (keyof typeof ROLE_OPTIONS)[] =
     currentRole === "SuperAdmin"
@@ -48,9 +48,12 @@ export function PermissionsSection({
             <span className="text-destructive mr-0.5">*</span>
           </Label>
           <RadioGroup
-            value={data.role}
+            value={role}
             onValueChange={(value) =>
-              onChange({ role: value as UserFormData["role"] })
+              setValue("role", value as UserFormData["role"], {
+                shouldValidate: false,
+                shouldDirty: true,
+              })
             }
             disabled={isDisabled}
             className="grid grid-cols-1 sm:grid-cols-2 gap-3"
@@ -82,4 +85,4 @@ export function PermissionsSection({
       </CardContent>
     </Card>
   );
-}
+});
