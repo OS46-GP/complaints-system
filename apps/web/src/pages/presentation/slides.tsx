@@ -849,7 +849,8 @@ function ScreenshotPreview({ src, url }: { src: string; url: string }) {
       <img
         src={src}
         alt={url}
-        loading="lazy"
+        loading="eager"
+        decoding="async"
         className="h-auto w-full animate-in fade-in duration-700 fill-mode-both"
       />
     </div>
