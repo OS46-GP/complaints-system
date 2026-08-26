@@ -35,4 +35,4 @@ databases:
   - name: complaints-db
     plan: free
     region: frankfurt
-    postgresMajorVersion: "16"
+    postgresMajorVersion: "18"
