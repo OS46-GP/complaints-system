@@ -29,7 +29,7 @@ services:
     healthCheckPath: /
     envVars:
       - key: VITE_API_URL
-        value: "" # single-origin via nginx proxy; set to https://complaints-api.onrender.com if you split origins
+        value: https://complaints-api-nkkw.onrender.com # cross-origin on Render (CORS allows complaints-web.onrender.com + CORS_ORIGIN)
 
 databases:
   - name: complaints-db
