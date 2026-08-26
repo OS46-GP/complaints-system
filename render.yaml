@@ -9,13 +9,16 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
-        sync: false # Neon: postgresql://neondb_owner:...@ep-silent-frog-b1fov093.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require
+        fromDatabase:
+          name: complaints-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: NODE_ENV
         value: production
       # Add via Render Dashboard → complaints-api → Environment:
       # SBG_API_KEY or OPENAI_API_KEY, LLM_MODEL, EMBEDDING_MODEL, FB_ACCESS_TOKEN
+      # To use Neon instead, change DATABASE_URL to sync: false and set the Neon URL manually
 
   - type: web
     name: complaints-web
@@ -28,3 +31,10 @@ services:
     envVars:
       - key: VITE_API_URL
         value: "" # single-origin via nginx proxy; set to https://complaints-api.onrender.com if you split origins
+
+databases:
+  - name: complaints-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "16" # Render free, expires 30 days + 14-day grace; needs card
+    # To stay card-free, remove this block and use Neon (ep-silent-frog-b1fov093) with DATABASE_URL sync:false
