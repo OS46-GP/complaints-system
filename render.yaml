@@ -18,7 +18,6 @@ services:
         value: production
       # Add via Render Dashboard → complaints-api → Environment:
       # SBG_API_KEY or OPENAI_API_KEY, LLM_MODEL, EMBEDDING_MODEL, FB_ACCESS_TOKEN
-      # To use Neon instead, change DATABASE_URL to sync: false and set the Neon URL manually
 
   - type: web
     name: complaints-web
@@ -36,5 +35,4 @@ databases:
   - name: complaints-db
     plan: free
     region: frankfurt
-    postgresMajorVersion: "16" # Render free, expires 30 days + 14-day grace; needs card
-    # To stay card-free, remove this block and use Neon (ep-silent-frog-b1fov093) with DATABASE_URL sync:false
+    postgresMajorVersion: "16"
