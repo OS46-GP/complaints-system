@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AssignmentStatusBadge } from "@/features/complaint-detail/assignment-status-badge";
 import {
   computeDueDate,
+  computeLateDays,
   formatDate,
 } from "@/features/complaint-detail/assignment-status";
 import type { DepartmentAssignment } from "@/features/complaint-detail/types";
@@ -196,6 +197,16 @@ export function ComplaintAssignmentDetailsDialog({
                     label="تاريخ تسجيل الرد"
                     value={formatDate(selected.respondedAt)}
                   />
+                  {(() => {
+                    const lateDays = computeLateDays(selected);
+                    return lateDays ? (
+                      <DetailRow
+                        label="أيام التأخير"
+                        value={`${lateDays} يوم`}
+                        emphasis
+                      />
+                    ) : null;
+                  })()}
                 </div>
               </div>
             ) : (

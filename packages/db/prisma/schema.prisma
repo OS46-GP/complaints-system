@@ -5,18 +5,21 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["public"]
 }
 
 enum Severity {
   Low
   Medium
   High
+  @@schema("public")
 }
 
 enum UserRole {
   Official
   Admin
   SuperAdmin
+  @@schema("public")
 }
 
 model User {
@@ -37,6 +40,7 @@ model User {
   notifications         Notification[]
   actorNotifications    Notification[]         @relation("ActorNotifications")
   passwordResetRequests PasswordResetRequest[]
+  @@schema("public")
 }
 
 model Notification {
@@ -57,6 +61,7 @@ model Notification {
   @@index([recipientId])
   @@index([recipientRole])
   @@index([createdAt])
+  @@schema("public")
 }
 
 model PasswordResetRequest {
@@ -72,12 +77,14 @@ model PasswordResetRequest {
 
   @@index([userId])
   @@index([status])
+  @@schema("public")
 }
 
 enum PasswordResetStatus {
   Pending
   Approved
   Rejected
+  @@schema("public")
 }
 
 model Citizen {
@@ -94,6 +101,7 @@ model Citizen {
   updatedAt    DateTime  @updatedAt
 
   complaints Complaint[]
+  @@schema("public")
 }
 
 model Location {
@@ -116,6 +124,7 @@ model Location {
   citizens Citizen[]
 
   @@index([parentCode])
+  @@schema("public")
 }
 
 model Department {
@@ -128,6 +137,7 @@ model Department {
   complaints           Complaint[]
   complaintDepartments ComplaintDepartment[]
   urgencies            ComplaintUrgency[]
+  @@schema("public")
 }
 
 model ReceptionMethod {
@@ -135,6 +145,7 @@ model ReceptionMethod {
   name String @unique
 
   complaints Complaint[]
+  @@schema("public")
 }
 
 model ComplaintType {
@@ -142,6 +153,7 @@ model ComplaintType {
   name String @unique
 
   complaints Complaint[]
+  @@schema("public")
 }
 
 model ExaminationStatus {
@@ -150,6 +162,7 @@ model ExaminationStatus {
 
   complaints           Complaint[]
   complaintDepartments ComplaintDepartment[]
+  @@schema("public")
 }
 
 model PresentationStatus {
@@ -157,6 +170,7 @@ model PresentationStatus {
   name String @unique
 
   complaints Complaint[]
+  @@schema("public")
 }
 
 model Complaint {
@@ -217,6 +231,7 @@ model Complaint {
   @@index([departmentId])
   @@index([statementYear])
   @@index([createdAt])
+  @@schema("public")
 }
 
 model ComplaintDepartment {
@@ -247,6 +262,7 @@ model ComplaintDepartment {
 
   @@index([complaintId, departmentId])
   @@index([departmentId])
+  @@schema("public")
 }
 
 model ComplaintUrgency {
@@ -265,6 +281,7 @@ model ComplaintUrgency {
   @@index([complaintId])
   @@index([departmentId])
   @@index([assignmentId])
+  @@schema("public")
 }
 
 model ComplaintAction {
@@ -277,6 +294,7 @@ model ComplaintAction {
   createdAt   DateTime  @default(now())
 
   @@index([complaintId])
+  @@schema("public")
 }
 
 model ComplaintEscalation {
@@ -289,6 +307,7 @@ model ComplaintEscalation {
   createdAt     DateTime  @default(now())
 
   @@index([complaintId])
+  @@schema("public")
 }
 
 model ComplaintFile {
@@ -300,6 +319,7 @@ model ComplaintFile {
   uploadedAt  DateTime  @default(now())
 
   @@index([complaintId])
+  @@schema("public")
 }
 
 model ComplaintLink {
@@ -313,11 +333,13 @@ model ComplaintLink {
   @@unique([sourceId, targetId])
   @@index([sourceId])
   @@index([targetId])
+  @@schema("public")
 }
 
 model ComplaintYearCounter {
   year          Int @id
   currentNumber Int @default(0)
+  @@schema("public")
 }
 
 model GeneratedReport {
@@ -333,6 +355,7 @@ model GeneratedReport {
 
   @@index([generatedAt])
   @@index([type])
+  @@schema("public")
 }
 
 model DelayThreshold {
@@ -341,17 +364,20 @@ model DelayThreshold {
   mediumDays Int      @default(30)
   highDays   Int      @default(15)
   updatedAt  DateTime @updatedAt
+  @@schema("public")
 }
 
 enum SocialDraftStatus {
   Pending
   Approved
   Rejected
+  @@schema("public")
 }
 
 enum GroupType {
   Group
   Page
+  @@schema("public")
 }
 
 model MonitoredGroup {
@@ -364,6 +390,7 @@ model MonitoredGroup {
   updatedAt DateTime  @updatedAt
 
   @@index([isActive])
+  @@schema("public")
 }
 
 model SocialDraft {
@@ -386,12 +413,14 @@ model SocialDraft {
 
   @@index([status])
   @@index([detectedAt])
+  @@schema("public")
 }
 
 enum LetterTemplateType {
   HTML
   DOCX
   PDF_LETTERHEAD
+  @@schema("public")
 }
 
 enum LetterVariableType {
@@ -399,6 +428,7 @@ enum LetterVariableType {
   textarea
   date
   image
+  @@schema("public")
 }
 
 model LetterTemplate {
@@ -418,6 +448,7 @@ model LetterTemplate {
   generations LetterGeneration[]
 
   @@index([isActive])
+  @@schema("public")
 }
 
 model LetterVariable {
@@ -436,6 +467,7 @@ model LetterVariable {
 
   @@index([isActive])
   @@index([isSystem])
+  @@schema("public")
 }
 
 model LetterSettings {
@@ -454,6 +486,7 @@ model LetterSettings {
   seal                   String?
   responseDefaultDays    Int      @default(15)
   updatedAt              DateTime @updatedAt
+  @@schema("public")
 }
 
 model LetterGeneration {
@@ -471,4 +504,5 @@ model LetterGeneration {
 
   @@unique([complaintId, templateId])
   @@index([templateId])
+  @@schema("public")
 }

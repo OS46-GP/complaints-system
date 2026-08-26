@@ -8,4 +8,6 @@ coverage/
 uploads/
 backup.sql
 backups/
-docs/
+docs/templates/
+*.tsbuildinfo
+deploy/.env.production

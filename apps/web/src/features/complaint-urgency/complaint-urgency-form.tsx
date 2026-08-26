@@ -45,7 +45,7 @@ export function ComplaintUrgencyForm({ complaintId }: ComplaintUrgencyFormProps)
   const eligibleDepartments = useMemo(() => {
     const latest = new Map<string, DepartmentAssignment>();
     for (const assignment of complaint?.assignmentHistory ?? []) {
-      if (assignment.status !== "ACTIVE") continue;
+      if (assignment.status !== "OVERDUE") continue;
       const existing = latest.get(assignment.departmentId);
       if (!existing || assignment.assignmentIndex > existing.assignmentIndex) {
         latest.set(assignment.departmentId, assignment);
@@ -134,13 +134,13 @@ export function ComplaintUrgencyForm({ complaintId }: ComplaintUrgencyFormProps)
               <div className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-body-sm text-destructive">
                 <AlertTriangle className="size-4 shrink-0 mt-0.5" />
                 <span>
-                  لا توجد جهات معنية بإحالات مفتوحة قبل انتهاء مهلة الرد. لا يمكن إرسال استعجال
-                  لإحالة متأخرة أو منتهية.
+                  لا توجد جهات معنية انتهت مهلة الرد عليها دون رد حتى الآن. لا يمكن إرسال
+                  استعجال لجهة لم تنتهِ مهلة ردها بعد.
                 </span>
               </div>
             ) : (
               <p className="text-body-sm text-muted-foreground">
-                يمكن إرسال الاستعجال فقط للجهات التي لم تنتهِ مهلة الرد على إحالاتها بعد.
+                يمكن إرسال الاستعجال فقط للجهات التي انتهت مهلة الرد على إحالاتها دون رد.
               </p>
             )}
           </div>
@@ -156,13 +156,14 @@ export function ComplaintUrgencyForm({ complaintId }: ComplaintUrgencyFormProps)
                     : ""}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <AssignmentStatusBadge status="ACTIVE" />
+                  <AssignmentStatusBadge status="OVERDUE" />
                   <span className="text-label-xs text-muted-foreground">
-                    الإحالة رقم {selectedAssignment.assignmentIndex} — تنتهي المهلة قبل الرد
+                    الإحالة رقم {selectedAssignment.assignmentIndex} — انتهت المهلة دون رد
                   </span>
                 </div>
                 <p className="font-body text-body-sm text-muted-foreground">
-                  سيتم توجيه استعجال لهذه الجهة على الإحالة المفتوحة الحالية.
+                  سيتم توجيه استعجال لهذه الجهة بسبب تجاوزها مهلة الرد على الإحالة المفتوحة
+                  الحالية.
                 </p>
               </div>
             </div>

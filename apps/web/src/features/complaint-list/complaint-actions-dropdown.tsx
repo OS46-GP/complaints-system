@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import {
   MoreHorizontal,
   Eye,
-  Pencil,
   MessageSquareReply,
   Archive,
   Sparkles,
@@ -48,9 +47,6 @@ export function ComplaintActionsDropdown({
   const detailPath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_DETAIL(complaintId)
     : PATHS.USER.COMPLAINT_DETAIL(complaintId);
-  const editPath = isAdmin
-    ? PATHS.ADMIN.COMPLAINT_EDIT(complaintId)
-    : PATHS.USER.COMPLAINT_EDIT(complaintId);
   const responsePath = isAdmin
     ? PATHS.ADMIN.COMPLAINT_RESPONSE(complaintId)
     : PATHS.USER.COMPLAINT_RESPONSE(complaintId);
@@ -65,7 +61,6 @@ export function ComplaintActionsDropdown({
     : PATHS.USER.COMPLAINT_URGENCY(complaintId);
 
   const handleView = () => navigate(detailPath);
-  const handleEdit = () => navigate(editPath);
   const handleResponse = () => navigate(responsePath);
   const handleArchive = () => navigate(archivePath);
   const handleReassign = () => navigate(reassignPath);
@@ -103,10 +98,6 @@ export function ComplaintActionsDropdown({
             label="طباعة PDF"
           />
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleEdit} className="w-full gap-2">
-            <Pencil className="size-4" />
-            تعديل
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleResponse} className="w-full gap-2">
             <MessageSquareReply className="size-4" />
             إضافة رد

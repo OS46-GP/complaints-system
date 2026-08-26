@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ComplaintDetailsButton } from "@/features/reporting/components/complaint-details-button";
 import { LEGACY_MEMO_TEMPLATE } from "./constants";
 import type { ApiComplaint } from "@/features/complaint-list/types";
 import type { LetterTemplate } from "@/features/letter-templates/types";
@@ -70,6 +71,7 @@ export function MemoActions({
           </Select>
         </div>
         <div className="flex items-center gap-2">
+          <ComplaintDetailsButton complaintId={complaint.id} label="تفاصيل الشكوى" />
           <Button
             type="button"
             variant="outline"

@@ -16,9 +16,9 @@ export class CreateDepartmentResponseDto {
   @IsDateString()
   importDate?: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsInt()
-  examinationStatusId?: number;
+  examinationStatusId!: number;
 
   @IsOptional()
   @IsString()

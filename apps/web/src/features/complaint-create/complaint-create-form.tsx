@@ -217,8 +217,11 @@ function draftHasContent(draft: ComplaintDraft): boolean {
 export function ComplaintCreateForm() {
   const navigate = useNavigate();
   const { pathname, state } = useLocation();
-  const listPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINTS : PATHS.ADMIN.COMPLAINTS;
-  const ocrPath = pathname.startsWith("/user") ? PATHS.USER.COMPLAINT_OCR : PATHS.ADMIN.COMPLAINT_OCR;
+  const isUser = pathname.startsWith("/user");
+  const ocrPath = isUser ? PATHS.USER.COMPLAINT_OCR : PATHS.ADMIN.COMPLAINT_OCR;
+  const detailPath = isUser
+    ? PATHS.USER.COMPLAINT_DETAIL
+    : PATHS.ADMIN.COMPLAINT_DETAIL;
   const createMutation = useCreateComplaint();
   const linkDraftMutation = useLinkDraft();
 
@@ -300,7 +303,11 @@ export function ComplaintCreateForm() {
   const { data: locations } = useLocations();
 
   const [step, setStep] = useState(restoredDraft ? restoredDraft.step : 1);
-  const [activeDraft, setActiveDraft] = useState<ComplaintDraft | null>(() => getDraft());
+  const [formResetKey, setFormResetKey] = useState(0);
+  const [hasDraftContent, setHasDraftContent] = useState<boolean>(() => {
+    const draft = getDraft();
+    return !!draft && draftHasContent(draft);
+  });
   const stepRef = useRef(step);
   const suppressPersist = useRef(false);
   useEffect(() => {
@@ -322,7 +329,7 @@ export function ComplaintCreateForm() {
       updatedAt: Date.now(),
     };
     setDraft(draft);
-    setActiveDraft(draft);
+    setHasDraftContent(draftHasContent(draft));
     const subscription = form.watch((values) => {
       if (suppressPersist.current) return;
       const nextDraft = {
@@ -332,7 +339,7 @@ export function ComplaintCreateForm() {
         updatedAt: Date.now(),
       };
       setDraft(nextDraft);
-      setActiveDraft(nextDraft);
+      setHasDraftContent(draftHasContent(nextDraft));
     });
     return () => subscription.unsubscribe();
   }, [form, seedTag]);
@@ -421,7 +428,7 @@ export function ComplaintCreateForm() {
     return fields;
   }, [ocrOriginal]);
 
-    const showClearDraft = !!activeDraft && draftHasContent(activeDraft);
+    const showClearDraft = hasDraftContent;
 
   const handleNext = async () => {
     const isValid = await form.trigger(STEP_FIELDS[step - 1]);
@@ -442,8 +449,9 @@ export function ComplaintCreateForm() {
     suppressPersist.current = true;
     clearDraft();
     form.reset(DEFAULT_DATA);
-    setActiveDraft(null);
+    setHasDraftContent(false);
     setStep(1);
+    setFormResetKey((key) => key + 1);
     if (ocrData || socialDraft) {
       navigate(pathname, { replace: true, state: null });
     }
@@ -474,7 +482,7 @@ export function ComplaintCreateForm() {
           }
         }
         toast.success("تم تقديم الشكوى بنجاح");
-        navigate(listPath);
+        navigate(detailPath(created.id));
       },
       onError: () => {
         toast.error("حدث خطأ أثناء تقديم الشكوى");
@@ -527,7 +535,7 @@ export function ComplaintCreateForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border p-4 md:p-8 shadow-xs">
-              {step === 1 && <ComplaintCitizenStep ocrFields={ocrFields} />}
+              {step === 1 && <ComplaintCitizenStep key={formResetKey} ocrFields={ocrFields} />}
               {step === 2 && <ComplaintBasicInfoStep ocrFields={ocrFields} />}
               {step === 3 && <ComplaintAttachmentStep />}
               {step === 4 && <ComplaintReviewStep ocrFields={ocrFields} onGoToStep={setStep} />}

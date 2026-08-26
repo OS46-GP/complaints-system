@@ -9,10 +9,12 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { AssignmentStatusBadge } from "@/features/complaint-detail/assignment-status-badge";
 import { ComplaintAssignmentDetailsDialog } from "@/features/complaint-detail/complaint-assignment-details-dialog";
 import {
   computeDueDate,
+  computeLateDays,
   formatDate,
 } from "@/features/complaint-detail/assignment-status";
 import type { AssignmentStatus, ComplaintDetailsData } from "@/features/complaint-detail/types";
@@ -95,6 +97,10 @@ function buildEvents(complaint: ComplaintDetailsData): TimelineEvent[] {
           assignment.responseDate ? formatDate(assignment.responseDate) : "",
           assignment.examinationStatusName ?? "",
           assignment.examinationResult ?? "",
+          (() => {
+            const lateDays = computeLateDays(assignment);
+            return lateDays ? `متأخر ${lateDays} يوم` : "";
+          })(),
         ].filter(Boolean),
         badge: "RESPONDED",
         warning: false,
@@ -259,6 +265,22 @@ export function ComplaintTimeline({ complaint }: ComplaintTimelineProps) {
                     {event.title}
                   </h3>
                   {event.badge && <AssignmentStatusBadge status={event.badge} />}
+                  {event.icon === "response" &&
+                    (() => {
+                      const assignment = complaint.assignmentHistory.find(
+                        (a) => a.id === event.assignmentId,
+                      );
+                      const lateDays = assignment ? computeLateDays(assignment) : null;
+                      return lateDays ? (
+                        <Badge
+                          variant="warning"
+                          className="h-auto px-2 py-0.5 text-[0.625rem] font-semibold"
+                        >
+                          <AlertTriangle className="size-3" />
+                          متأخر {lateDays} يوم
+                        </Badge>
+                      ) : null;
+                    })()}
                 </div>
                 {event.description && (
                   <p className="text-body-sm text-muted-foreground mb-1 whitespace-pre-wrap break-words">

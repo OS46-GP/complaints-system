@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportResultTable } from "@/features/reporting/components/report-result-table";
+import { ComplaintDetailsButton } from "@/features/reporting/components/complaint-details-button";
+import { ReportListPagination } from "@/features/reporting/components/report-list-pagination";
 import { ExportButtons } from "@/features/reporting/components/export-buttons";
 import { ReportsNav } from "@/features/reporting/components/reports-nav";
 import { DateRangePicker, type DateRangeValue } from "@/features/reporting/components/date-range-picker";
@@ -36,6 +38,7 @@ const columns: DataTableColumn[] = [
   { key: "department", label: "الجهة" },
   { key: "status", label: "حالة الفحص" },
   { key: "arrival", label: "تاريخ الوصول" },
+  { key: "actions", label: "", className: "text-center" },
 ];
 
 interface CustomReportBuilderProps {
@@ -57,6 +60,7 @@ export function CustomReportBuilder({ basePath }: CustomReportBuilderProps) {
     searchParams.get("examinationStatus") ?? "",
   );
   const [result, setResult] = useState<CustomReportResult | null>(null);
+  const [page, setPage] = useState(1);
   const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
   const customMutation = useCustomReport();
@@ -96,7 +100,15 @@ export function CustomReportBuilder({ basePath }: CustomReportBuilderProps) {
 
   const handleGenerate = () => {
     syncUrl();
+    setPage(1);
     customMutation.mutate(buildFilters(), {
+      onSuccess: (data) => setResult(data),
+    });
+  };
+
+  const handlePageChange = (next: number) => {
+    setPage(next);
+    customMutation.mutate({ ...buildFilters(), page: next, limit: 20 }, {
       onSuccess: (data) => setResult(data),
     });
   };
@@ -294,9 +306,20 @@ export function CustomReportBuilder({ basePath }: CustomReportBuilderProps) {
                 <td className="px-6 py-3.5 text-label-sm text-muted-foreground">
                   {new Date(c.arrivalDate).toLocaleDateString("ar-SA")}
                 </td>
+                <td className="px-6 py-3.5 text-center">
+                  <ComplaintDetailsButton complaintId={c.id} label="عرض" />
+                </td>
               </tr>
             ))}
           </ReportResultTable>
+
+          <ReportListPagination
+            page={result.page ?? page}
+            totalPages={result.totalPages}
+            total={result.total}
+            onPageChange={handlePageChange}
+            entity="شكوى"
+          />
         </>
       )}
 

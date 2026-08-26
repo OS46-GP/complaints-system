@@ -4,6 +4,7 @@ import { ComplaintActionsDropdown } from "@/features/complaint-list/complaint-ac
 import { ComplaintStatusBadge } from "@/features/complaint-list/complaint-status-badge";
 import { ComplaintPriority } from "@/features/complaint-list/complaint-priority";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HighlightText } from "@/components/shared/highlight-text";
 import { cn } from "@/lib/utils";
 import { PATHS } from "@/router/paths";
 
@@ -11,12 +12,14 @@ interface ComplaintCardProps {
   complaint: ComplaintItem;
   selected: boolean;
   onToggle: () => void;
+  search?: string;
 }
 
 export function ComplaintCard({
   complaint,
   selected,
   onToggle,
+  search,
 }: ComplaintCardProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -36,10 +39,10 @@ export function ComplaintCard({
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-col gap-1">
           <span className="font-mono text-mono-data text-primary font-bold tracking-tight">
-            {complaint.displayId}
+            <HighlightText text={complaint.displayId} query={search} />
           </span>
           <h3 className="font-heading text-headline-md text-foreground">
-            {complaint.subject}
+            <HighlightText text={complaint.subject} query={search} />
           </h3>
         </div>
         <div
@@ -60,7 +63,9 @@ export function ComplaintCard({
       <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-label-sm font-heading">
         <div>
           <p className="text-muted-foreground opacity-70 mb-1">المواطن</p>
-          <span className="text-foreground">{complaint.citizenName}</span>
+          <span className="text-foreground">
+            <HighlightText text={complaint.citizenName} query={search} />
+          </span>
         </div>
         <div>
           <p className="text-muted-foreground opacity-70 mb-1">القسم</p>

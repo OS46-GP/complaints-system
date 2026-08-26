@@ -1,4 +1,4 @@
-import { axiosClient } from "@/api/axios-client";
+import { axiosClient, AI_REQUEST_TIMEOUT } from "@/api/axios-client";
 import type {
   CustomReportFilters,
   CustomReportResult,
@@ -66,7 +66,12 @@ export const reportingApi = {
       })
       .then((res) => res.data),
 
-  achievementDepartment: (department: string, filters?: ReportFilters) =>
+  achievementDepartment: (
+    department: string,
+    filters?: ReportFilters,
+    page = 1,
+    limit = 20,
+  ) =>
     axiosClient
       .get<DepartmentComplaintsResult>("/api/reports/achievement/department", {
         params: {
@@ -76,11 +81,18 @@ export const reportingApi = {
           village: filters?.village || undefined,
           status: filters?.status || undefined,
           severity: filters?.severity || undefined,
+          page,
+          limit,
         },
       })
       .then((res) => res.data),
 
-  delayDepartment: (department: string, filters?: ReportFilters) =>
+  delayDepartment: (
+    department: string,
+    filters?: ReportFilters,
+    page = 1,
+    limit = 20,
+  ) =>
     axiosClient
       .get<DelayDepartmentComplaintsResult>("/api/reports/delays/department", {
         params: {
@@ -90,6 +102,8 @@ export const reportingApi = {
           village: filters?.village || undefined,
           status: filters?.status || undefined,
           severity: filters?.severity || undefined,
+          page,
+          limit,
         },
       })
       .then((res) => res.data),
@@ -146,6 +160,8 @@ export const reportingApi = {
 
   draftPeriodReport: (from: string, to: string) =>
     axiosClient
-      .post<{ draft: string }>("/api/ai/draft-report", { from, to })
+      .post<{ draft: string }>("/api/ai/draft-report", { from, to }, {
+        timeout: AI_REQUEST_TIMEOUT,
+      })
       .then((res) => res.data),
 };

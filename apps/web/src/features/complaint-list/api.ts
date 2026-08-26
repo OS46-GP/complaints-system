@@ -1,4 +1,4 @@
-import { axiosClient } from "@/api/axios-client";
+import { axiosClient, AI_REQUEST_TIMEOUT } from "@/api/axios-client";
 import type { ApiComplaint, ApiCitizen, PaginatedComplaintResponse, Department, ReferenceItem, LocationItem, RecurrenceMatch, CheckDuplicatesPayload, DueAssignmentsResponse } from "@/features/complaint-list/types";
 import type { SeverityLevel } from "@/features/complaint-detail/api";
 
@@ -8,6 +8,7 @@ export interface ListComplaintsParams {
   departmentId?: string;
   citizenNationalId?: string;
   citizenFullName?: string;
+  citizenNameAny?: string;
   name?: string;
   complaintNumber?: number;
   statementYear?: number;
@@ -155,7 +156,11 @@ export const complaintsApi = {
       .then((res) => res.data),
   analyze: (id: string) =>
     axiosClient
-      .post<{ severity: SeverityLevel; recurrenceMatches: RecurrenceMatch[] }>(`/api/complaints/${id}/analyze`)
+      .post<{ severity: SeverityLevel; recurrenceMatches: RecurrenceMatch[] }>(
+        `/api/complaints/${id}/analyze`,
+        undefined,
+        { timeout: AI_REQUEST_TIMEOUT },
+      )
       .then((res) => res.data),
   updateSeverity: (id: string, severity: SeverityLevel) =>
     axiosClient
@@ -163,15 +168,21 @@ export const complaintsApi = {
       .then((res) => res.data),
   summarize: (id: string) =>
     axiosClient
-      .post<{ draft: string }>(`/api/ai/summarize/${id}`)
+      .post<{ draft: string }>(`/api/ai/summarize/${id}`, undefined, {
+        timeout: AI_REQUEST_TIMEOUT,
+      })
       .then((res) => res.data),
   summarizeBatch: (complaintIds: string[]) =>
     axiosClient
-      .post<{ draft: string }>("/api/ai/summarize-batch", { complaintIds })
+      .post<{ draft: string }>("/api/ai/summarize-batch", { complaintIds }, {
+        timeout: AI_REQUEST_TIMEOUT,
+      })
       .then((res) => res.data),
   draftSelectionReport: (complaintIds: string[]) =>
     axiosClient
-      .post<{ draft: string }>("/api/ai/draft-selection-report", { complaintIds })
+      .post<{ draft: string }>("/api/ai/draft-selection-report", { complaintIds }, {
+        timeout: AI_REQUEST_TIMEOUT,
+      })
       .then((res) => res.data),
   getLinks: (id: string) =>
     axiosClient
