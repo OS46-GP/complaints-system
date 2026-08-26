@@ -10,7 +10,12 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
   app.useStaticAssets(join(process.cwd(), "uploads"), { prefix: "/uploads" });
   app.enableCors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://complaints-web.onrender.com",
+      ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean) : []),
+    ],
     credentials: true,
   });
   app.setGlobalPrefix("api");
